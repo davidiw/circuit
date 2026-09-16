@@ -45,7 +45,7 @@ export function Diagram({ project, highlight, selected, selectedNet, compact, on
                   <circle cx={x} cy={y} r={2.2} />
                   <text x={x} y={up ? y + 10 : y - 4} textAnchor="middle" className="pinlab">{p.name}</text>
                   {p.flag && <><line x1={x} y1={y} x2={x} y2={fy} className="flagline" />
-                    {up ? <text x={x} y={fy - 3} textAnchor="middle" className="flag">{p.flag}</text>
+                    {up ? <g><line x1={x - 7} y1={fy} x2={x + 7} y2={fy} className="flagline" /><text x={x} y={fy - 4} textAnchor="middle" className="flag">{p.flag}{p.source ? ' (source)' : ''}</text></g>
                       : <g className="gndsym"><line x1={x - 6} y1={fy} x2={x + 6} y2={fy} /><line x1={x - 4} y1={fy + 3} x2={x + 4} y2={fy + 3} /><line x1={x - 2} y1={fy + 6} x2={x + 2} y2={fy + 6} /><text x={x + 9} y={fy + 4} className="flag">{p.flag}</text></g>}</>}
                 </g>
               );
@@ -53,7 +53,7 @@ export function Diagram({ project, highlight, selected, selectedNet, compact, on
           </g>
         ))}
       </svg>
-      <div className="legend"><span><i className="pw"></i>power</span><span><i className="gnd"></i>ground</span><span><i className="sig"></i>signal</span><span><i className="mot"></i>motor</span><span>⌒ hop: wires cross, no connection</span><span>● junction</span><span className="muted">rails ({l.rails.map((r) => r.name).join(', ')}) are drawn as flags at each pin · tap a part or wire</span></div>
+      <div className="legend"><span><i className="pw"></i>power</span><span><i className="gnd"></i>ground</span><span><i className="sig"></i>signal</span><span><i className="mot"></i>motor</span><span>⌒ hop: wires cross, no connection</span><span>● junction</span><span className="muted">{l.rails.length ? `${l.rails.map((r) => r.name).join(', ')} drawn as symbols at each pin · ` : ''}tap a part or wire · Delete removes the selection</span></div>
     </div>
   );
 }

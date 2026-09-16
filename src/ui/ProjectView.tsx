@@ -32,6 +32,18 @@ export function ProjectView({ session, state, dispatch }: { session: Session; st
     setToast(`Evaluated · ${parts.join(' · ')}`);
     window.clearTimeout(toastTimer.current); toastTimer.current = window.setTimeout(() => setToast(null), 3200);
   }, [session.lastSummary]);
+  // Delete or Backspace removes the selected part or disconnects the selected net, unless typing in a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      const t = e.target as HTMLElement | null; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (session.selectedInstance) { const inst = p.instances.find((i) => i.id === session.selectedInstance); if (!inst) return; e.preventDefault();
+        dispatch({ type: 'EDIT', label: `Remove ${inst.label}`, ops: [...(p.power.sourceInstance === inst.id ? [{ op: 'clear_power_source' as const }] : []), { op: 'remove_instance' as const, instance: inst.id }] }); }
+      else if (session.selectedNet) { const net = p.nets.find((n) => n.id === session.selectedNet); if (!net) return; e.preventDefault();
+        dispatch({ type: 'EDIT', label: `Disconnect net ${net.name}`, ops: net.pins.map((pin) => ({ op: 'move_pin' as const, instance: pin.instance, pin: pin.pin, net: null })) }); }
+    };
+    window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
+  }, [session.selectedInstance, session.selectedNet, p, dispatch]);
   const runEvaluate = () => { if (evaluating) return; setEvaluating(true); window.setTimeout(() => { dispatch({ type: 'EVALUATE' }); setEvaluating(false); }, 350); };
 
   const open = lifecycles.find((f) => f.id === session.openFinding) ?? session.aiReview?.observations.find((f) => f.id === session.openFinding);
