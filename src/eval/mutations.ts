@@ -71,7 +71,12 @@ export function connectPins(project: Project, registry: Registry, a: PinRef, b: 
   const netOf = (r: PinRef) => project.nets.find((n) => n.pins.some((x) => x.instance === r.instance && x.pin === r.pin));
   const na = netOf(a), nb = netOf(b);
   if (na && nb && na.id === nb.id) return [];
-  if (na && nb) return nb.pins.map((x) => ({ op: 'move_pin' as const, instance: x.instance, pin: x.pin, net: na.id }));
+  if (na && nb) {
+    // Merge into the net that should keep its identity: ground beats power beats the rest; then the larger net.
+    const rank = (n: Net) => (n.kind === 'ground' ? 3 : n.kind === 'power' ? 2 : n.kind === 'bus' ? 1 : 0);
+    const [keep, drop] = rank(na) > rank(nb) || (rank(na) === rank(nb) && na.pins.length >= nb.pins.length) ? [na, nb] : [nb, na];
+    return drop.pins.map((x) => ({ op: 'move_pin' as const, instance: x.instance, pin: x.pin, net: keep.id }));
+  }
   if (na) return [{ op: 'move_pin', instance: b.instance, pin: b.pin, net: na.id }];
   if (nb) return [{ op: 'move_pin', instance: a.instance, pin: a.pin, net: nb.id }];
   const role = (r: PinRef) => { const i = project.instances.find((x) => x.id === r.instance); return i ? registry.components.find((c) => c.id === i.registryId)?.pins.find((x) => x.name === r.pin)?.role : undefined; };

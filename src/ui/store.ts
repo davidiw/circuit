@@ -1,10 +1,11 @@
 import { useEffect, useReducer } from 'react';
-import type { Project, EvaluationResult, Finding, MutationOp } from '../model/schema';
+import type { Project, EvaluationResult, Finding, MutationOp, PinRef } from '../model/schema';
 import type { HistoryEvent, EventKind } from '../model/history';
 import type { Session, Edit } from '../model/workflow';
+import { findingKey } from '../model/workflow';
 import { registry, freshProject, getTemplate } from '../data';
 import { evaluate } from '../eval/evaluate';
-import { applyOps } from '../eval/mutations';
+import { applyOps, connectPins } from '../eval/mutations';
 import { stateHash } from '../eval/hash';
 
 export type AIStatus = { configured: boolean; provider?: string; model?: string };
@@ -12,8 +13,9 @@ export type AppState = { view: 'gate' | 'library' | 'project'; sessions: Record<
 
 export type Action =
   | { type: 'AUTHED' } | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project }
-  | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[] } | { type: 'UNDO' } | { type: 'RESET' }
-  | { type: 'VIEW_FINDING'; id: string } | { type: 'VIEW_COVERAGE' } | { type: 'SELECT_INSTANCE'; id?: string } | { type: 'SELECT_NET'; id?: string } | { type: 'DISMISS_TIP'; id: string }
+  | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[]; kind?: EventKind } | { type: 'UNDO' } | { type: 'RESET' }
+  | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation: EvaluationResult } | { type: 'COMPARE'; id?: string }
+  | { type: 'VIEW_FINDING'; id: string } | { type: 'VIEW_COVERAGE' } | { type: 'SELECT_INSTANCE'; id?: string } | { type: 'SELECT_NET'; id?: string } | { type: 'SELECT_PIN'; pin?: PinRef } | { type: 'DESELECT' } | { type: 'DISMISS_TIP'; id: string } | { type: 'DISMISS_INTRO' }
   | { type: 'AI_START' } | { type: 'AI_RESULT'; result: { observations: Finding[]; model: string; provider: string; latencyMs: number; dropped: number } } | { type: 'AI_ERROR'; error: string }
   | { type: 'SET_AI_STATUS'; status: AIStatus };
 
@@ -25,10 +27,12 @@ function load(): Pick<AppState, 'sessions' | 'activeId'> {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Pick<AppState, 'sessions' | 'activeId'>;
-      // Older sessions predate `base` and `edits`; rebuild them from their template.
       for (const [id, s] of Object.entries(parsed.sessions ?? {})) {
-        if (!s.base) { const t = getTemplate(s.project.id); if (!t) { delete parsed.sessions[id]; continue; } s.base = structuredClone(t); s.edits = (s.appliedMutations ?? []).map((m) => ({ label: m, ops: t.mutations.find((x) => x.id === m)?.ops ?? [], mutationId: m })); }
-        s.edits ??= []; s.appliedMutations ??= []; s.dismissedTips ??= [];
+        const t = getTemplate(s.project?.id ?? id);
+        if (!s.base || !s.project) { if (!t) { delete parsed.sessions[id]; continue; } s.base = structuredClone(t); s.edits = (s.appliedMutations ?? []).map((m) => ({ label: m, ops: t.mutations.find((x) => x.id === m)?.ops ?? [], mutationId: m })); }
+        // Templates evolve between builds: rebase a template session on the current template so new data (optimizations, labels) shows up.
+        if (t && s.base.source === 'template') { s.base = structuredClone(t); try { s.project = applyOps(structuredClone(t), (s.edits ?? []).flatMap((e) => e.ops)); s.project.lastEvaluation = undefined; } catch { delete parsed.sessions[id]; continue; } }
+        s.edits ??= []; s.appliedMutations ??= []; s.dismissedTips ??= []; s.history ??= []; s.currentHash = stateHash(s.project); s.connectFrom = undefined; s.compareId = undefined;
       }
       return parsed;
     }
@@ -45,11 +49,14 @@ function newSession(base: Project, kind: EventKind = 'open_template'): Session {
 }
 
 /** Recompute the project from base plus edits; keep the last evaluation so the stale/current distinction survives. */
-function replay(s: Session, edits: Edit[], eventKind: EventKind, ref?: string): Session {
+function replay(s: Session, edits: Edit[], eventKind: EventKind, ref?: string, keepEvaluation: EvaluationResult | undefined = s.project.lastEvaluation): Session {
   const project = applyOps(structuredClone(s.base), edits.flatMap((e) => e.ops));
-  project.lastEvaluation = s.project.lastEvaluation;
+  project.lastEvaluation = keepEvaluation;
   const h = stateHash(project);
-  return { ...s, edits, project, currentHash: h, appliedMutations: edits.filter((e) => e.mutationId).map((e) => e.mutationId!), history: [...s.history, ev(eventKind, h, ref)], selectedInstance: project.instances.some((i) => i.id === s.selectedInstance) ? s.selectedInstance : undefined, selectedNet: project.nets.some((n) => n.id === s.selectedNet) ? s.selectedNet : undefined };
+  const pinOk = (p?: PinRef) => !!p && project.instances.some((i) => i.id === p.instance);
+  return { ...s, edits, project, currentHash: h, appliedMutations: edits.filter((e) => e.mutationId).map((e) => e.mutationId!), history: [...s.history, ev(eventKind, h, ref)],
+    selectedInstance: project.instances.some((i) => i.id === s.selectedInstance) ? s.selectedInstance : undefined, selectedNet: project.nets.some((n) => n.id === s.selectedNet) ? s.selectedNet : undefined,
+    selectedPin: pinOk(s.selectedPin) ? s.selectedPin : undefined, connectFrom: undefined, compareId: undefined };
 }
 
 function withSession(state: AppState, f: (s: Session) => Session): AppState {
@@ -58,7 +65,12 @@ function withSession(state: AppState, f: (s: Session) => Session): AppState {
   return { ...state, sessions: { ...state.sessions, [id]: f(s) } };
 }
 
-const fkey = (f: Finding) => `${f.ruleId}|${f.category}|${f.affected.map((a) => a.instanceId ?? a.netId ?? '').sort().join(',')}`;
+function summarize(prev: EvaluationResult | undefined, result: EvaluationResult) {
+  const prevKeys = new Set((prev?.findings ?? []).map(findingKey)); const curKeys = new Set(result.findings.map(findingKey));
+  const added = result.findings.filter((f) => !prevKeys.has(findingKey(f))).length;
+  const resolved = (prev?.findings ?? []).filter((f) => !curKeys.has(findingKey(f)) && (f.severity === 'violation' || f.severity === 'warning')).length;
+  return { at: result.evaluatedAt, added, resolved, persisting: result.findings.length - added };
+}
 
 export function reducer(state: AppState, a: Action): AppState {
   switch (a.type) {
@@ -76,24 +88,37 @@ export function reducer(state: AppState, a: Action): AppState {
     }
     case 'BACK': return { ...state, view: 'library' };
     case 'EVALUATE': return withSession(state, (s) => {
-      const result: EvaluationResult = evaluate(s.project, registry);
-      const prev = s.project.lastEvaluation; const prevKeys = new Set((prev?.findings ?? []).map(fkey)); const curKeys = new Set(result.findings.map(fkey));
-      const added = result.findings.filter((f) => !prevKeys.has(fkey(f))).length;
-      const resolved = (prev?.findings ?? []).filter((f) => !curKeys.has(fkey(f)) && (f.severity === 'violation' || f.severity === 'warning')).length;
-      return { ...s, previousEvaluation: prev ?? s.previousEvaluation, project: { ...s.project, lastEvaluation: result }, lastSummary: { at: result.evaluatedAt, added, resolved, persisting: result.findings.length - added }, history: [...s.history, ev('evaluate', result.stateHash)], openFinding: undefined };
+      const result = evaluate(s.project, registry); const prev = s.project.lastEvaluation;
+      return { ...s, previousEvaluation: prev ?? s.previousEvaluation, project: { ...s.project, lastEvaluation: result }, lastSummary: summarize(prev, result), history: [...s.history, ev('evaluate', result.stateHash)], openFinding: undefined };
     });
-    case 'APPLY_MUTATION': return withSession(state, (s) => {
-      const m = s.project.mutations.find((x) => x.id === a.id); if (!m) return s;
-      return replay(s, [...s.edits, { label: m.label, ops: m.ops, mutationId: m.id }], 'apply_mutation', m.id);
+    case 'APPLY_MUTATION': return withSession(state, (s) => { const m = s.project.mutations.find((x) => x.id === a.id); return m ? replay(s, [...s.edits, { label: m.label, ops: m.ops, mutationId: m.id }], 'apply_mutation', m.id) : s; });
+    case 'EDIT': return withSession(state, (s) => replay(s, [...s.edits, { label: a.label, ops: a.ops }], a.kind ?? 'edit', a.label));
+    case 'ARM_CONNECT': return withSession(state, (s) => ({ ...s, connectFrom: a.pin, selectedPin: a.pin ?? s.selectedPin }));
+    case 'CONNECT_TO': return withSession(state, (s) => {
+      const from = s.connectFrom; if (!from) return s;
+      const ops = connectPins(s.project, registry, from, a.pin); if (!ops.length) return { ...s, connectFrom: undefined };
+      const name = (r: PinRef) => `${s.project.instances.find((i) => i.id === r.instance)?.label ?? r.instance} ${r.pin}`;
+      const label = `Connect ${name(from)} to ${name(a.pin)}`;
+      const next = replay(s, [...s.edits, { label, ops }], 'connect', label);
+      return { ...next, selectedPin: a.pin, selectedNet: next.project.nets.find((n) => n.pins.some((p) => p.instance === a.pin.instance && p.pin === a.pin.pin))?.id };
     });
-    case 'EDIT': return withSession(state, (s) => replay(s, [...s.edits, { label: a.label, ops: a.ops }], 'edit', a.label));
+    case 'COMPARE': return withSession(state, (s) => ({ ...s, compareId: a.id }));
+    case 'APPLY_OPTIMIZATION': return withSession(state, (s) => {
+      const o = s.project.optimizations.find((x) => x.id === a.id); if (!o) return s;
+      const prev = s.project.lastEvaluation;
+      const next = replay(s, [...s.edits, { label: o.title, ops: o.ops, optimizationId: o.id }], 'optimize', o.id, a.evaluation);
+      return { ...next, previousEvaluation: prev ?? s.previousEvaluation, lastSummary: summarize(prev, a.evaluation), compareId: undefined, openFinding: undefined };
+    });
     case 'UNDO': return withSession(state, (s) => (s.edits.length ? replay(s, s.edits.slice(0, -1), 'edit', 'undo') : s));
     case 'RESET': return withSession(state, (s) => ({ ...replay(s, [], 'reset'), aiReview: undefined, openFinding: undefined }));
     case 'VIEW_FINDING': return withSession(state, (s) => ({ ...s, openFinding: s.openFinding === a.id ? undefined : a.id, history: s.openFinding === a.id ? s.history : [...s.history, ev('view_finding', s.currentHash, a.id)] }));
     case 'VIEW_COVERAGE': return withSession(state, (s) => s.history.some((e) => e.kind === 'view_coverage') ? s : ({ ...s, history: [...s.history, ev('view_coverage', s.currentHash)] }));
-    case 'SELECT_INSTANCE': return withSession(state, (s) => ({ ...s, selectedNet: undefined, selectedInstance: s.selectedInstance === a.id ? undefined : a.id, history: a.id ? [...s.history, ev('select_instance', s.currentHash, a.id)] : s.history }));
-    case 'SELECT_NET': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedNet: s.selectedNet === a.id ? undefined : a.id }));
+    case 'SELECT_INSTANCE': return withSession(state, (s) => ({ ...s, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined, selectedInstance: s.selectedInstance === a.id ? undefined : a.id, history: a.id ? [...s.history, ev('select_instance', s.currentHash, a.id)] : s.history }));
+    case 'SELECT_NET': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedPin: undefined, connectFrom: undefined, selectedNet: s.selectedNet === a.id ? undefined : a.id }));
+    case 'SELECT_PIN': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedNet: undefined, connectFrom: undefined, selectedPin: a.pin }));
+    case 'DESELECT': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined }));
     case 'DISMISS_TIP': return withSession(state, (s) => ({ ...s, dismissedTips: [...s.dismissedTips, a.id], history: [...s.history, ev('dismiss_tip', s.currentHash, a.id)] }));
+    case 'DISMISS_INTRO': return withSession(state, (s) => ({ ...s, introDismissed: true }));
     case 'AI_START': return { ...state, aiBusy: true };
     case 'AI_RESULT': return withSession({ ...state, aiBusy: false }, (s) => ({ ...s, aiReview: { stateHash: s.currentHash, ...a.result }, history: [...s.history, ev('ai_review', s.currentHash)] }));
     case 'AI_ERROR': return withSession({ ...state, aiBusy: false }, (s) => ({ ...s, aiReview: { stateHash: s.currentHash, observations: [], model: '', latencyMs: 0, dropped: 0, error: a.error } }));

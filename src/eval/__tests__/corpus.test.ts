@@ -102,6 +102,9 @@ describe('connectPins', () => {
     const p1 = applyOps(t, fresh); expect(p1.nets.find((n) => n.id === 'W1')?.pins.length).toBe(2);
     const join = connectPins(t, registry, { instance: 'mcu', pin: 'D7' }, { instance: 'driver', pin: 'STBY' });
     expect(join).toEqual([{ op: 'move_pin', instance: 'mcu', pin: 'D7', net: 'STBY' }]);
+    // Merging a signal net into ground keeps the ground net's identity regardless of which pin was picked first.
+    const toGnd = applyOps(t, connectPins(t, registry, { instance: 'mcu', pin: 'D6' }, { instance: 'driver', pin: 'GND' }));
+    expect(toGnd.nets.find((n) => n.id === 'GND')?.pins.some((p) => p.pin === 'STBY')).toBe(true); expect(toGnd.nets.find((n) => n.id === 'STBY')).toBeUndefined();
     const merge = connectPins(t, registry, { instance: 'mcu', pin: 'D0' }, { instance: 'driver', pin: 'AIN1' });
     const p2 = applyOps(t, merge); expect(p2.nets.find((n) => n.id === 'CTRL_PWMA')?.pins.length).toBe(4); expect(p2.nets.find((n) => n.id === 'CTRL_AIN1')).toBeUndefined();
     expect(connectPins(t, registry, { instance: 'mcu', pin: 'D0' }, { instance: 'driver', pin: 'PWMA' })).toEqual([]);
