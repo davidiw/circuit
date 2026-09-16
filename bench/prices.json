@@ -1,0 +1,12 @@
+{
+  "as_of": "2026-09-16",
+  "unit": "USD per 1M tokens, standard context, text only",
+  "models": {
+    "claude-sonnet-5":       { "input": 2.00, "output": 10.00, "source": "claude-api skill model table (cached 2026-06-24), https://docs.claude.com/en/docs/about-claude/pricing", "approximate": false },
+    "claude-haiku-4-5":      { "input": 1.00, "output": 5.00,  "source": "claude-api skill model table (cached 2026-06-24), https://docs.claude.com/en/docs/about-claude/pricing", "approximate": false },
+    "gemini-3.8-flash":      { "input": 0.75, "output": 3.75,  "source": "https://ai.google.dev/gemini-api/docs/pricing (page dated 2026-09-15; promotional through 2026-12-31, then 1.50/7.50)", "approximate": false },
+    "gemini-3.1-pro-preview":{ "input": 2.00, "output": 12.00, "source": "https://ai.google.dev/gemini-api/docs/pricing (page dated 2026-09-15; prompts <= 200k tokens)", "approximate": false },
+    "gemini-2.5-flash":      { "input": 0.30, "output": 2.50,  "source": "https://ai.google.dev/gemini-api/docs/pricing (page dated 2026-09-15)", "approximate": false },
+    "fake-1":                { "input": 0, "output": 0, "source": "n/a", "approximate": false }
+  }
+}

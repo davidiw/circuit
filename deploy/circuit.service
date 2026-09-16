@@ -1,0 +1,16 @@
+[Unit]
+Description=Circuit Factory (Hono server behind nginx)
+After=network.target
+
+[Service]
+Type=simple
+User=davidiw
+WorkingDirectory=/srv/circuit
+EnvironmentFile=/etc/circuit/env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
