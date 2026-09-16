@@ -32,6 +32,13 @@ export const decoupling: Rule = {
           consequence: known ? 'Supply transients at the part reach the die unfiltered; the datasheet application circuit assumes local capacitors. Expect resets or erratic switching under motor load.' : 'Whether this part needs an external capacitor is not recorded in the registry.',
           remediation: known ? ['Add a 0.1 uF ceramic across the supply pin and ground, as close to the part as possible', 'Or use a breakout that carries the decoupling on the board'] : ['Record the part\'s decoupling requirement in the registry with a source'],
           missing: known ? undefined : ['decoupling requirement'],
+          fixes: (() => {
+            if (!known) return [];
+            const gnd = ctx.project.nets.filter((n) => n.kind === 'ground').sort((a, b) => b.pins.length - a.pins.length)[0]; if (!gnd) return [];
+            let n = 1; while (ctx.project.instances.some((i) => i.id === `c_dec${n}`)) n++;
+            const id = `c_dec${n}`;
+            return [{ label: `Add a 0.1 uF ceramic at ${inst.label} ${pin.name}`, kind: 'edit' as const, ops: [{ op: 'add_instance' as const, id, registryId: 'cap.ceramic_100nf_class', label: `Decoupling for ${inst.label}` }, { op: 'move_pin' as const, instance: id, pin: '+', net: net.id }, { op: 'move_pin' as const, instance: id, pin: '-', net: gnd.id }] }];
+          })(),
         }));
       }
     }

@@ -12,7 +12,7 @@ export const requirement_capability: Rule = {
     const coverage: CoverageEntry[] = [];
     const fail = (r: Requirement, title: string, evidence: { label: string; value: string }[], consequence: string, remediation: string[]) =>
       findings.push(finding({ ruleId: 'requirement_capability', basis: 'component_spec', severity: 'violation', category: 'requirement', title,
-        affected: [], evidence: evidence.map((e) => ({ ...e, provenance: 'vetted_source' as const })), consequence, remediation, missing: [r.label] }));
+        affected: [{ requirementId: r.id }], evidence: evidence.map((e) => ({ ...e, provenance: 'vetted_source' as const })), consequence, remediation, missing: [r.label] }));
     let checked = 0;
     for (const r of ctx.project.requirements) {
       if (!r.evaluable) { if (!INFORMATIONAL_KINDS.includes(r.kind)) coverage.push({ dimension: DIM_FOR_KIND[r.kind] ?? r.kind, group: 'product', status: 'not_evaluated', note: r.label }); continue; }
@@ -64,7 +64,7 @@ export const requirement_capability: Rule = {
         default: coverage.push({ dimension: r.kind, group: 'product', status: 'unsupported', note: `${r.label}: no evaluator for kind ${r.kind}` });
       }
     }
-    coverage.unshift({ dimension: 'product_requirements', group: 'product', status: 'checked', note: `${checked} evaluable requirements mapped to capabilities` });
+    coverage.unshift({ dimension: 'product_requirements', group: 'product', status: 'checked', note: `${checked} requirements checked against hardware capabilities and wiring; application behavior, firmware, and streaming performance are not evaluated` });
     return { findings, coverage };
   },
 };

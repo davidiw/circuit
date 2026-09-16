@@ -39,6 +39,20 @@ export const supply_in_range: Rule = {
             affected, evidence,
             consequence: high ? 'Overvoltage on a supply input can destroy the part or its onboard regulator.' : 'The part will not operate or will operate erratically below its minimum supply.',
             remediation: [high ? 'Lower the rail or insert a regulator rated for this part' : 'Raise the rail or choose a part rated for this voltage'],
+            fixes: (() => {
+              const via = v.via.split('.'); const src = via[0]; const isProp = via[1] === 'outputV' && ctx.prop(src, 'outputV');
+              if (!isProp) return [];
+              const target = Math.min(Math.max(5.0, r.min), r.max);
+              return [{ label: `Set ${ctx.inst(src)!.label} output to ${fmtV(target)}`, ops: [{ op: 'set_prop' as const, instance: src, prop: 'outputV', value: target, provenance: 'user' as const }], kind: 'edit' as const }];
+            })(),
+          }));
+        } else if (prov !== 'vetted_source' && (v.max > r.max - 0.05 * (r.max - r.min) || v.nominal > r.max - 0.05 * (r.max - r.min))) {
+          findings.push(finding({
+            ruleId: 'supply_in_range', basis: 'assumption', severity: 'warning', category: 'voltage',
+            title: `${inst.label} ${pin.name} at ${fmtV(v.max)} sits at the edge of an assumed ${fmtV(r.max)} limit`,
+            affected, evidence,
+            consequence: 'The input range for this pin is a fixture assumption, not a published limit. Operating at its edge is unverified.',
+            remediation: ['Confirm the input tolerance from the manufacturer documentation', 'Or lower the rail to leave margin'],
           }));
         } else if (v.min < r.min) {
           findings.push(finding({

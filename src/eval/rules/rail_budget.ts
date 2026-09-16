@@ -8,6 +8,7 @@ export const rail_budget: Rule = {
     if (!regs.length) return { findings: [], coverage: [] };
     if (!ctx.hasPower) return { findings: [], coverage: [{ dimension: 'regulator_current_thermal', group: 'electrical', status: 'not_evaluated', note: 'No power source' }] };
     const findings = [] as ReturnType<typeof finding>[];
+    const metrics = [] as { key: string; label: string; value: number; unit: string; provenance: 'vetted_source' | 'fixture_assumption' | 'user' | 'ai' | 'unknown'; group: 'electrical' }[];
     const cov = [] as { dimension: string; group: 'electrical'; status: 'checked' | 'partial'; note: string }[];
     for (const reg of regs) {
       const limit = ctx.fact(reg.id, 'continuous_output_a') ?? ctx.fact(reg.id, 'continuous_current_a')!;
@@ -20,8 +21,9 @@ export const rail_budget: Rule = {
       const thermalUnknown = ctx.comp(reg.id)!.facts['thermal_performance']?.provenance === 'unknown';
       const ev = [...parts.map((p) => ({ label: p.label, value: fmtA(p.value), provenance: p.provenance as never })), { label: `${reg.id} continuous limit`, value: fmtA(limit.value), provenance: limit.provenance }];
       if (total > limit.value) findings.push(finding({ ruleId: 'rail_budget', basis: limit.provenance === 'vetted_source' ? 'component_spec' : 'assumption', severity: 'warning', category: 'budget', title: `Worst-case draw ${fmtA(total)} exceeds ${reg.label} limit ${fmtA(limit.value)}`, affected: [{ instanceId: reg.id }], evidence: ev, consequence: 'Simultaneous stall plus radio peak overloads the regulator; expect voltage sag, thermal shutdown, or resets.', remediation: ['Choose a regulator with more continuous capability', 'Separate motor and logic rails'] }));
+      metrics.push({ key: `worst_case_draw_a:${reg.id}`, label: `Worst-case draw on ${reg.label}`, value: Math.round(total * 100) / 100, unit: 'A', provenance: 'fixture_assumption', group: 'electrical' }, { key: `rail_limit_a:${reg.id}`, label: `${reg.label} continuous limit`, value: limit.value, unit: 'A', provenance: limit.provenance, group: 'electrical' });
       cov.push({ dimension: 'regulator_current_thermal', group: 'electrical', status: limit.provenance === 'vetted_source' && !thermalUnknown ? 'checked' : 'partial', note: `${fmtA(total)} worst case of ${fmtA(limit.value)} ${limit.provenance === 'vetted_source' ? 'rated' : 'assumed'}${thermalUnknown ? '; thermal behavior of this class unknown' : ''}` });
     }
-    return { findings, coverage: cov };
+    return { findings, coverage: cov, metrics };
   },
 };

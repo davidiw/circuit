@@ -108,6 +108,19 @@ export type Assumption = z.infer<typeof Assumption>;
 
 export const Override = z.object({ ruleId: z.string(), instanceId: z.string().optional(), note: z.string() });
 
+// Structured mutation ops: the same ops drive UI buttons and tests.
+export const MutationOp = z.discriminatedUnion('op', [
+  z.object({ op: z.literal('remove_instance'), instance: z.string() }),
+  z.object({ op: z.literal('move_pin'), instance: z.string(), pin: z.string(), net: z.string().nullable(), name: z.string().optional(), kind: z.enum(['power', 'ground', 'signal', 'motor', 'bus']).optional() }), // null = disconnect; name/kind apply when the net is created
+  z.object({ op: z.literal('add_instance'), id: z.string(), registryId: z.string(), label: z.string(), props: z.record(z.string(), Fact).optional() }),
+  z.object({ op: z.literal('set_prop'), instance: z.string(), prop: z.string(), value: z.unknown(), provenance: Provenance.default('user') }),
+  z.object({ op: z.literal('swap_registry'), instance: z.string(), registryId: z.string() }),
+  z.object({ op: z.literal('set_assumption'), key: z.string(), value: z.unknown() }),
+  z.object({ op: z.literal('clear_power_source') }),
+]);
+export type MutationOp = z.infer<typeof MutationOp>;
+
+
 export const Severity = z.enum(['violation', 'warning', 'unknown', 'optimization', 'unsupported']);
 export type Severity = z.infer<typeof Severity>;
 
@@ -119,39 +132,34 @@ export const Finding = z.object({
   severity: Severity,
   category: z.string(),
   title: z.string(),
-  affected: z.array(z.object({ instanceId: z.string().optional(), pin: z.string().optional(), netId: z.string().optional() })),
+  affected: z.array(z.object({ instanceId: z.string().optional(), pin: z.string().optional(), netId: z.string().optional(), requirementId: z.string().optional() })),
   evidence: z.array(z.object({ label: z.string(), value: z.string(), provenance: Provenance })),
   consequence: z.string(),
   remediation: z.array(z.string()),
   missing: z.array(z.string()).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  fixes: z.array(z.object({ label: z.string(), ops: z.array(MutationOp), kind: z.enum(['edit', 'optimize']).default('edit'), optimizationId: z.string().optional() })).default([]),
 });
 export type Finding = z.infer<typeof Finding>;
 
 export const CoverageStatus = z.enum(['checked', 'partial', 'estimated', 'heuristic', 'not_evaluated', 'unsupported']);
-export const CoverageOutcome = z.enum(['pass', 'violation', 'warning', 'unknown']);
+export const CoverageOutcome = z.enum(['pass', 'violation', 'warning', 'unknown', 'optimization']);
 export const CoverageEntry = z.object({ dimension: z.string(), group: z.enum(['electrical', 'product']), status: CoverageStatus, note: z.string(), outcome: CoverageOutcome.optional(), findingCount: z.number().optional() });
 export type CoverageEntry = z.infer<typeof CoverageEntry>;
+
+/** A modeled quantity with provenance, e.g. estimated runtime. Never a score. */
+export const Metric = z.object({ key: z.string(), label: z.string(), value: z.number(), unit: z.string(), provenance: Provenance, note: z.string().optional(), group: z.enum(['power', 'performance', 'physical', 'electrical']).default('electrical') });
+export type Metric = z.infer<typeof Metric>;
 
 export const EvaluationResult = z.object({
   status: z.enum(['complete', 'incomplete']),
   findings: z.array(Finding),
   coverage: z.array(CoverageEntry),
+  metrics: z.array(Metric).default([]),
   stateHash: z.string(),
   evaluatedAt: z.string(),
 });
 export type EvaluationResult = z.infer<typeof EvaluationResult>;
-
-// Structured mutation ops: the same ops drive UI buttons and tests.
-export const MutationOp = z.discriminatedUnion('op', [
-  z.object({ op: z.literal('remove_instance'), instance: z.string() }),
-  z.object({ op: z.literal('move_pin'), instance: z.string(), pin: z.string(), net: z.string().nullable() }), // null = disconnect
-  z.object({ op: z.literal('set_prop'), instance: z.string(), prop: z.string(), value: z.unknown(), provenance: Provenance.default('user') }),
-  z.object({ op: z.literal('swap_registry'), instance: z.string(), registryId: z.string() }),
-  z.object({ op: z.literal('set_assumption'), key: z.string(), value: z.unknown() }),
-  z.object({ op: z.literal('clear_power_source') }),
-]);
-export type MutationOp = z.infer<typeof MutationOp>;
 
 export const ExpectedFinding = z.object({
   ruleId: z.string(),
@@ -171,6 +179,21 @@ export const Mutation = z.object({
 });
 export type Mutation = z.infer<typeof Mutation>;
 
+/** A curated design transformation toward a product goal. Real ops on real state; consequences come from the evaluator, never from this record. */
+export const Optimization = z.object({
+  id: z.string(),
+  title: z.string(),
+  goal: z.string(),              // the product goal it serves, in user language
+  summary: z.string(),           // what it changes
+  ops: z.array(MutationOp),
+  acceptsRisks: z.array(z.string()).default([]),
+  costDirection: z.enum(['lower', 'higher', 'same', 'unknown']).default('unknown'),
+  expected: z.array(ExpectedFinding).default([]),   // findings the corpus expects after applying
+  expectAbsent: z.array(z.string()).default([]),
+  expectNoNewViolations: z.boolean().default(true),
+});
+export type Optimization = z.infer<typeof Optimization>;
+
 export const Project = z.object({
   id: z.string(),
   title: z.string(),
@@ -186,6 +209,7 @@ export const Project = z.object({
   overrides: z.array(Override).default([]),
   unresolved: z.array(z.string()).default([]),   // generated designs: component needs not yet mapped to the registry
   mutations: z.array(Mutation).default([]),
+  optimizations: z.array(Optimization).default([]),
   expectedBaseline: z.array(ExpectedFinding).default([]),
   lastEvaluation: EvaluationResult.optional(),
 });

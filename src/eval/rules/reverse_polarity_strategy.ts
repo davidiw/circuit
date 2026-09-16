@@ -25,6 +25,19 @@ export const reverse_polarity_strategy: Rule = {
       ],
       consequence: 'The circuit runs normally when connected correctly. One reversed connection during assembly or a battery swap puts full pack voltage backwards across the regulator and everything after it.',
       remediation: ['Add a series Schottky diode on the battery positive line', 'Use a keyed connector and record it as the accepted strategy', 'Choose a source or module with documented reverse protection'],
+      fixes: (() => {
+        if (!net) return [];
+        const consumers = ctx.netPins(net).filter((p) => p.instance !== src && p.def.role === 'supply_in');
+        if (!consumers.length) return [];
+        let n = 1; while (ctx.project.instances.some((i) => i.id === `diode${n}`)) n++;
+        const id = `diode${n}`; const prot = `${net.id}_PROT`;
+        return [{ label: 'Add a 1N5822 Schottky in series', kind: 'edit' as const, ops: [
+          { op: 'add_instance' as const, id, registryId: 'diode.onsemi_1n5822', label: 'Reverse-polarity Schottky' },
+          { op: 'move_pin' as const, instance: id, pin: 'A', net: net.id },
+          { op: 'move_pin' as const, instance: id, pin: 'K', net: prot, name: 'VIN', kind: 'power' as const },
+          ...consumers.map((c) => ({ op: 'move_pin' as const, instance: c.instance, pin: c.pin, net: prot })),
+        ] }];
+      })(),
     })] };
   },
 };

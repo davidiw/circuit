@@ -9,7 +9,7 @@
     {
       "id": "ble",
       "kind": "capability",
-      "label": "Bluetooth LE control",
+      "label": "Bluetooth LE hardware",
       "value": "bluetooth_le",
       "evaluable": true
     },
@@ -30,7 +30,7 @@
     {
       "id": "pwm",
       "kind": "pwm_speed_control",
-      "label": "PWM speed control",
+      "label": "PWM speed control path",
       "value": true,
       "evaluable": true
     },
@@ -44,7 +44,7 @@
     {
       "id": "runtime",
       "kind": "runtime_minutes",
-      "label": "15 to 30 minute runtime",
+      "label": "Runtime target 15 to 30 minutes",
       "value": {
         "min": 15,
         "max": 30
@@ -465,7 +465,7 @@
   "mutations": [
     {
       "id": "remove_power_source",
-      "label": "Remove the battery",
+      "label": "What if there is no battery?",
       "description": "Deletes the battery instance and clears the power source. The project becomes incomplete and voltage-dependent rules stop evaluating.",
       "ops": [
         {
@@ -487,7 +487,7 @@
     },
     {
       "id": "split_driver_reference",
-      "label": "Break the driver's ground",
+      "label": "What if the driver's ground is broken?",
       "description": "Moves the driver GND pin onto its own net. The driver still receives 5 V and control signals but shares no reference with the XIAO.",
       "ops": [
         {
@@ -508,7 +508,7 @@
     },
     {
       "id": "force_stby_low",
-      "label": "Tie STBY to ground",
+      "label": "What if STBY is tied to ground?",
       "description": "Moves the driver STBY pin from the XIAO GPIO to GND. The driver is held in standby.",
       "ops": [
         {
@@ -529,7 +529,7 @@
     },
     {
       "id": "disconnect_stby",
-      "label": "Leave STBY unconnected",
+      "label": "What if STBY is left unconnected?",
       "description": "Disconnects STBY entirely. On this exact Adafruit breakout the 10 kOhm pull-up keeps the driver enabled, so no finding is expected.",
       "ops": [
         {
@@ -546,7 +546,7 @@
     },
     {
       "id": "connect_motor_to_mcu",
-      "label": "Wire the left motor to XIAO GPIO",
+      "label": "What if a motor is wired to a GPIO?",
       "description": "Moves the left motor off the driver and onto XIAO D7 and D8.",
       "ops": [
         {
@@ -585,7 +585,7 @@
     },
     {
       "id": "set_motor_rail_3v3",
-      "label": "Set the buck output to 3.3 V",
+      "label": "What if the buck is set to 3.3 V?",
       "description": "Changes the buck module output. The driver motor supply minimum is 4.5 V and the XIAO 5V input expects about 5 V.",
       "ops": [
         {
@@ -613,7 +613,7 @@
     },
     {
       "id": "set_motor_rail_14v",
-      "label": "Set the buck output to 14 V",
+      "label": "What if the buck is set to 14 V?",
       "description": "Exceeds the driver's 13.5 V motor supply maximum and the XIAO 5V input.",
       "ops": [
         {
@@ -641,7 +641,7 @@
     },
     {
       "id": "remove_reverse_polarity_diode",
-      "label": "Remove the Schottky diode",
+      "label": "Remove reverse-polarity protection",
       "description": "Deletes the diode and wires the battery straight into the buck. The circuit still runs; the reverse-polarity strategy is gone.",
       "ops": [
         {
@@ -685,7 +685,7 @@
     },
     {
       "id": "swap_battery_2s",
-      "label": "Swap the battery to 2S",
+      "label": "What if the battery is 2S?",
       "description": "Uses the handoff's original 2S class. With the series diode, the buck sees about 5.95 V at end of discharge for a 5 V output.",
       "ops": [
         {
@@ -705,7 +705,7 @@
     },
     {
       "id": "substitute_high_current_motor",
-      "label": "Substitute a 2.5 A stall motor",
+      "label": "What if a motor stalls at 2.5 A?",
       "description": "Replaces the left motor with a class whose stall current exceeds the driver's 1.2 A continuous limit.",
       "ops": [
         {
@@ -725,7 +725,7 @@
     },
     {
       "id": "substitute_bare_tb6612",
-      "label": "Swap the driver for a bare TB6612 IC",
+      "label": "What if the driver is a bare IC?",
       "description": "Replaces the Adafruit breakout with the bare Toshiba IC. Same limits, but no onboard decoupling and no STBY pull-up.",
       "ops": [
         {
@@ -742,6 +742,141 @@
           "affectedInstance": "driver"
         }
       ]
+    }
+  ],
+  "optimizations": [
+    {
+      "id": "right_size_battery",
+      "title": "Right-size the battery for the runtime target",
+      "goal": "15 to 30 minute runtime with the smallest, lightest pack that meets it",
+      "summary": "Swaps the 1000-1500 mAh 3S class for a 200-300 mAh 3S class. Same voltage window, same protection, about a quarter of the mass.",
+      "ops": [
+        {
+          "op": "swap_registry",
+          "instance": "battery",
+          "registryId": "battery.3s_lipo_200_300mah_class"
+        },
+        {
+          "op": "set_assumption",
+          "key": "battery_class",
+          "value": "3S LiPo, 200-300 mAh"
+        }
+      ],
+      "acceptsRisks": [
+        "Less reserve if the average-current assumption is optimistic"
+      ],
+      "costDirection": "lower",
+      "expected": [],
+      "expectAbsent": [
+        "runtime_estimate"
+      ],
+      "expectNoNewViolations": true
+    },
+    {
+      "id": "motors_at_rated_voltage",
+      "title": "Run the motors at their rated 6 V",
+      "goal": "Top speed and torque the motors are rated for",
+      "summary": "Raises the motor rail to 6 V and adds a second LM2596 module set to 5 V for the XIAO, so the logic supply stays inside its range.",
+      "ops": [
+        {
+          "op": "add_instance",
+          "id": "buck_logic",
+          "registryId": "regulator.lm2596_adjustable_module_common",
+          "label": "LM2596 for logic (5 V)",
+          "props": {
+            "outputV": {
+              "value": 5.0,
+              "provenance": "user"
+            }
+          }
+        },
+        {
+          "op": "move_pin",
+          "instance": "buck_logic",
+          "pin": "IN+",
+          "net": "VIN_PROT"
+        },
+        {
+          "op": "move_pin",
+          "instance": "buck_logic",
+          "pin": "IN-",
+          "net": "GND"
+        },
+        {
+          "op": "move_pin",
+          "instance": "buck_logic",
+          "pin": "OUT-",
+          "net": "GND"
+        },
+        {
+          "op": "move_pin",
+          "instance": "buck_logic",
+          "pin": "OUT+",
+          "net": "RAIL_5V_LOGIC",
+          "name": "5V logic",
+          "kind": "power"
+        },
+        {
+          "op": "move_pin",
+          "instance": "mcu",
+          "pin": "5V",
+          "net": "RAIL_5V_LOGIC"
+        },
+        {
+          "op": "set_prop",
+          "instance": "buck",
+          "prop": "outputV",
+          "value": 6.0,
+          "provenance": "user"
+        },
+        {
+          "op": "set_assumption",
+          "key": "motor_rail_v",
+          "value": 6.0
+        }
+      ],
+      "acceptsRisks": [
+        "One more module to wire and adjust",
+        "Higher stall current at 6 V; driver margin shrinks"
+      ],
+      "costDirection": "higher",
+      "expected": [],
+      "expectAbsent": [
+        "motor_operating_point"
+      ],
+      "expectNoNewViolations": true
+    },
+    {
+      "id": "drop_reverse_polarity_protection",
+      "title": "Drop the reverse-polarity diode",
+      "goal": "Fewer parts and lower cost",
+      "summary": "Removes the 1N5822 and wires the battery straight into the buck. The car runs the same; one reversed battery connection is no longer protected against.",
+      "ops": [
+        {
+          "op": "remove_instance",
+          "instance": "diode"
+        },
+        {
+          "op": "move_pin",
+          "instance": "buck",
+          "pin": "IN+",
+          "net": "BATT_PLUS"
+        }
+      ],
+      "acceptsRisks": [
+        "A reversed battery connection puts full pack voltage backwards across the buck and everything after it"
+      ],
+      "costDirection": "lower",
+      "expected": [
+        {
+          "ruleId": "reverse_polarity_strategy",
+          "severity": "warning",
+          "category": "protection",
+          "affectedInstance": "battery"
+        }
+      ],
+      "expectAbsent": [],
+      "expectNoNewViolations": true
     }
   ]
 }

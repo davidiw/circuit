@@ -1,4 +1,4 @@
-import { finding, type Rule } from '../context';
+import { finding, freeGpio, type Rule } from '../context';
 
 export const driver_enable_state: Rule = {
   id: 'driver_enable_state', origin: 'deterministic', dimensions: ['driver_control_state'],
@@ -33,6 +33,15 @@ export const driver_enable_state: Rule = {
             ],
             consequence: 'Both H-bridges are disabled. The board receives commands and PWM but neither motor turns. Drive is unavailable.',
             remediation: ['Move the pin to a GPIO and drive it high in firmware', 'Tie it to the logic rail', ...(comp.board_features.includes('stby_10k_pullup') ? ['Leave it unconnected: this breakout\'s pull-up enables the driver by default'] : [])],
+            fixes: (() => {
+              const board = ctx.instancesOfKind('dev_board')[0]; const gpio = board && freeGpio(ctx, board.id);
+              const logic = ctx.project.nets.find((n) => n.kind === 'power' && ctx.netVoltages.get(n.id)?.nominal === 3.3);
+              return [
+                ...(board && gpio ? [{ label: `Move ${pin.name} to ${board.label} ${gpio}`, ops: [{ op: 'move_pin' as const, instance: inst.id, pin: pin.name, net: `${inst.id}_${pin.name}_${gpio}`, name: pin.name, kind: 'signal' as const }, { op: 'move_pin' as const, instance: board.id, pin: gpio, net: `${inst.id}_${pin.name}_${gpio}` }], kind: 'edit' as const }] : []),
+                ...(logic ? [{ label: `Tie ${pin.name} to ${logic.name}`, ops: [{ op: 'move_pin' as const, instance: inst.id, pin: pin.name, net: logic.id }], kind: 'edit' as const }] : []),
+                ...(comp.board_features.includes('stby_10k_pullup') ? [{ label: `Leave ${pin.name} unconnected`, ops: [{ op: 'move_pin' as const, instance: inst.id, pin: pin.name, net: null }], kind: 'edit' as const }] : []),
+              ];
+            })(),
           }));
         } else if (!pins.some((p) => p.def.role === 'gpio' || p.def.role === 'supply_out' || p.def.role === 'logic_out')) {
           findings.push(finding({

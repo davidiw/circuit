@@ -27,6 +27,12 @@ export const bulk_capacitance: Rule = {
         ],
         consequence: 'Motor start and stall transients pull the shared rail down. The logic board on the same rail may reset. This is a heuristic based on two small motors on a shared regulator, not a datasheet limit.',
         remediation: ['Add an electrolytic capacitor across the motor supply near the driver', 'Or separate the motor rail from the logic rail and accept this warning by override'],
+        fixes: (() => {
+          const gnd = ctx.project.nets.filter((n) => n.kind === 'ground').sort((a, b) => b.pins.length - a.pins.length)[0]; if (!gnd) return [];
+          let n = 1; while (ctx.project.instances.some((i) => i.id === `bulk_cap${n}`)) n++;
+          const id = `bulk_cap${n}`;
+          return [{ label: `Add a 470 uF capacitor on ${net.name}`, kind: 'edit' as const, ops: [{ op: 'add_instance' as const, id, registryId: 'cap.electrolytic_470uf_class', label: 'Motor rail bulk cap' }, { op: 'move_pin' as const, instance: id, pin: '+', net: net.id }, { op: 'move_pin' as const, instance: id, pin: '-', net: gnd.id }] }];
+        })(),
       }));
     }
     return { findings, coverage: [{ dimension: 'bulk_capacitance', group: 'electrical', status: 'heuristic', note: notes.join('; ') || 'Heuristic check' }] };

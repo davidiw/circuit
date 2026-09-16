@@ -71,3 +71,56 @@ describe('voltage propagation', () => {
     expect(ctx.netVoltages.get('RAIL_3V3')?.nominal).toBe(3.3);
   });
 });
+
+describe('optimization corpus', () => {
+  for (const t of templates) for (const o of t.optimizations) {
+    it(`${t.id} / ${o.id}`, () => {
+      const before = evaluate(t, registry); const candidate = applyOps(t, o.ops); const after = evaluate(candidate, registry);
+      expect(after.status).toBe('complete');
+      for (const e of o.expected) expect(after.findings.some((f) => matches(f, e)), `expected ${JSON.stringify(e)} in ${after.findings.map((f) => `${f.ruleId}/${f.severity}`).join(' | ')}`).toBe(true);
+      for (const ruleId of o.expectAbsent) expect(after.findings.some((f) => f.ruleId === ruleId), `${ruleId} should be absent after ${o.id}`).toBe(false);
+      if (o.expectNoNewViolations) {
+        const beforeV = new Set(before.findings.filter((f) => f.severity === 'violation').map((f) => f.ruleId));
+        expect(after.findings.filter((f) => f.severity === 'violation' && !beforeV.has(f.ruleId)).map((f) => f.title)).toEqual([]);
+      }
+      expect(after.metrics.length).toBeGreaterThan(0);
+    });
+  }
+  it('race car baseline reports runtime above target and motors below rating as opportunities, not faults', () => {
+    const r = evaluate(templates[0], registry);
+    expect(r.findings.filter((f) => f.severity === 'optimization').map((f) => f.ruleId).sort()).toEqual(['motor_operating_point', 'runtime_estimate']);
+    expect(r.findings.some((f) => f.severity === 'violation' || f.severity === 'warning')).toBe(false);
+  });
+});
+
+describe('connectPins', () => {
+  it('creates, joins, and merges nets structurally', async () => {
+    const { connectPins } = await import('../mutations');
+    const t = templates[0];
+    const fresh = connectPins(t, registry, { instance: 'mcu', pin: 'D7' }, { instance: 'mcu', pin: 'D8' });
+    expect(fresh.map((o) => o.op)).toEqual(['move_pin', 'move_pin']);
+    const p1 = applyOps(t, fresh); expect(p1.nets.find((n) => n.id === 'W1')?.pins.length).toBe(2);
+    const join = connectPins(t, registry, { instance: 'mcu', pin: 'D7' }, { instance: 'driver', pin: 'STBY' });
+    expect(join).toEqual([{ op: 'move_pin', instance: 'mcu', pin: 'D7', net: 'STBY' }]);
+    const merge = connectPins(t, registry, { instance: 'mcu', pin: 'D0' }, { instance: 'driver', pin: 'AIN1' });
+    const p2 = applyOps(t, merge); expect(p2.nets.find((n) => n.id === 'CTRL_PWMA')?.pins.length).toBe(4); expect(p2.nets.find((n) => n.id === 'CTRL_AIN1')).toBeUndefined();
+    expect(connectPins(t, registry, { instance: 'mcu', pin: 'D0' }, { instance: 'driver', pin: 'PWMA' })).toEqual([]);
+    // Electrically poor but structurally fine: GPIO to motor terminal is allowed; the evaluator explains it.
+    const bad = applyOps(t, connectPins(t, registry, { instance: 'mcu', pin: 'D9' }, { instance: 'motor_left', pin: 'M+' }));
+    expect(evaluate(bad, registry).findings.some((f) => f.ruleId === 'motor_load_path')).toBe(true);
+  });
+});
+
+describe('structured fixes', () => {
+  it('every fix offered on a race car mutation resolves that finding when applied', () => {
+    const t = templates[0];
+    for (const m of t.mutations) {
+      const mutated = applyOps(t, m.ops); const r = evaluate(mutated, registry);
+      for (const f of r.findings) for (const fix of f.fixes.filter((x) => x.kind === 'edit')) {
+        const fixed = evaluate(applyOps(mutated, fix.ops), registry);
+        const still = fixed.findings.some((g) => g.ruleId === f.ruleId && g.severity === f.severity && g.affected.some((a) => f.affected.some((b) => b.instanceId && a.instanceId === b.instanceId && (a.pin ?? '') === (b.pin ?? ''))));
+        expect(still, `${m.id}: fix "${fix.label}" did not clear ${f.ruleId} (${f.title})`).toBe(false);
+      }
+    }
+  });
+});

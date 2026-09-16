@@ -85,7 +85,7 @@ export async function reviewProject(project: Project, registry: Registry, provid
     let category = o.category;
     if (!CATEGORIES.has(category)) { base.dropReasons.push(`category ${category} mapped to other: "${o.title}"`); category = 'other'; }
     base.observations.push({
-      id: `ai-${++n}`, ruleId: o.contradicts_rule || 'ai_review', origin: 'ai_review', basis: 'ai_inference',
+      id: `ai-${++n}`, ruleId: o.contradicts_rule || 'ai_review', origin: 'ai_review', basis: 'ai_inference', fixes: [],
       severity: o.severity, category, title: o.title,
       affected: o.affected.map((a) => ({ instanceId: a.instanceId, netId: a.netId })),
       evidence: [{ label: 'model rationale', value: o.rationale, provenance: 'ai' }, ...(o.contradicts_rule ? [{ label: 'contradicts rule', value: o.contradicts_rule, provenance: 'ai' as const }] : [])],

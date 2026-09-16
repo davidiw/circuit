@@ -22,8 +22,10 @@ export const signal_reference: Rule = {
         const ra = refNets.get(a)!, rb = refNets.get(b)!;
         const shared = [...ra].some((n) => rb.has(n));
         if (shared) continue;
-        // Blame the instance with the smaller reference set (the one split off); tie -> both.
-        const victims = ra.size < rb.size ? [a] : rb.size < ra.size ? [b] : [a, b];
+        // Blame the instance whose reference net is the smaller island (the one split off); a true tie blames both.
+        const weight = (ids: Set<string>) => [...ids].reduce((s, id) => s + (ctx.netById(id)?.pins.length ?? 0), 0);
+        const wa = weight(ra), wb = weight(rb);
+        const victims = wa < wb ? [a] : wb < wa ? [b] : [a, b];
         for (const v of victims) { const other = v === a ? b : a; const cur = flagged.get(v); if (cur) cur.others.push(other); else flagged.set(v, { net, others: [other] }); }
       }
     }
@@ -37,6 +39,11 @@ export const signal_reference: Rule = {
       ],
       consequence: 'Signals and supplies between these parts have no defined return path. Logic levels are undefined and current returns through whatever path exists, if any.',
       remediation: ['Connect the ground pins of both parts to the same ground net'],
+      fixes: (() => {
+        const main = ctx.project.nets.filter((n) => n.kind === 'ground').sort((a, b) => b.pins.length - a.pins.length)[0]; if (!main) return [];
+        const pins = (ctx.comp(id)?.pins ?? []).filter((p) => p.role === 'ground');
+        return [{ label: `Connect ${ctx.inst(id)!.label} ground to ${main.name}`, ops: pins.map((p) => ({ op: 'move_pin' as const, instance: id, pin: p.name, net: main.id })), kind: 'edit' as const }];
+      })(),
     }));
     return { findings, coverage: [{ dimension: 'signal_reference', group: 'electrical', status: 'checked', note: `${ctx.project.nets.filter((n) => n.kind !== 'ground').length} nets checked for a shared reference` }] };
   },

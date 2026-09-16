@@ -1,4 +1,4 @@
-import type { Project, Registry, RegistryComponent, RegistryPin, Net, Instance, Provenance, Finding, CoverageEntry } from '../model/schema';
+import type { Project, Registry, RegistryComponent, RegistryPin, Net, Instance, Provenance, Finding, CoverageEntry, Metric } from '../model/schema';
 
 export type NetVoltage = { nominal: number; min: number; max: number; via: string };
 
@@ -95,7 +95,7 @@ export class Ctx {
   }
 }
 
-export type AnalyzerResult = { findings: Finding[]; coverage: CoverageEntry[] };
+export type AnalyzerResult = { findings: Finding[]; coverage: CoverageEntry[]; metrics?: Metric[] };
 /** A rule is the smallest analyzer. The AI reviewer and future simulation passes implement the same shape. */
 export type Analyzer = {
   id: string;
@@ -106,8 +106,13 @@ export type Analyzer = {
 export type Rule = { id: string; origin: 'deterministic'; dimensions: string[]; analyze: (ctx: Ctx) => AnalyzerResult };
 
 let seq = 0;
-export function finding(f: Omit<Finding, 'id' | 'origin'>): Finding {
-  return { id: `${f.ruleId}-${++seq}`, origin: 'deterministic', ...f };
+export function finding(f: Omit<Finding, 'id' | 'origin' | 'fixes'> & { fixes?: Finding['fixes'] }): Finding {
+  return { id: `${f.ruleId}-${++seq}`, origin: 'deterministic', fixes: [], ...f };
+}
+/** First unused PWM-capable GPIO on a dev board, for fix suggestions. */
+export function freeGpio(ctx: Ctx, boardId: string): string | undefined {
+  const comp = ctx.comp(boardId); if (!comp) return undefined;
+  return comp.pins.find((p) => p.role === 'gpio' && !ctx.netOf(boardId, p.name))?.name;
 }
 export function resetIds() { seq = 0; }
 export const fmtV = (v: number) => `${v.toFixed(2)} V`;

@@ -6,40 +6,282 @@
   "source": "template",
   "status": "fixture_candidate",
   "requirements": [
-    { "id": "wifi", "kind": "capability", "label": "Wi-Fi", "value": "wifi", "evaluable": true },
-    { "id": "ble", "kind": "capability", "label": "Bluetooth LE", "value": "bluetooth_le", "evaluable": true },
-    { "id": "video", "kind": "video", "label": "1080p at 30 fps, device to user", "value": "1080p30", "evaluable": true },
-    { "id": "audio_in", "kind": "capability", "label": "Microphone", "value": "pdm_microphone", "evaluable": true },
-    { "id": "audio_out", "kind": "audio_output", "label": "Speaker output", "value": true, "evaluable": true },
-    { "id": "motion", "kind": "motion_detection", "label": "Motion detection (software, from video)", "value": "software", "evaluable": false },
-    { "id": "button", "kind": "capability", "label": "Doorbell button", "value": "momentary_button", "evaluable": true },
-    { "id": "power", "kind": "power_mode", "label": "Continuous 5 V power", "value": "continuous", "evaluable": true },
-    { "id": "latency", "kind": "streaming_latency", "label": "Acceptable end-to-end streaming latency", "evaluable": false }
+    {
+      "id": "wifi",
+      "kind": "capability",
+      "label": "Wi-Fi hardware",
+      "value": "wifi",
+      "evaluable": true
+    },
+    {
+      "id": "ble",
+      "kind": "capability",
+      "label": "Bluetooth LE hardware",
+      "value": "bluetooth_le",
+      "evaluable": true
+    },
+    {
+      "id": "video",
+      "kind": "video",
+      "label": "1080p30 camera hardware path",
+      "value": "1080p30",
+      "evaluable": true
+    },
+    {
+      "id": "audio_in",
+      "kind": "capability",
+      "label": "Microphone hardware",
+      "value": "pdm_microphone",
+      "evaluable": true
+    },
+    {
+      "id": "audio_out",
+      "kind": "audio_output",
+      "label": "Speaker output path",
+      "value": true,
+      "evaluable": true
+    },
+    {
+      "id": "motion",
+      "kind": "motion_detection",
+      "label": "Motion detection (software, from video)",
+      "value": "software",
+      "evaluable": false
+    },
+    {
+      "id": "button",
+      "kind": "capability",
+      "label": "Doorbell button",
+      "value": "momentary_button",
+      "evaluable": true
+    },
+    {
+      "id": "power",
+      "kind": "power_mode",
+      "label": "Continuous 5 V power",
+      "value": "continuous",
+      "evaluable": true
+    },
+    {
+      "id": "latency",
+      "kind": "streaming_latency",
+      "label": "Acceptable end-to-end streaming latency",
+      "evaluable": false
+    }
   ],
-  "power": { "sourceInstance": "psu", "mode": "continuous" },
+  "power": {
+    "sourceInstance": "psu",
+    "mode": "continuous"
+  },
   "instances": [
-    { "id": "psu", "registryId": "class.external_5v_3a_supply", "label": "5 V 3 A supply", "props": {} },
-    { "id": "mcu", "registryId": "board.dfrobot_dfr1172", "label": "FireBeetle 2 ESP32-P4", "props": {} },
-    { "id": "camera", "registryId": "camera.dfrobot_sen0173", "label": "5 MP CSI camera", "props": {} },
-    { "id": "amp", "registryId": "audio.adafruit_max98357a", "label": "I2S amplifier", "props": {} },
-    { "id": "speaker", "registryId": "speaker.4ohm_3w_class", "label": "Speaker", "props": {} },
-    { "id": "button", "registryId": "switch.momentary_no_class", "label": "Doorbell button", "props": {} }
+    {
+      "id": "psu",
+      "registryId": "class.external_5v_3a_supply",
+      "label": "5 V 3 A supply",
+      "props": {}
+    },
+    {
+      "id": "mcu",
+      "registryId": "board.dfrobot_dfr1172",
+      "label": "FireBeetle 2 ESP32-P4",
+      "props": {}
+    },
+    {
+      "id": "camera",
+      "registryId": "camera.dfrobot_sen0173",
+      "label": "5 MP CSI camera",
+      "props": {}
+    },
+    {
+      "id": "amp",
+      "registryId": "audio.adafruit_max98357a",
+      "label": "I2S amplifier",
+      "props": {}
+    },
+    {
+      "id": "speaker",
+      "registryId": "speaker.4ohm_3w_class",
+      "label": "Speaker",
+      "props": {}
+    },
+    {
+      "id": "button",
+      "registryId": "switch.momentary_no_class",
+      "label": "Doorbell button",
+      "props": {}
+    }
   ],
   "nets": [
-    { "id": "RAIL_5V", "name": "5V", "kind": "power", "pins": [ { "instance": "psu", "pin": "+" }, { "instance": "mcu", "pin": "5V" }, { "instance": "amp", "pin": "VIN" } ] },
-    { "id": "GND", "name": "GND", "kind": "ground", "pins": [ { "instance": "psu", "pin": "-" }, { "instance": "mcu", "pin": "GND" }, { "instance": "amp", "pin": "GND" }, { "instance": "button", "pin": "2" } ] },
-    { "id": "CSI", "name": "CSI", "kind": "bus", "pins": [ { "instance": "mcu", "pin": "CSI" }, { "instance": "camera", "pin": "CSI" } ] },
-    { "id": "I2S_BCLK", "name": "I2S BCLK", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "I2S_BCLK" }, { "instance": "amp", "pin": "BCLK" } ] },
-    { "id": "I2S_LRCLK", "name": "I2S LRCLK", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "I2S_LRCLK" }, { "instance": "amp", "pin": "LRC" } ] },
-    { "id": "I2S_DOUT", "name": "I2S DOUT", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "I2S_DOUT" }, { "instance": "amp", "pin": "DIN" } ] },
-    { "id": "SPK_P", "name": "SPK+", "kind": "signal", "pins": [ { "instance": "amp", "pin": "SPK+" }, { "instance": "speaker", "pin": "+" } ] },
-    { "id": "SPK_N", "name": "SPK-", "kind": "signal", "pins": [ { "instance": "amp", "pin": "SPK-" }, { "instance": "speaker", "pin": "-" } ] },
-    { "id": "BTN", "name": "BUTTON", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D0" }, { "instance": "button", "pin": "1" } ] }
+    {
+      "id": "RAIL_5V",
+      "name": "5V",
+      "kind": "power",
+      "pins": [
+        {
+          "instance": "psu",
+          "pin": "+"
+        },
+        {
+          "instance": "mcu",
+          "pin": "5V"
+        },
+        {
+          "instance": "amp",
+          "pin": "VIN"
+        }
+      ]
+    },
+    {
+      "id": "GND",
+      "name": "GND",
+      "kind": "ground",
+      "pins": [
+        {
+          "instance": "psu",
+          "pin": "-"
+        },
+        {
+          "instance": "mcu",
+          "pin": "GND"
+        },
+        {
+          "instance": "amp",
+          "pin": "GND"
+        },
+        {
+          "instance": "button",
+          "pin": "2"
+        }
+      ]
+    },
+    {
+      "id": "CSI",
+      "name": "CSI",
+      "kind": "bus",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "CSI"
+        },
+        {
+          "instance": "camera",
+          "pin": "CSI"
+        }
+      ]
+    },
+    {
+      "id": "I2S_BCLK",
+      "name": "I2S BCLK",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "I2S_BCLK"
+        },
+        {
+          "instance": "amp",
+          "pin": "BCLK"
+        }
+      ]
+    },
+    {
+      "id": "I2S_LRCLK",
+      "name": "I2S LRCLK",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "I2S_LRCLK"
+        },
+        {
+          "instance": "amp",
+          "pin": "LRC"
+        }
+      ]
+    },
+    {
+      "id": "I2S_DOUT",
+      "name": "I2S DOUT",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "I2S_DOUT"
+        },
+        {
+          "instance": "amp",
+          "pin": "DIN"
+        }
+      ]
+    },
+    {
+      "id": "SPK_P",
+      "name": "SPK+",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "amp",
+          "pin": "SPK+"
+        },
+        {
+          "instance": "speaker",
+          "pin": "+"
+        }
+      ]
+    },
+    {
+      "id": "SPK_N",
+      "name": "SPK-",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "amp",
+          "pin": "SPK-"
+        },
+        {
+          "instance": "speaker",
+          "pin": "-"
+        }
+      ]
+    },
+    {
+      "id": "BTN",
+      "name": "BUTTON",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D0"
+        },
+        {
+          "instance": "button",
+          "pin": "1"
+        }
+      ]
+    }
   ],
   "assumptions": [
-    { "key": "power_supply", "value": "5 V 3 A regulated", "reason": "Headroom over DFRobot's reported >1 A Wi-Fi peaks plus a 3 W class-D amplifier", "source": "template", "status": "active" },
-    { "key": "motion_detection", "value": "software on the P4 from the video stream", "reason": "No PIR sensor in v1; whether the P4 sustains detection plus streaming is not evaluated here", "source": "template", "status": "active" },
-    { "key": "button_wiring", "value": "GPIO with internal pull-up, button to GND", "reason": "Simplest hobby wiring; debounce in firmware", "source": "template", "status": "active" }
+    {
+      "key": "power_supply",
+      "value": "5 V 3 A regulated",
+      "reason": "Headroom over DFRobot's reported >1 A Wi-Fi peaks plus a 3 W class-D amplifier",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "motion_detection",
+      "value": "software on the P4 from the video stream",
+      "reason": "No PIR sensor in v1; whether the P4 sustains detection plus streaming is not evaluated here",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "button_wiring",
+      "value": "GPIO with internal pull-up, button to GND",
+      "reason": "Simplest hobby wiring; debounce in firmware",
+      "source": "template",
+      "status": "active"
+    }
   ],
   "overrides": [],
   "unresolved": [],
@@ -49,22 +291,58 @@
       "id": "remove_camera",
       "label": "Remove the camera",
       "description": "Deletes the camera module. The 1080p30 video requirement can no longer be met.",
-      "ops": [ { "op": "remove_instance", "instance": "camera" } ],
-      "expected": [ { "ruleId": "requirement_capability", "severity": "violation", "category": "requirement" } ]
+      "ops": [
+        {
+          "op": "remove_instance",
+          "instance": "camera"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "requirement_capability",
+          "severity": "violation",
+          "category": "requirement"
+        }
+      ]
     },
     {
       "id": "remove_amplifier",
       "label": "Remove the amplifier",
       "description": "Deletes the I2S amplifier. Speaker output is gone.",
-      "ops": [ { "op": "remove_instance", "instance": "amp" } ],
-      "expected": [ { "ruleId": "requirement_capability", "severity": "violation", "category": "requirement" } ]
+      "ops": [
+        {
+          "op": "remove_instance",
+          "instance": "amp"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "requirement_capability",
+          "severity": "violation",
+          "category": "requirement"
+        }
+      ]
     },
     {
       "id": "remove_power_source",
       "label": "Remove the supply",
       "description": "Deletes the power supply. The project becomes incomplete.",
-      "ops": [ { "op": "clear_power_source" }, { "op": "remove_instance", "instance": "psu" } ],
-      "expected": [ { "ruleId": "power_source_present", "severity": "violation", "category": "power" } ],
+      "ops": [
+        {
+          "op": "clear_power_source"
+        },
+        {
+          "op": "remove_instance",
+          "instance": "psu"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "power_source_present",
+          "severity": "violation",
+          "category": "power"
+        }
+      ],
       "expectStatus": "incomplete"
     }
   ]

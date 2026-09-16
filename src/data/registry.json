@@ -575,6 +575,11 @@
         "built_in_reverse_protection": {
           "value": false,
           "provenance": "fixture_assumption"
+        },
+        "mass_g_approx": {
+          "value": 110,
+          "provenance": "fixture_assumption",
+          "note": "Typical 3S 1000-1500 mAh hobby pack, 90-130 g"
         }
       },
       "capabilities": [
@@ -643,6 +648,10 @@
         },
         "built_in_reverse_protection": {
           "value": false,
+          "provenance": "fixture_assumption"
+        },
+        "mass_g_approx": {
+          "value": 75,
           "provenance": "fixture_assumption"
         }
       },
@@ -1075,8 +1084,8 @@
             "min": 3.0,
             "max": 4.2
           },
-          "supply_range_provenance": "fixture_assumption",
-          "note": "Battery pads; single-cell LiPo per wiki"
+          "supply_range_provenance": "vetted_source",
+          "note": "Battery pads for a single-cell LiPo per the wiki; 4.2 V is the cell's full-charge voltage by design"
         },
         {
           "name": "3V3",
@@ -1361,6 +1370,83 @@
         "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf"
       ],
       "notes": "Same electrical limits as the Adafruit breakout, none of the board conveniences: no STBY pull-up, no decoupling, not breadboard-usable. Pin names mirror the breakout so a design can swap between them."
+    },
+    {
+      "id": "battery.3s_lipo_200_300mah_class",
+      "kind": "battery_class",
+      "label": "3S LiPo 200-300 mAh (class)",
+      "manufacturer": null,
+      "mpn": null,
+      "verification_status": "constrained_component_class",
+      "prototype_interface": {
+        "type": "keyed_connector_xt30_or_jst",
+        "requires_light_soldering": false
+      },
+      "breadboard_usable": false,
+      "pins": [
+        {
+          "name": "+",
+          "role": "battery_pos",
+          "output": {
+            "kind": "fact",
+            "nominal": "nominal_v",
+            "min": "min_usable_v",
+            "max": "full_charge_v"
+          }
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
+      ],
+      "facts": {
+        "cells_series": {
+          "value": 3,
+          "provenance": "fixture_assumption"
+        },
+        "nominal_v": {
+          "value": 11.1,
+          "provenance": "fixture_assumption",
+          "note": "3.7 V per cell"
+        },
+        "full_charge_v": {
+          "value": 12.6,
+          "provenance": "fixture_assumption",
+          "note": "4.2 V per cell"
+        },
+        "min_usable_v": {
+          "value": 9.6,
+          "provenance": "fixture_assumption",
+          "note": "3.2 V per cell cutoff"
+        },
+        "capacity_mah_min": {
+          "value": 200,
+          "provenance": "fixture_assumption"
+        },
+        "capacity_mah_max": {
+          "value": 300,
+          "provenance": "fixture_assumption"
+        },
+        "continuous_current_a": {
+          "value": 6.0,
+          "provenance": "fixture_assumption",
+          "note": "Small packs in this class are sold at 25C or better: 200 mAh x 30C = 6 A"
+        },
+        "built_in_reverse_protection": {
+          "value": false,
+          "provenance": "fixture_assumption"
+        },
+        "mass_g_approx": {
+          "value": 25,
+          "provenance": "fixture_assumption",
+          "note": "Typical 3S 200-300 mAh micro pack, 20-30 g"
+        }
+      },
+      "capabilities": [
+        "battery"
+      ],
+      "sources": [],
+      "notes": "Right-sized alternative for the 15-30 minute runtime target. Same voltage window as the larger class."
     }
   ]
 }
