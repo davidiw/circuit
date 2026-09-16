@@ -1,0 +1,54 @@
+{
+  "id": "water_leak_detector_v1",
+  "title": "Connected Water Leak Detector",
+  "goal": "Small battery-powered detector that senses liquid, provisions over BLE, alerts over Wi-Fi, and aims for long standby life.",
+  "schemaVersion": 1,
+  "source": "template",
+  "status": "fixture_candidate",
+  "requirements": [
+    { "id": "wifi", "kind": "capability", "label": "Wi-Fi alerting", "value": "wifi", "evaluable": true },
+    { "id": "ble", "kind": "capability", "label": "BLE provisioning", "value": "bluetooth_le", "evaluable": true },
+    { "id": "sense", "kind": "capability", "label": "Leak detection", "value": "water_detection", "evaluable": true },
+    { "id": "battery", "kind": "power_mode", "label": "Battery powered", "value": "battery", "evaluable": true },
+    { "id": "standby", "kind": "standby_life", "label": "Long standby life", "value": "long", "evaluable": false },
+    { "id": "compact", "kind": "envelope", "label": "Compact, fits under a sink", "evaluable": false },
+    { "id": "waterproof", "kind": "enclosure", "label": "Survives a wet location", "evaluable": false }
+  ],
+  "power": { "sourceInstance": "battery", "mode": "battery" },
+  "instances": [
+    { "id": "battery", "registryId": "class.single_cell_lipo", "label": "Single-cell LiPo", "props": {} },
+    { "id": "mcu", "registryId": "board.seeed_xiao_esp32c6", "label": "XIAO ESP32-C6", "props": {} },
+    { "id": "sensor", "registryId": "sensor.dfrobot_sen0121", "label": "Water sensor", "props": {} }
+  ],
+  "nets": [
+    { "id": "BATT_PLUS", "name": "BATT+", "kind": "power", "pins": [ { "instance": "battery", "pin": "+" }, { "instance": "mcu", "pin": "BAT+" } ] },
+    { "id": "GND", "name": "GND", "kind": "ground", "pins": [ { "instance": "battery", "pin": "-" }, { "instance": "mcu", "pin": "GND" }, { "instance": "sensor", "pin": "GND" } ] },
+    { "id": "RAIL_3V3", "name": "3V3", "kind": "power", "pins": [ { "instance": "mcu", "pin": "3V3" }, { "instance": "sensor", "pin": "VCC" } ] },
+    { "id": "SENSE", "name": "SENSE", "kind": "signal", "pins": [ { "instance": "sensor", "pin": "SIG" }, { "instance": "mcu", "pin": "A0" } ] }
+  ],
+  "assumptions": [
+    { "key": "battery", "value": "3.7 V single-cell LiPo, capacity TBD", "reason": "Capacity depends on enclosure and on a power budget that is not modeled yet", "source": "template", "status": "active" },
+    { "key": "sensor_supply_v", "value": 3.3, "reason": "Powering the sensor from the XIAO 3V3 rail keeps its analog output inside the ADC range", "source": "template", "status": "active" },
+    { "key": "sensor_power_gating", "value": "not modeled", "reason": "Sensor quiescent current is unpublished; standby life cannot be estimated until it is measured or gated", "source": "template", "status": "active" }
+  ],
+  "overrides": [],
+  "unresolved": [],
+  "expectedBaseline": [],
+  "mutations": [
+    {
+      "id": "remove_sensor",
+      "label": "Remove the sensor",
+      "description": "Deletes the water sensor. Leak detection is gone.",
+      "ops": [ { "op": "remove_instance", "instance": "sensor" } ],
+      "expected": [ { "ruleId": "requirement_capability", "severity": "violation", "category": "requirement" } ]
+    },
+    {
+      "id": "remove_power_source",
+      "label": "Remove the battery",
+      "description": "Deletes the battery. The project becomes incomplete.",
+      "ops": [ { "op": "clear_power_source" }, { "op": "remove_instance", "instance": "battery" } ],
+      "expected": [ { "ruleId": "power_source_present", "severity": "violation", "category": "power" } ],
+      "expectStatus": "incomplete"
+    }
+  ]
+}
