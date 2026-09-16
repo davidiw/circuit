@@ -8,33 +8,142 @@
       "manufacturer": "Seeed Studio",
       "mpn": "XIAO ESP32-S3",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "2.54mm_header", "requires_light_soldering": true },
+      "prototype_interface": {
+        "type": "2.54mm_header",
+        "requires_light_soldering": true
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "5V", "role": "supply_in", "supply_range": { "min": 4.5, "max": 5.5 }, "supply_range_provenance": "fixture_assumption", "note": "Wiki documents 5V as USB VBUS out and as an external input; the formal input tolerance is not published, so the range is a fixture assumption. Seeed advises a diode between an external 5 V source and this pin so USB and the external source cannot backfeed." },
-        { "name": "3V3", "role": "supply_out", "output": { "kind": "fixed", "v": 3.3 } },
-        { "name": "GND", "role": "ground" },
-        { "name": "D0", "role": "gpio", "pwm": true, "note": "GPIO1 / A0" },
-        { "name": "D1", "role": "gpio", "pwm": true, "note": "GPIO2 / A1" },
-        { "name": "D2", "role": "gpio", "pwm": true, "note": "GPIO3 / A2" },
-        { "name": "D3", "role": "gpio", "pwm": true, "note": "GPIO4 / A3" },
-        { "name": "D4", "role": "gpio", "pwm": true, "note": "GPIO5 / SDA" },
-        { "name": "D5", "role": "gpio", "pwm": true, "note": "GPIO6 / SCL" },
-        { "name": "D6", "role": "gpio", "pwm": true, "note": "GPIO43 / TX" },
-        { "name": "D7", "role": "gpio", "pwm": true, "note": "GPIO44 / RX" },
-        { "name": "D8", "role": "gpio", "pwm": true, "note": "GPIO7 / SCK" },
-        { "name": "D9", "role": "gpio", "pwm": true, "note": "GPIO8 / MISO" },
-        { "name": "D10", "role": "gpio", "pwm": true, "note": "GPIO9 / MOSI" }
+        {
+          "name": "5V",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 4.5,
+            "max": 5.5
+          },
+          "supply_range_provenance": "fixture_assumption",
+          "note": "Wiki documents 5V as USB VBUS out and as an external input; the formal input tolerance is not published, so the range is a fixture assumption. Seeed advises a diode between an external 5 V source and this pin so USB and the external source cannot backfeed."
+        },
+        {
+          "name": "3V3",
+          "role": "supply_out",
+          "output": {
+            "kind": "fixed",
+            "v": 3.3
+          }
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "D0",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO1 / A0"
+        },
+        {
+          "name": "D1",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO2 / A1"
+        },
+        {
+          "name": "D2",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO3 / A2"
+        },
+        {
+          "name": "D3",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO4 / A3"
+        },
+        {
+          "name": "D4",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO5 / SDA"
+        },
+        {
+          "name": "D5",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO6 / SCL"
+        },
+        {
+          "name": "D6",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO43 / TX"
+        },
+        {
+          "name": "D7",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO44 / RX"
+        },
+        {
+          "name": "D8",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO7 / SCK"
+        },
+        {
+          "name": "D9",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO8 / MISO"
+        },
+        {
+          "name": "D10",
+          "role": "gpio",
+          "pwm": true,
+          "note": "GPIO9 / MOSI"
+        }
       ],
       "facts": {
-        "logic_v": { "value": 3.3, "provenance": "vetted_source", "source": "https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/" },
-        "gpio_count": { "value": 11, "provenance": "vetted_source", "source": "https://wiki.seeedstudio.com/xiao_esp32s3_pin_multiplexing/" },
-        "peak_current_a": { "value": 0.5, "provenance": "fixture_assumption", "note": "Radio transmit peaks; board-level measurement not taken" },
-        "gpio_max_source_current_a": { "value": 0.04, "provenance": "fixture_assumption", "note": "ESP32-S3 GPIO drive is tens of mA; far below any motor current" }
+        "logic_v": {
+          "value": 3.3,
+          "provenance": "vetted_source",
+          "source": "https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/"
+        },
+        "gpio_count": {
+          "value": 11,
+          "provenance": "vetted_source",
+          "source": "https://wiki.seeedstudio.com/xiao_esp32s3_pin_multiplexing/"
+        },
+        "peak_current_a": {
+          "value": 0.5,
+          "provenance": "fixture_assumption",
+          "note": "Radio transmit peaks; board-level measurement not taken"
+        },
+        "gpio_max_source_current_a": {
+          "value": 0.04,
+          "provenance": "fixture_assumption",
+          "note": "ESP32-S3 GPIO drive is tens of mA; far below any motor current"
+        }
       },
-      "capabilities": ["bluetooth_le", "wifi", "gpio", "pwm", "adc", "i2c", "spi", "uart"],
-      "board_features": ["onboard_3v3_ldo", "usb_c"],
-      "sources": ["https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/", "https://wiki.seeedstudio.com/xiao_esp32s3_pin_multiplexing/"]
+      "capabilities": [
+        "bluetooth_le",
+        "wifi",
+        "gpio",
+        "pwm",
+        "adc",
+        "i2c",
+        "spi",
+        "uart"
+      ],
+      "board_features": [
+        "onboard_3v3_ldo",
+        "usb_c",
+        "onboard_decoupling"
+      ],
+      "sources": [
+        "https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/",
+        "https://wiki.seeedstudio.com/xiao_esp32s3_pin_multiplexing/"
+      ]
     },
     {
       "id": "driver.adafruit_tb6612_breakout",
@@ -43,33 +152,131 @@
       "manufacturer": "Adafruit",
       "mpn": "2448",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "2.54mm_header", "requires_light_soldering": true },
+      "prototype_interface": {
+        "type": "2.54mm_header",
+        "requires_light_soldering": true
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "VMOT", "role": "supply_in", "supply_range": { "min": 4.5, "max": 13.5 }, "supply_range_provenance": "vetted_source", "note": "Motor supply" },
-        { "name": "VCC", "role": "supply_in", "supply_range": { "min": 2.7, "max": 5.5 }, "supply_range_provenance": "vetted_source", "note": "Logic supply" },
-        { "name": "GND", "role": "ground" },
-        { "name": "STBY", "role": "enable_in", "note": "Active high. This breakout has a 10 kOhm pull-up to VCC." },
-        { "name": "PWMA", "role": "logic_in", "pwm_required": true, "channel": "A" },
-        { "name": "AIN1", "role": "logic_in", "channel": "A" },
-        { "name": "AIN2", "role": "logic_in", "channel": "A" },
-        { "name": "PWMB", "role": "logic_in", "pwm_required": true, "channel": "B" },
-        { "name": "BIN1", "role": "logic_in", "channel": "B" },
-        { "name": "BIN2", "role": "logic_in", "channel": "B" },
-        { "name": "MOTORA1", "role": "motor_out", "channel": "A" },
-        { "name": "MOTORA2", "role": "motor_out", "channel": "A" },
-        { "name": "MOTORB1", "role": "motor_out", "channel": "B" },
-        { "name": "MOTORB2", "role": "motor_out", "channel": "B" }
+        {
+          "name": "VMOT",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 4.5,
+            "max": 13.5
+          },
+          "supply_range_provenance": "vetted_source",
+          "note": "Motor supply"
+        },
+        {
+          "name": "VCC",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 2.7,
+            "max": 5.5
+          },
+          "supply_range_provenance": "vetted_source",
+          "note": "Logic supply"
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "STBY",
+          "role": "enable_in",
+          "note": "Active high. This breakout has a 10 kOhm pull-up to VCC."
+        },
+        {
+          "name": "PWMA",
+          "role": "logic_in",
+          "pwm_required": true,
+          "channel": "A"
+        },
+        {
+          "name": "AIN1",
+          "role": "logic_in",
+          "channel": "A"
+        },
+        {
+          "name": "AIN2",
+          "role": "logic_in",
+          "channel": "A"
+        },
+        {
+          "name": "PWMB",
+          "role": "logic_in",
+          "pwm_required": true,
+          "channel": "B"
+        },
+        {
+          "name": "BIN1",
+          "role": "logic_in",
+          "channel": "B"
+        },
+        {
+          "name": "BIN2",
+          "role": "logic_in",
+          "channel": "B"
+        },
+        {
+          "name": "MOTORA1",
+          "role": "motor_out",
+          "channel": "A"
+        },
+        {
+          "name": "MOTORA2",
+          "role": "motor_out",
+          "channel": "A"
+        },
+        {
+          "name": "MOTORB1",
+          "role": "motor_out",
+          "channel": "B"
+        },
+        {
+          "name": "MOTORB2",
+          "role": "motor_out",
+          "channel": "B"
+        }
       ],
       "facts": {
-        "continuous_current_per_channel_a": { "value": 1.2, "provenance": "vetted_source", "source": "https://www.adafruit.com/product/2448" },
-        "peak_current_per_channel_a": { "value": 3.0, "provenance": "vetted_source", "source": "https://www.adafruit.com/product/2448", "note": "20 ms single pulse" },
-        "h_bridge_channels": { "value": 2, "provenance": "vetted_source", "source": "https://www.adafruit.com/product/2448" },
-        "stby_pullup_kohm": { "value": 10, "provenance": "vetted_source", "source": "https://learn.adafruit.com/adafruit-tb6612-h-bridge-dc-stepper-motor-driver-breakout/pinouts" }
+        "continuous_current_per_channel_a": {
+          "value": 1.2,
+          "provenance": "vetted_source",
+          "source": "https://www.adafruit.com/product/2448"
+        },
+        "peak_current_per_channel_a": {
+          "value": 3.0,
+          "provenance": "vetted_source",
+          "source": "https://www.adafruit.com/product/2448",
+          "note": "20 ms single pulse"
+        },
+        "h_bridge_channels": {
+          "value": 2,
+          "provenance": "vetted_source",
+          "source": "https://www.adafruit.com/product/2448"
+        },
+        "stby_pullup_kohm": {
+          "value": 10,
+          "provenance": "vetted_source",
+          "source": "https://learn.adafruit.com/adafruit-tb6612-h-bridge-dc-stepper-motor-driver-breakout/pinouts"
+        }
       },
-      "capabilities": ["dc_motor_drive", "pwm_input"],
-      "board_features": ["stby_10k_pullup", "dual_h_bridge", "kickback_protection"],
-      "sources": ["https://www.adafruit.com/product/2448", "https://learn.adafruit.com/adafruit-tb6612-h-bridge-dc-stepper-motor-driver-breakout/pinouts"]
+      "capabilities": [
+        "dc_motor_drive",
+        "pwm_input"
+      ],
+      "board_features": [
+        "stby_10k_pullup",
+        "dual_h_bridge",
+        "kickback_protection",
+        "onboard_decoupling"
+      ],
+      "sources": [
+        "https://www.adafruit.com/product/2448",
+        "https://learn.adafruit.com/adafruit-tb6612-h-bridge-dc-stepper-motor-driver-breakout/pinouts"
+      ]
     },
     {
       "id": "motor.pololu_2365",
@@ -78,21 +285,55 @@
       "manufacturer": "Pololu",
       "mpn": "2365",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "solder_tabs", "requires_light_soldering": true },
+      "prototype_interface": {
+        "type": "solder_tabs",
+        "requires_light_soldering": true
+      },
       "breadboard_usable": false,
       "pins": [
-        { "name": "M+", "role": "motor_in" },
-        { "name": "M-", "role": "motor_in" }
+        {
+          "name": "M+",
+          "role": "motor_in"
+        },
+        {
+          "name": "M-",
+          "role": "motor_in"
+        }
       ],
       "facts": {
-        "nominal_v": { "value": 6.0, "provenance": "vetted_source", "source": "https://www.pololu.com/product/2365/specs" },
-        "no_load_current_a": { "value": 0.07, "provenance": "vetted_source", "source": "https://www.pololu.com/product/2365/specs" },
-        "stall_current_a": { "value": 0.67, "provenance": "vetted_source", "source": "https://www.pololu.com/product/2365/specs", "note": "Theoretical stall at 6 V" },
-        "no_load_rpm": { "value": 420, "provenance": "vetted_source", "source": "https://www.pololu.com/product/2365/specs" },
-        "gear_ratio": { "value": 51.45, "provenance": "vetted_source", "source": "https://www.pololu.com/product/2365/specs" }
+        "nominal_v": {
+          "value": 6.0,
+          "provenance": "vetted_source",
+          "source": "https://www.pololu.com/product/2365/specs"
+        },
+        "no_load_current_a": {
+          "value": 0.07,
+          "provenance": "vetted_source",
+          "source": "https://www.pololu.com/product/2365/specs"
+        },
+        "stall_current_a": {
+          "value": 0.67,
+          "provenance": "vetted_source",
+          "source": "https://www.pololu.com/product/2365/specs",
+          "note": "Theoretical stall at 6 V"
+        },
+        "no_load_rpm": {
+          "value": 420,
+          "provenance": "vetted_source",
+          "source": "https://www.pololu.com/product/2365/specs"
+        },
+        "gear_ratio": {
+          "value": 51.45,
+          "provenance": "vetted_source",
+          "source": "https://www.pololu.com/product/2365/specs"
+        }
       },
-      "capabilities": ["brushed_dc_motor"],
-      "sources": ["https://www.pololu.com/product/2365/specs"]
+      "capabilities": [
+        "brushed_dc_motor"
+      ],
+      "sources": [
+        "https://www.pololu.com/product/2365/specs"
+      ]
     },
     {
       "id": "motor.generic_high_current_class",
@@ -102,15 +343,33 @@
       "mpn": null,
       "verification_status": "constrained_component_class",
       "pins": [
-        { "name": "M+", "role": "motor_in" },
-        { "name": "M-", "role": "motor_in" }
+        {
+          "name": "M+",
+          "role": "motor_in"
+        },
+        {
+          "name": "M-",
+          "role": "motor_in"
+        }
       ],
       "facts": {
-        "nominal_v": { "value": 6.0, "provenance": "fixture_assumption" },
-        "stall_current_a": { "value": 2.5, "provenance": "fixture_assumption", "note": "Class bound used for the substitution mutation" },
-        "no_load_current_a": { "value": 0.2, "provenance": "fixture_assumption" }
+        "nominal_v": {
+          "value": 6.0,
+          "provenance": "fixture_assumption"
+        },
+        "stall_current_a": {
+          "value": 2.5,
+          "provenance": "fixture_assumption",
+          "note": "Class bound used for the substitution mutation"
+        },
+        "no_load_current_a": {
+          "value": 0.2,
+          "provenance": "fixture_assumption"
+        }
       },
-      "capabilities": ["brushed_dc_motor"],
+      "capabilities": [
+        "brushed_dc_motor"
+      ],
       "sources": [],
       "notes": "Exists only to exercise the driver current rule."
     },
@@ -121,24 +380,84 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "prototype_interface": { "type": "varies_pins_or_screw_terminals", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "varies_pins_or_screw_terminals",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "IN+", "role": "supply_in", "supply_range": { "min": 4.5, "max": 40.0 }, "supply_range_provenance": "vetted_source", "note": "TI LM2596 IC limit. Board-level limits (capacitor ratings, connectors) are unknown for a commodity module." },
-        { "name": "IN-", "role": "ground" },
-        { "name": "OUT+", "role": "supply_out", "output": { "kind": "prop", "prop": "outputV" } },
-        { "name": "OUT-", "role": "ground" }
+        {
+          "name": "IN+",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 4.5,
+            "max": 40.0
+          },
+          "supply_range_provenance": "vetted_source",
+          "note": "TI LM2596 IC limit. Board-level limits (capacitor ratings, connectors) are unknown for a commodity module."
+        },
+        {
+          "name": "IN-",
+          "role": "ground"
+        },
+        {
+          "name": "OUT+",
+          "role": "supply_out",
+          "output": {
+            "kind": "prop",
+            "prop": "outputV"
+          }
+        },
+        {
+          "name": "OUT-",
+          "role": "ground"
+        }
       ],
       "facts": {
-        "ic_max_output_a": { "value": 3.0, "provenance": "vetted_source", "source": "https://www.ti.com/product/LM2596", "note": "IC rating, not the module's thermal reality" },
-        "continuous_output_a": { "value": 2.0, "provenance": "fixture_assumption", "note": "Conservative class bound for an unheatsinked marketplace board" },
-        "dropout_v": { "value": 1.5, "provenance": "fixture_assumption", "note": "TI datasheet shows about 1.5 V at 3 A load; less at lower current. Treated conservatively." },
-        "board_protection": { "value": "unknown", "provenance": "unknown", "note": "Reverse-input, overcurrent, and thermal protection vary by board" },
-        "thermal_performance": { "value": "unknown", "provenance": "unknown" }
+        "ic_max_output_a": {
+          "value": 3.0,
+          "provenance": "vetted_source",
+          "source": "https://www.ti.com/product/LM2596",
+          "note": "IC rating, not the module's thermal reality"
+        },
+        "continuous_output_a": {
+          "value": 2.0,
+          "provenance": "fixture_assumption",
+          "note": "Conservative class bound for an unheatsinked marketplace board"
+        },
+        "dropout_v": {
+          "value": 1.5,
+          "provenance": "fixture_assumption",
+          "note": "TI datasheet shows about 1.5 V at 3 A load; less at lower current. Treated conservatively."
+        },
+        "board_protection": {
+          "value": "unknown",
+          "provenance": "unknown",
+          "note": "Reverse-input, overcurrent, and thermal protection vary by board"
+        },
+        "thermal_performance": {
+          "value": "unknown",
+          "provenance": "unknown"
+        },
+        "input_output_capacitors_onboard": {
+          "value": true,
+          "provenance": "fixture_assumption",
+          "note": "Every LM2596 marketplace module carries input and output electrolytics; values and ratings vary by board"
+        }
       },
-      "capabilities": ["buck_regulation", "adjustable_output"],
-      "sources": ["https://www.ti.com/product/LM2596"],
-      "notes": "Replace with an exact purchased module to promote the unknowns to facts."
+      "capabilities": [
+        "buck_regulation",
+        "adjustable_output"
+      ],
+      "sources": [
+        "https://www.ti.com/product/LM2596"
+      ],
+      "notes": "Replace with an exact purchased module to promote the unknowns to facts.",
+      "board_features": [
+        "onboard_input_capacitor",
+        "onboard_output_capacitor",
+        "onboard_decoupling"
+      ]
     },
     {
       "id": "diode.onsemi_1n5822",
@@ -147,19 +466,50 @@
       "manufacturer": "onsemi",
       "mpn": "1N5822",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "through_hole_axial", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "through_hole_axial",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "A", "role": "anode" },
-        { "name": "K", "role": "cathode", "output": { "kind": "from_pin", "pin": "A", "drop_fact": "forward_drop_v" } }
+        {
+          "name": "A",
+          "role": "anode"
+        },
+        {
+          "name": "K",
+          "role": "cathode",
+          "output": {
+            "kind": "from_pin",
+            "pin": "A",
+            "drop_fact": "forward_drop_v"
+          }
+        }
       ],
       "facts": {
-        "forward_current_a": { "value": 3.0, "provenance": "vetted_source", "source": "https://www.onsemi.com/pub/Collateral/1N5820-D.PDF" },
-        "reverse_voltage_v": { "value": 40.0, "provenance": "vetted_source", "source": "https://www.onsemi.com/pub/Collateral/1N5820-D.PDF" },
-        "forward_drop_v": { "value": 0.45, "provenance": "fixture_assumption", "note": "Datasheet max 0.525 V at 3 A; about 0.4 V near 1 A. 0.45 V used as a conservative working value." }
+        "forward_current_a": {
+          "value": 3.0,
+          "provenance": "vetted_source",
+          "source": "https://www.onsemi.com/pub/Collateral/1N5820-D.PDF"
+        },
+        "reverse_voltage_v": {
+          "value": 40.0,
+          "provenance": "vetted_source",
+          "source": "https://www.onsemi.com/pub/Collateral/1N5820-D.PDF"
+        },
+        "forward_drop_v": {
+          "value": 0.45,
+          "provenance": "fixture_assumption",
+          "note": "Datasheet max 0.525 V at 3 A; about 0.4 V near 1 A. 0.45 V used as a conservative working value."
+        }
       },
-      "capabilities": ["reverse_polarity_protection", "rectification"],
-      "sources": ["https://www.onsemi.com/pub/Collateral/1N5820-D.PDF"]
+      "capabilities": [
+        "reverse_polarity_protection",
+        "rectification"
+      ],
+      "sources": [
+        "https://www.onsemi.com/pub/Collateral/1N5820-D.PDF"
+      ]
     },
     {
       "id": "battery.3s_lipo_1000_1500mah_class",
@@ -168,23 +518,68 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "prototype_interface": { "type": "keyed_connector_xt30_or_jst", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "keyed_connector_xt30_or_jst",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": false,
       "pins": [
-        { "name": "+", "role": "battery_pos", "output": { "kind": "fact", "nominal": "nominal_v", "min": "min_usable_v", "max": "full_charge_v" } },
-        { "name": "-", "role": "ground" }
+        {
+          "name": "+",
+          "role": "battery_pos",
+          "output": {
+            "kind": "fact",
+            "nominal": "nominal_v",
+            "min": "min_usable_v",
+            "max": "full_charge_v"
+          }
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
       ],
       "facts": {
-        "cells_series": { "value": 3, "provenance": "fixture_assumption" },
-        "nominal_v": { "value": 11.1, "provenance": "fixture_assumption", "note": "3.7 V per cell" },
-        "full_charge_v": { "value": 12.6, "provenance": "fixture_assumption", "note": "4.2 V per cell" },
-        "min_usable_v": { "value": 9.6, "provenance": "fixture_assumption", "note": "3.2 V per cell cutoff" },
-        "capacity_mah_min": { "value": 1000, "provenance": "fixture_assumption" },
-        "capacity_mah_max": { "value": 1500, "provenance": "fixture_assumption" },
-        "continuous_current_a": { "value": 3.0, "provenance": "fixture_assumption", "note": "Any hobby 3S pack in this size exceeds this" },
-        "built_in_reverse_protection": { "value": false, "provenance": "fixture_assumption" }
+        "cells_series": {
+          "value": 3,
+          "provenance": "fixture_assumption"
+        },
+        "nominal_v": {
+          "value": 11.1,
+          "provenance": "fixture_assumption",
+          "note": "3.7 V per cell"
+        },
+        "full_charge_v": {
+          "value": 12.6,
+          "provenance": "fixture_assumption",
+          "note": "4.2 V per cell"
+        },
+        "min_usable_v": {
+          "value": 9.6,
+          "provenance": "fixture_assumption",
+          "note": "3.2 V per cell cutoff"
+        },
+        "capacity_mah_min": {
+          "value": 1000,
+          "provenance": "fixture_assumption"
+        },
+        "capacity_mah_max": {
+          "value": 1500,
+          "provenance": "fixture_assumption"
+        },
+        "continuous_current_a": {
+          "value": 3.0,
+          "provenance": "fixture_assumption",
+          "note": "Any hobby 3S pack in this size exceeds this"
+        },
+        "built_in_reverse_protection": {
+          "value": false,
+          "provenance": "fixture_assumption"
+        }
       },
-      "capabilities": ["battery"],
+      "capabilities": [
+        "battery"
+      ],
       "sources": [],
       "notes": "Chosen over 2S so the series Schottky plus LM2596 keeps about 4 V of regulator headroom at end of discharge."
     },
@@ -195,23 +590,65 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "prototype_interface": { "type": "keyed_connector_xt30_or_jst", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "keyed_connector_xt30_or_jst",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": false,
       "pins": [
-        { "name": "+", "role": "battery_pos", "output": { "kind": "fact", "nominal": "nominal_v", "min": "min_usable_v", "max": "full_charge_v" } },
-        { "name": "-", "role": "ground" }
+        {
+          "name": "+",
+          "role": "battery_pos",
+          "output": {
+            "kind": "fact",
+            "nominal": "nominal_v",
+            "min": "min_usable_v",
+            "max": "full_charge_v"
+          }
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
       ],
       "facts": {
-        "cells_series": { "value": 2, "provenance": "fixture_assumption" },
-        "nominal_v": { "value": 7.4, "provenance": "fixture_assumption" },
-        "full_charge_v": { "value": 8.4, "provenance": "fixture_assumption" },
-        "min_usable_v": { "value": 6.4, "provenance": "fixture_assumption", "note": "3.2 V per cell cutoff" },
-        "capacity_mah_min": { "value": 1000, "provenance": "fixture_assumption" },
-        "capacity_mah_max": { "value": 1500, "provenance": "fixture_assumption" },
-        "continuous_current_a": { "value": 3.0, "provenance": "fixture_assumption" },
-        "built_in_reverse_protection": { "value": false, "provenance": "fixture_assumption" }
+        "cells_series": {
+          "value": 2,
+          "provenance": "fixture_assumption"
+        },
+        "nominal_v": {
+          "value": 7.4,
+          "provenance": "fixture_assumption"
+        },
+        "full_charge_v": {
+          "value": 8.4,
+          "provenance": "fixture_assumption"
+        },
+        "min_usable_v": {
+          "value": 6.4,
+          "provenance": "fixture_assumption",
+          "note": "3.2 V per cell cutoff"
+        },
+        "capacity_mah_min": {
+          "value": 1000,
+          "provenance": "fixture_assumption"
+        },
+        "capacity_mah_max": {
+          "value": 1500,
+          "provenance": "fixture_assumption"
+        },
+        "continuous_current_a": {
+          "value": 3.0,
+          "provenance": "fixture_assumption"
+        },
+        "built_in_reverse_protection": {
+          "value": false,
+          "provenance": "fixture_assumption"
+        }
       },
-      "capabilities": ["battery"],
+      "capabilities": [
+        "battery"
+      ],
       "sources": [],
       "notes": "Original handoff choice. With a series Schottky and a 5 V LM2596 output it leaves under 1 V of headroom at end of discharge."
     },
@@ -222,17 +659,35 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "prototype_interface": { "type": "through_hole_radial", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "through_hole_radial",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "+", "role": "cap_pos" },
-        { "name": "-", "role": "ground" }
+        {
+          "name": "+",
+          "role": "cap_pos"
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
       ],
       "facts": {
-        "capacitance_uf": { "value": 470, "provenance": "fixture_assumption", "note": "Heuristic bulk value for two small motors on a shared 5 V rail" },
-        "voltage_rating_v": { "value": 16, "provenance": "fixture_assumption" }
+        "capacitance_uf": {
+          "value": 470,
+          "provenance": "fixture_assumption",
+          "note": "Heuristic bulk value for two small motors on a shared 5 V rail"
+        },
+        "voltage_rating_v": {
+          "value": 16,
+          "provenance": "fixture_assumption"
+        }
       },
-      "capabilities": ["bulk_capacitance"],
+      "capabilities": [
+        "bulk_capacitance"
+      ],
       "sources": []
     },
     {
@@ -242,18 +697,44 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "prototype_interface": { "type": "usb_c_or_barrel", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "usb_c_or_barrel",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": false,
       "pins": [
-        { "name": "+", "role": "supply_out", "output": { "kind": "fixed", "v": 5.0 } },
-        { "name": "-", "role": "ground" }
+        {
+          "name": "+",
+          "role": "supply_out",
+          "output": {
+            "kind": "fixed",
+            "v": 5.0
+          }
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
       ],
       "facts": {
-        "output_v": { "value": 5.0, "provenance": "fixture_assumption" },
-        "continuous_current_a": { "value": 3.0, "provenance": "fixture_assumption", "note": "Headroom over DFRobot's reported >1 A Wi-Fi peaks plus a 3 W amplifier" },
-        "built_in_reverse_protection": { "value": true, "provenance": "fixture_assumption", "note": "Keyed connector and regulated output; polarity cannot be reversed by the user" }
+        "output_v": {
+          "value": 5.0,
+          "provenance": "fixture_assumption"
+        },
+        "continuous_current_a": {
+          "value": 3.0,
+          "provenance": "fixture_assumption",
+          "note": "Headroom over DFRobot's reported >1 A Wi-Fi peaks plus a 3 W amplifier"
+        },
+        "built_in_reverse_protection": {
+          "value": true,
+          "provenance": "fixture_assumption",
+          "note": "Keyed connector and regulated output; polarity cannot be reversed by the user"
+        }
       },
-      "capabilities": ["regulated_dc"],
+      "capabilities": [
+        "regulated_dc"
+      ],
       "sources": []
     },
     {
@@ -263,20 +744,54 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "incomplete",
-      "prototype_interface": { "type": "jst_ph_2pin", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "jst_ph_2pin",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": false,
       "pins": [
-        { "name": "+", "role": "battery_pos", "output": { "kind": "fact", "nominal": "nominal_v", "min": "min_usable_v", "max": "full_charge_v" } },
-        { "name": "-", "role": "ground" }
+        {
+          "name": "+",
+          "role": "battery_pos",
+          "output": {
+            "kind": "fact",
+            "nominal": "nominal_v",
+            "min": "min_usable_v",
+            "max": "full_charge_v"
+          }
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
       ],
       "facts": {
-        "nominal_v": { "value": 3.7, "provenance": "fixture_assumption" },
-        "full_charge_v": { "value": 4.2, "provenance": "fixture_assumption" },
-        "min_usable_v": { "value": 3.2, "provenance": "fixture_assumption" },
-        "capacity_mah_min": { "value": "unknown", "provenance": "unknown", "note": "Exact pack deferred until enclosure and runtime are chosen" },
-        "built_in_reverse_protection": { "value": true, "provenance": "fixture_assumption", "note": "Keyed JST-PH connector into the XIAO battery pads; the XIAO C6 charger path is the intended input" }
+        "nominal_v": {
+          "value": 3.7,
+          "provenance": "fixture_assumption"
+        },
+        "full_charge_v": {
+          "value": 4.2,
+          "provenance": "fixture_assumption"
+        },
+        "min_usable_v": {
+          "value": 3.2,
+          "provenance": "fixture_assumption"
+        },
+        "capacity_mah_min": {
+          "value": "unknown",
+          "provenance": "unknown",
+          "note": "Exact pack deferred until enclosure and runtime are chosen"
+        },
+        "built_in_reverse_protection": {
+          "value": true,
+          "provenance": "fixture_assumption",
+          "note": "Keyed JST-PH connector into the XIAO battery pads; the XIAO C6 charger path is the intended input"
+        }
       },
-      "capabilities": ["battery"],
+      "capabilities": [
+        "battery"
+      ],
       "sources": []
     },
     {
@@ -286,26 +801,91 @@
       "manufacturer": "DFRobot",
       "mpn": "DFR1172",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "exposed_headers_and_connectors", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "exposed_headers_and_connectors",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "5V", "role": "supply_in", "supply_range": { "min": 4.5, "max": 5.5 }, "supply_range_provenance": "fixture_assumption", "note": "Wiki specifies 5 V input; tolerance band is a fixture assumption" },
-        { "name": "3V3", "role": "supply_out", "output": { "kind": "fixed", "v": 3.3 } },
-        { "name": "GND", "role": "ground" },
-        { "name": "CSI", "role": "csi", "note": "MIPI CSI FPC connector" },
-        { "name": "I2S_BCLK", "role": "i2s" },
-        { "name": "I2S_LRCLK", "role": "i2s" },
-        { "name": "I2S_DOUT", "role": "i2s" },
-        { "name": "D0", "role": "gpio" },
-        { "name": "D1", "role": "gpio" }
+        {
+          "name": "5V",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 4.5,
+            "max": 5.5
+          },
+          "supply_range_provenance": "fixture_assumption",
+          "note": "Wiki specifies 5 V input; tolerance band is a fixture assumption"
+        },
+        {
+          "name": "3V3",
+          "role": "supply_out",
+          "output": {
+            "kind": "fixed",
+            "v": 3.3
+          }
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "CSI",
+          "role": "csi",
+          "note": "MIPI CSI FPC connector"
+        },
+        {
+          "name": "I2S_BCLK",
+          "role": "i2s"
+        },
+        {
+          "name": "I2S_LRCLK",
+          "role": "i2s"
+        },
+        {
+          "name": "I2S_DOUT",
+          "role": "i2s"
+        },
+        {
+          "name": "D0",
+          "role": "gpio"
+        },
+        {
+          "name": "D1",
+          "role": "gpio"
+        }
       ],
       "facts": {
-        "peak_current_a": { "value": 1.2, "provenance": "vetted_source", "source": "https://wiki.dfrobot.com/dfr1172/", "note": "DFRobot reports board-level Wi-Fi peaks above 1 A depending on mode" },
-        "dimensions_mm": { "value": "25.4 x 60", "provenance": "vetted_source", "source": "https://wiki.dfrobot.com/dfr1172/" }
+        "peak_current_a": {
+          "value": 1.2,
+          "provenance": "vetted_source",
+          "source": "https://wiki.dfrobot.com/dfr1172/",
+          "note": "DFRobot reports board-level Wi-Fi peaks above 1 A depending on mode"
+        },
+        "dimensions_mm": {
+          "value": "25.4 x 60",
+          "provenance": "vetted_source",
+          "source": "https://wiki.dfrobot.com/dfr1172/"
+        }
       },
-      "capabilities": ["wifi", "bluetooth_le", "mipi_csi", "pdm_microphone", "i2s", "gpio", "sd_card"],
-      "board_features": ["onboard_esp32_c6_radio", "onboard_pdm_mic"],
-      "sources": ["https://wiki.dfrobot.com/dfr1172/", "https://dfimg.dfrobot.com/wiki/21103/DFR1172_firebeetle-esp32-p4r32-development-board_datasheet_V1.0.pdf"]
+      "capabilities": [
+        "wifi",
+        "bluetooth_le",
+        "mipi_csi",
+        "pdm_microphone",
+        "i2s",
+        "gpio",
+        "sd_card"
+      ],
+      "board_features": [
+        "onboard_esp32_c6_radio",
+        "onboard_pdm_mic",
+        "onboard_decoupling"
+      ],
+      "sources": [
+        "https://wiki.dfrobot.com/dfr1172/",
+        "https://dfimg.dfrobot.com/wiki/21103/DFR1172_firebeetle-esp32-p4r32-development-board_datasheet_V1.0.pdf"
+      ]
     },
     {
       "id": "camera.dfrobot_sen0173",
@@ -314,16 +894,45 @@
       "manufacturer": "DFRobot",
       "mpn": "SEN0173",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "csi_fpc", "requires_light_soldering": false },
-      "breadboard_usable": false,
-      "pins": [ { "name": "CSI", "role": "csi" } ],
-      "facts": {
-        "megapixels": { "value": 5, "provenance": "vetted_source", "source": "https://www.dfrobot.com/product-1179.html" },
-        "video_modes": { "value": ["1080p30", "720p60"], "provenance": "vetted_source", "source": "https://www.dfrobot.com/product-1179.html" },
-        "demonstrated_with": { "value": "board.dfrobot_dfr1172", "provenance": "vetted_source", "source": "https://wiki.dfrobot.com/dfr1172/docs/22906" }
+      "prototype_interface": {
+        "type": "csi_fpc",
+        "requires_light_soldering": false
       },
-      "capabilities": ["camera_csi", "video_1080p30"],
-      "sources": ["https://www.dfrobot.com/product-1179.html", "https://wiki.dfrobot.com/dfr1172/docs/22906"]
+      "breadboard_usable": false,
+      "pins": [
+        {
+          "name": "CSI",
+          "role": "csi"
+        }
+      ],
+      "facts": {
+        "megapixels": {
+          "value": 5,
+          "provenance": "vetted_source",
+          "source": "https://www.dfrobot.com/product-1179.html"
+        },
+        "video_modes": {
+          "value": [
+            "1080p30",
+            "720p60"
+          ],
+          "provenance": "vetted_source",
+          "source": "https://www.dfrobot.com/product-1179.html"
+        },
+        "demonstrated_with": {
+          "value": "board.dfrobot_dfr1172",
+          "provenance": "vetted_source",
+          "source": "https://wiki.dfrobot.com/dfr1172/docs/22906"
+        }
+      },
+      "capabilities": [
+        "camera_csi",
+        "video_1080p30"
+      ],
+      "sources": [
+        "https://www.dfrobot.com/product-1179.html",
+        "https://wiki.dfrobot.com/dfr1172/docs/22906"
+      ]
     },
     {
       "id": "audio.adafruit_max98357a",
@@ -332,22 +941,64 @@
       "manufacturer": "Adafruit",
       "mpn": "3006",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "header_plus_speaker_terminal", "requires_light_soldering": true },
+      "prototype_interface": {
+        "type": "header_plus_speaker_terminal",
+        "requires_light_soldering": true
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "VIN", "role": "supply_in", "supply_range": { "min": 2.7, "max": 5.5 }, "supply_range_provenance": "vetted_source" },
-        { "name": "GND", "role": "ground" },
-        { "name": "BCLK", "role": "i2s" },
-        { "name": "LRC", "role": "i2s" },
-        { "name": "DIN", "role": "i2s" },
-        { "name": "SPK+", "role": "speaker_out" },
-        { "name": "SPK-", "role": "speaker_out" }
+        {
+          "name": "VIN",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 2.7,
+            "max": 5.5
+          },
+          "supply_range_provenance": "vetted_source"
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "BCLK",
+          "role": "i2s"
+        },
+        {
+          "name": "LRC",
+          "role": "i2s"
+        },
+        {
+          "name": "DIN",
+          "role": "i2s"
+        },
+        {
+          "name": "SPK+",
+          "role": "speaker_out"
+        },
+        {
+          "name": "SPK-",
+          "role": "speaker_out"
+        }
       ],
       "facts": {
-        "output_power_w": { "value": 3.0, "provenance": "vetted_source", "source": "https://www.adafruit.com/product/3006", "note": "Into 4 ohm at 5 V" }
+        "output_power_w": {
+          "value": 3.0,
+          "provenance": "vetted_source",
+          "source": "https://www.adafruit.com/product/3006",
+          "note": "Into 4 ohm at 5 V"
+        }
       },
-      "capabilities": ["i2s_input", "mono_speaker_output"],
-      "sources": ["https://www.adafruit.com/product/3006"]
+      "capabilities": [
+        "i2s_input",
+        "mono_speaker_output"
+      ],
+      "sources": [
+        "https://www.adafruit.com/product/3006"
+      ],
+      "board_features": [
+        "onboard_decoupling"
+      ]
     },
     {
       "id": "speaker.4ohm_3w_class",
@@ -356,12 +1007,29 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "pins": [ { "name": "+", "role": "speaker_in" }, { "name": "-", "role": "speaker_in" } ],
+      "pins": [
+        {
+          "name": "+",
+          "role": "speaker_in"
+        },
+        {
+          "name": "-",
+          "role": "speaker_in"
+        }
+      ],
       "facts": {
-        "impedance_ohm": { "value": 4.0, "provenance": "fixture_assumption" },
-        "power_w": { "value": 3.0, "provenance": "fixture_assumption" }
+        "impedance_ohm": {
+          "value": 4.0,
+          "provenance": "fixture_assumption"
+        },
+        "power_w": {
+          "value": 3.0,
+          "provenance": "fixture_assumption"
+        }
       },
-      "capabilities": ["speaker"],
+      "capabilities": [
+        "speaker"
+      ],
       "sources": []
     },
     {
@@ -371,9 +1039,20 @@
       "manufacturer": null,
       "mpn": null,
       "verification_status": "constrained_component_class",
-      "pins": [ { "name": "1", "role": "switch" }, { "name": "2", "role": "switch" } ],
+      "pins": [
+        {
+          "name": "1",
+          "role": "switch"
+        },
+        {
+          "name": "2",
+          "role": "switch"
+        }
+      ],
       "facts": {},
-      "capabilities": ["momentary_button"],
+      "capabilities": [
+        "momentary_button"
+      ],
       "sources": []
     },
     {
@@ -383,23 +1062,76 @@
       "manufacturer": "Seeed Studio",
       "mpn": "XIAO ESP32-C6",
       "verification_status": "vetted_candidate",
-      "prototype_interface": { "type": "2.54mm_header", "requires_light_soldering": true },
+      "prototype_interface": {
+        "type": "2.54mm_header",
+        "requires_light_soldering": true
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "BAT+", "role": "supply_in", "supply_range": { "min": 3.0, "max": 4.2 }, "supply_range_provenance": "fixture_assumption", "note": "Battery pads; single-cell LiPo per wiki" },
-        { "name": "3V3", "role": "supply_out", "output": { "kind": "fixed", "v": 3.3 } },
-        { "name": "GND", "role": "ground" },
-        { "name": "A0", "role": "analog_in", "note": "GPIO0 / ADC" },
-        { "name": "D1", "role": "gpio" },
-        { "name": "D2", "role": "gpio" }
+        {
+          "name": "BAT+",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 3.0,
+            "max": 4.2
+          },
+          "supply_range_provenance": "fixture_assumption",
+          "note": "Battery pads; single-cell LiPo per wiki"
+        },
+        {
+          "name": "3V3",
+          "role": "supply_out",
+          "output": {
+            "kind": "fixed",
+            "v": 3.3
+          }
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "A0",
+          "role": "analog_in",
+          "note": "GPIO0 / ADC"
+        },
+        {
+          "name": "D1",
+          "role": "gpio"
+        },
+        {
+          "name": "D2",
+          "role": "gpio"
+        }
       ],
       "facts": {
-        "deep_sleep_ua": { "value": 15, "provenance": "vetted_source", "source": "https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/", "note": "Board-level typical" },
-        "dimensions_mm": { "value": "21 x 17.8", "provenance": "vetted_source", "source": "https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/" }
+        "deep_sleep_ua": {
+          "value": 15,
+          "provenance": "vetted_source",
+          "source": "https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/",
+          "note": "Board-level typical"
+        },
+        "dimensions_mm": {
+          "value": "21 x 17.8",
+          "provenance": "vetted_source",
+          "source": "https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/"
+        }
       },
-      "capabilities": ["wifi", "bluetooth_le", "gpio", "adc", "battery_input", "deep_sleep"],
-      "board_features": ["onboard_lipo_charger"],
-      "sources": ["https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/"]
+      "capabilities": [
+        "wifi",
+        "bluetooth_le",
+        "gpio",
+        "adc",
+        "battery_input",
+        "deep_sleep"
+      ],
+      "board_features": [
+        "onboard_lipo_charger",
+        "onboard_decoupling"
+      ],
+      "sources": [
+        "https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/"
+      ]
     },
     {
       "id": "sensor.dfrobot_sen0121",
@@ -408,20 +1140,227 @@
       "manufacturer": "DFRobot",
       "mpn": "SEN0121",
       "verification_status": "vetted_candidate_for_prototype",
-      "prototype_interface": { "type": "3_wire_gravity", "requires_light_soldering": false },
+      "prototype_interface": {
+        "type": "3_wire_gravity",
+        "requires_light_soldering": false
+      },
       "breadboard_usable": true,
       "pins": [
-        { "name": "VCC", "role": "supply_in", "supply_range": { "min": 3.3, "max": 5.0 }, "supply_range_provenance": "vetted_source" },
-        { "name": "GND", "role": "ground" },
-        { "name": "SIG", "role": "analog_out" }
+        {
+          "name": "VCC",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 3.3,
+            "max": 5.0
+          },
+          "supply_range_provenance": "vetted_source"
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "SIG",
+          "role": "analog_out"
+        }
       ],
       "facts": {
-        "dimensions_mm": { "value": "30 x 20", "provenance": "vetted_source", "source": "https://www.dfrobot.com/product-798.html" },
-        "quiescent_current_a": { "value": "unknown", "provenance": "unknown", "note": "Not published; needed for any standby-life estimate" }
+        "dimensions_mm": {
+          "value": "30 x 20",
+          "provenance": "vetted_source",
+          "source": "https://www.dfrobot.com/product-798.html"
+        },
+        "quiescent_current_a": {
+          "value": "unknown",
+          "provenance": "unknown",
+          "note": "Not published; needed for any standby-life estimate"
+        },
+        "onboard_decoupling": {
+          "value": "unknown",
+          "provenance": "unknown",
+          "note": "Simple Gravity board; local supply decoupling not documented"
+        }
       },
-      "capabilities": ["water_detection", "analog_output"],
-      "sources": ["https://www.dfrobot.com/product-798.html"],
+      "capabilities": [
+        "water_detection",
+        "analog_output"
+      ],
+      "sources": [
+        "https://www.dfrobot.com/product-798.html"
+      ],
       "notes": "Prototype leak sensor; does not by itself validate year-scale battery life or corrosion behavior."
+    },
+    {
+      "id": "cap.ceramic_100nf_class",
+      "kind": "capacitor_class",
+      "label": "0.1 uF ceramic, 50 V (class)",
+      "manufacturer": null,
+      "mpn": null,
+      "verification_status": "constrained_component_class",
+      "prototype_interface": {
+        "type": "through_hole_radial",
+        "requires_light_soldering": false
+      },
+      "breadboard_usable": true,
+      "pins": [
+        {
+          "name": "+",
+          "role": "cap_pos"
+        },
+        {
+          "name": "-",
+          "role": "ground"
+        }
+      ],
+      "facts": {
+        "capacitance_uf": {
+          "value": 0.1,
+          "provenance": "fixture_assumption",
+          "note": "Conventional local decoupling value"
+        },
+        "voltage_rating_v": {
+          "value": 50,
+          "provenance": "fixture_assumption"
+        }
+      },
+      "capabilities": [
+        "decoupling"
+      ],
+      "board_features": [],
+      "sources": []
+    },
+    {
+      "id": "driver.toshiba_tb6612fng_bare_class",
+      "kind": "motor_driver",
+      "label": "Toshiba TB6612FNG bare IC (SSOP-24)",
+      "manufacturer": "Toshiba",
+      "mpn": "TB6612FNG",
+      "verification_status": "constrained_component_class",
+      "prototype_interface": {
+        "type": "bare_smd_ssop24",
+        "requires_light_soldering": true
+      },
+      "breadboard_usable": false,
+      "pins": [
+        {
+          "name": "VMOT",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 4.5,
+            "max": 13.5
+          },
+          "supply_range_provenance": "vetted_source",
+          "note": "Datasheet pin VM1/VM2/VM3"
+        },
+        {
+          "name": "VCC",
+          "role": "supply_in",
+          "supply_range": {
+            "min": 2.7,
+            "max": 5.5
+          },
+          "supply_range_provenance": "vetted_source"
+        },
+        {
+          "name": "GND",
+          "role": "ground"
+        },
+        {
+          "name": "STBY",
+          "role": "enable_in",
+          "note": "Active high. No pull-up on the bare IC; must be driven."
+        },
+        {
+          "name": "PWMA",
+          "role": "logic_in",
+          "pwm_required": true,
+          "channel": "A"
+        },
+        {
+          "name": "AIN1",
+          "role": "logic_in",
+          "channel": "A"
+        },
+        {
+          "name": "AIN2",
+          "role": "logic_in",
+          "channel": "A"
+        },
+        {
+          "name": "PWMB",
+          "role": "logic_in",
+          "pwm_required": true,
+          "channel": "B"
+        },
+        {
+          "name": "BIN1",
+          "role": "logic_in",
+          "channel": "B"
+        },
+        {
+          "name": "BIN2",
+          "role": "logic_in",
+          "channel": "B"
+        },
+        {
+          "name": "MOTORA1",
+          "role": "motor_out",
+          "channel": "A",
+          "note": "Datasheet AO1"
+        },
+        {
+          "name": "MOTORA2",
+          "role": "motor_out",
+          "channel": "A",
+          "note": "Datasheet AO2"
+        },
+        {
+          "name": "MOTORB1",
+          "role": "motor_out",
+          "channel": "B",
+          "note": "Datasheet BO1"
+        },
+        {
+          "name": "MOTORB2",
+          "role": "motor_out",
+          "channel": "B",
+          "note": "Datasheet BO2"
+        }
+      ],
+      "facts": {
+        "continuous_current_per_channel_a": {
+          "value": 1.2,
+          "provenance": "vetted_source",
+          "source": "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf"
+        },
+        "peak_current_per_channel_a": {
+          "value": 3.2,
+          "provenance": "vetted_source",
+          "source": "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf"
+        },
+        "h_bridge_channels": {
+          "value": 2,
+          "provenance": "vetted_source",
+          "source": "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf"
+        },
+        "requires_external_decoupling": {
+          "value": true,
+          "provenance": "vetted_source",
+          "source": "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf",
+          "note": "Datasheet application circuit shows capacitors on VM and VCC"
+        }
+      },
+      "capabilities": [
+        "dc_motor_drive",
+        "pwm_input"
+      ],
+      "board_features": [
+        "dual_h_bridge"
+      ],
+      "sources": [
+        "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf"
+      ],
+      "notes": "Same electrical limits as the Adafruit breakout, none of the board conveniences: no STBY pull-up, no decoupling, not breadboard-usable. Pin names mirror the breakout so a design can swap between them."
     }
   ]
 }

@@ -17,6 +17,6 @@ export const driver_load_current: Rule = {
       else if (stall.value > 0.8 * limit.value) findings.push(finding({ ruleId: 'driver_load_current', basis: 'component_spec', severity: 'warning', category: 'current', title: `${m.label} stall ${fmtA(stall.value)} is within 20 percent of the driver limit`, affected: [{ instanceId: m.id }], evidence: ev, consequence: 'Little margin for stall events.', remediation: ['Consider a driver with more headroom'] }));
       else notes.push(`${m.label} ${fmtA(stall.value)} of ${fmtA(limit.value)}`);
     }
-    return { findings, coverage: [{ dimension: 'driver_motor_current', group: 'electrical', status: checked ? 'checked' : 'not_evaluated', note: notes.join('; ') || 'No motor/driver pairs' }] };
+    return { findings, coverage: motors.length ? [{ dimension: 'driver_motor_current', group: 'electrical', status: checked ? 'checked' : 'partial', note: notes.join('; ') || 'No motor/driver pairs resolved' }] : [] };
   },
 };

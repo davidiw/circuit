@@ -12,10 +12,13 @@ export const FINDING_CATEGORIES = [
 export const COVERAGE_DIMENSIONS = {
   electrical: [
     'power_source', 'signal_reference', 'rail_voltages', 'driver_control_state', 'motor_wiring', 'driver_motor_current',
-    'reverse_polarity', 'regulator_headroom', 'regulator_current_thermal', 'bulk_capacitance', 'transients_emi', 'thermal', 'physical_layout',
+    'reverse_polarity', 'regulator_headroom', 'decoupling', 'regulator_current_thermal', 'bulk_capacitance', 'transients_emi', 'thermal', 'physical_layout',
   ],
   product: ['product_requirements', 'runtime', 'size_envelope', 'streaming_latency', 'standby_life'],
 } as const;
+
+/** Dimensions relevant to every design; listed as not evaluated when no analyzer covers them. */
+export const UNIVERSAL_DIMENSIONS = ['transients_emi', 'thermal', 'physical_layout'] as const;
 
 /** Facts an analyzer depends on, per component kind. Missing ones make the registry test flag the entry as incomplete. */
 export const EXPECTED_FACTS: Record<string, string[]> = {

@@ -129,7 +129,8 @@ export const Finding = z.object({
 export type Finding = z.infer<typeof Finding>;
 
 export const CoverageStatus = z.enum(['checked', 'partial', 'estimated', 'heuristic', 'not_evaluated', 'unsupported']);
-export const CoverageEntry = z.object({ dimension: z.string(), group: z.enum(['electrical', 'product']), status: CoverageStatus, note: z.string() });
+export const CoverageOutcome = z.enum(['pass', 'violation', 'warning', 'unknown']);
+export const CoverageEntry = z.object({ dimension: z.string(), group: z.enum(['electrical', 'product']), status: CoverageStatus, note: z.string(), outcome: CoverageOutcome.optional(), findingCount: z.number().optional() });
 export type CoverageEntry = z.infer<typeof CoverageEntry>;
 
 export const EvaluationResult = z.object({

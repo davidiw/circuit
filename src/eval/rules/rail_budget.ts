@@ -5,7 +5,8 @@ export const rail_budget: Rule = {
   id: 'rail_budget', origin: 'deterministic', dimensions: ['regulator_current_thermal'],
   analyze(ctx) {
     const regs = ctx.project.instances.filter((i) => ctx.comp(i.id)?.kind !== 'battery_class' && (ctx.fact(i.id, 'continuous_output_a') || ctx.fact(i.id, 'continuous_current_a')));
-    if (!ctx.hasPower || !regs.length) return { findings: [], coverage: [{ dimension: 'regulator_current_thermal', group: 'electrical', status: 'not_evaluated', note: 'No regulator or supply with a current figure' }] };
+    if (!regs.length) return { findings: [], coverage: [] };
+    if (!ctx.hasPower) return { findings: [], coverage: [{ dimension: 'regulator_current_thermal', group: 'electrical', status: 'not_evaluated', note: 'No power source' }] };
     const findings = [] as ReturnType<typeof finding>[];
     const cov = [] as { dimension: string; group: 'electrical'; status: 'checked' | 'partial'; note: string }[];
     for (const reg of regs) {

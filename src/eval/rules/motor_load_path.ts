@@ -38,6 +38,6 @@ export const motor_load_path: Rule = {
         }));
       }
     }
-    return { findings, coverage: [{ dimension: 'motor_wiring', group: 'electrical', status: motors.length ? 'checked' : 'not_evaluated', note: motors.length ? `${motors.length} motors checked` : 'No motors in design' }] };
+    return { findings, coverage: motors.length ? [{ dimension: 'motor_wiring', group: 'electrical', status: 'checked', note: `${motors.length} motors checked` }] : [] };
   },
 };

@@ -5,7 +5,7 @@ export const reverse_polarity_strategy: Rule = {
   analyze(ctx) {
     const cov = (status: 'checked' | 'not_evaluated', note: string) => [{ dimension: 'reverse_polarity', group: 'electrical' as const, status, note }];
     if (!ctx.hasPower) return { findings: [], coverage: cov('not_evaluated', 'No power source') };
-    if (ctx.project.power.mode !== 'battery') return { findings: [], coverage: cov('checked', 'Continuous source; user-reversible polarity not applicable') };
+    if (ctx.project.power.mode !== 'battery') return { findings: [], coverage: [] };
     const src = ctx.project.power.sourceInstance!;
     const comp = ctx.comp(src)!;
     const builtIn = comp.facts['built_in_reverse_protection'];

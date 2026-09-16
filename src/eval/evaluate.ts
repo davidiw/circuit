@@ -1,5 +1,5 @@
 import type { Project, Registry, EvaluationResult, Finding, CoverageEntry } from '../model/schema';
-import { COVERAGE_DIMENSIONS } from '../model/vocab';
+import { UNIVERSAL_DIMENSIONS } from '../model/vocab';
 import { Ctx, resetIds, type Rule } from './context';
 import { stateHash } from './hash';
 import { power_source_present } from './rules/power_source_present';
@@ -14,11 +14,12 @@ import { requirement_capability } from './rules/requirement_capability';
 import { driver_load_current } from './rules/driver_load_current';
 import { rail_budget } from './rules/rail_budget';
 import { runtime_estimate } from './rules/runtime_estimate';
+import { decoupling } from './rules/decoupling';
 
 export const RULES: Rule[] = [
   power_source_present, signal_reference, supply_in_range, motor_load_path, driver_enable_state,
   reverse_polarity_strategy, regulator_headroom, bulk_capacitance, requirement_capability,
-  driver_load_current, rail_budget, runtime_estimate,
+  driver_load_current, rail_budget, runtime_estimate, decoupling,
 ];
 
 const SEVERITY_ORDER: Record<Finding['severity'], number> = { violation: 0, warning: 1, unknown: 2, optimization: 3, unsupported: 4 };
@@ -28,10 +29,16 @@ export function evaluate(project: Project, registry: Registry, rules: Rule[] = R
   resetIds();
   const ctx = new Ctx(project, registry);
   const findings: Finding[] = []; const coverage: CoverageEntry[] = [];
-  for (const rule of rules) { const r = rule.analyze(ctx); findings.push(...r.findings); coverage.push(...r.coverage); }
-  // Every known electrical dimension no analyzer claimed reads not evaluated. Never silently absent.
+  for (const rule of rules) {
+    const r = rule.analyze(ctx);
+    findings.push(...r.findings);
+    // Outcome per dimension: the worst severity among the analyzer's findings, so a "checked" row can still read as failed.
+    const worst = r.findings.reduce<CoverageEntry['outcome']>((w, f) => (SEVERITY_ORDER[f.severity] < SEVERITY_ORDER[(w ?? 'unknown') as Finding['severity']] || !w ? (f.severity === 'optimization' || f.severity === 'unsupported' ? w : f.severity) : w), undefined);
+    for (const c of r.coverage) coverage.push({ ...c, outcome: c.status === 'not_evaluated' || c.status === 'unsupported' ? undefined : (worst ?? 'pass'), findingCount: r.findings.length });
+  }
+  // Dimensions that apply to every design but have no analyzer yet read not evaluated. Others appear only when relevant.
   const seen = new Set(coverage.map((c) => c.dimension));
-  for (const d of COVERAGE_DIMENSIONS.electrical) if (!seen.has(d)) coverage.push({ dimension: d, group: 'electrical', status: 'not_evaluated', note: 'No analyzer covers this dimension yet' });
+  for (const d of UNIVERSAL_DIMENSIONS) if (!seen.has(d)) coverage.push({ dimension: d, group: 'electrical', status: 'not_evaluated', note: 'No analyzer covers this dimension yet' });
   findings.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
   return { status: ctx.hasPower ? 'complete' : 'incomplete', findings, coverage, stateHash: stateHash(project), evaluatedAt: new Date().toISOString() };
 }

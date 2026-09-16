@@ -1,6 +1,7 @@
 import { finding, type Rule } from '../context';
 import type { CoverageEntry, Requirement } from '../../model/schema';
 
+const INFORMATIONAL_KINDS = ['build_mode', 'exclusion'];
 const DIM_FOR_KIND: Record<string, string> = { envelope: 'size_envelope', streaming_latency: 'streaming_latency', standby_life: 'standby_life' };
 
 /** Product-level check: does the architecture plausibly satisfy each evaluable requirement? Independent of electrical coherence. */
@@ -14,7 +15,7 @@ export const requirement_capability: Rule = {
         affected: [], evidence: evidence.map((e) => ({ ...e, provenance: 'vetted_source' as const })), consequence, remediation, missing: [r.label] }));
     let checked = 0;
     for (const r of ctx.project.requirements) {
-      if (!r.evaluable) { coverage.push({ dimension: DIM_FOR_KIND[r.kind] ?? r.kind, group: 'product', status: 'not_evaluated', note: r.label }); continue; }
+      if (!r.evaluable) { if (!INFORMATIONAL_KINDS.includes(r.kind)) coverage.push({ dimension: DIM_FOR_KIND[r.kind] ?? r.kind, group: 'product', status: 'not_evaluated', note: r.label }); continue; }
       switch (r.kind) {
         case 'capability': {
           checked++;

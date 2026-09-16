@@ -5,7 +5,7 @@ export const bulk_capacitance: Rule = {
   id: 'bulk_capacitance', origin: 'deterministic', dimensions: ['bulk_capacitance'],
   analyze(ctx) {
     const drivers = ctx.instancesOfKind('motor_driver');
-    if (drivers.length === 0) return { findings: [], coverage: [{ dimension: 'bulk_capacitance', group: 'electrical', status: 'not_evaluated', note: 'No motor driver in design' }] };
+    if (drivers.length === 0) return { findings: [], coverage: [] };
     const target = ctx.assumptionNum('motor_bulk_cap_uf');
     const findings = [] as ReturnType<typeof finding>[];
     const notes: string[] = [];

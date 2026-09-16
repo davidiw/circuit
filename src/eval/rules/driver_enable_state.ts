@@ -45,6 +45,6 @@ export const driver_enable_state: Rule = {
       }
     }
     const any = ctx.project.instances.some((i) => ctx.comp(i.id)?.pins.some((p) => p.role === 'enable_in'));
-    return { findings, coverage: [{ dimension: 'driver_control_state', group: 'electrical', status: any ? 'checked' : 'not_evaluated', note: notes.join('; ') || (any ? 'enable pins checked' : 'No enable inputs in design') }] };
+    return { findings, coverage: any ? [{ dimension: 'driver_control_state', group: 'electrical', status: 'checked', note: notes.join('; ') || 'enable pins checked' }] : [] };
   },
 };

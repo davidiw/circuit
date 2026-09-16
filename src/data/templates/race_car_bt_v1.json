@@ -6,57 +6,458 @@
   "source": "template",
   "status": "golden_candidate",
   "requirements": [
-    { "id": "ble", "kind": "capability", "label": "Bluetooth LE control", "value": "bluetooth_le", "evaluable": true },
-    { "id": "motors", "kind": "motor_count", "label": "Two independently controlled brushed DC motors", "value": 2, "evaluable": true },
-    { "id": "fwd_rev", "kind": "h_bridge_per_motor", "label": "Forward and reverse per motor", "value": true, "evaluable": true },
-    { "id": "pwm", "kind": "pwm_speed_control", "label": "PWM speed control", "value": true, "evaluable": true },
-    { "id": "battery", "kind": "power_mode", "label": "Battery powered", "value": "battery", "evaluable": true },
-    { "id": "runtime", "kind": "runtime_minutes", "label": "15 to 30 minute runtime", "value": { "min": 15, "max": 30 }, "evaluable": true },
-    { "id": "envelope", "kind": "envelope", "label": "About 6 in x 6 in overall", "value": { "x_in": 6, "y_in": 6 }, "evaluable": false },
-    { "id": "proto", "kind": "build_mode", "label": "Hobbyist prototype build with boards and modules", "value": "hobby_prototype", "evaluable": false },
-    { "id": "no_camera", "kind": "exclusion", "label": "No camera, no Wi-Fi requirement", "evaluable": false }
+    {
+      "id": "ble",
+      "kind": "capability",
+      "label": "Bluetooth LE control",
+      "value": "bluetooth_le",
+      "evaluable": true
+    },
+    {
+      "id": "motors",
+      "kind": "motor_count",
+      "label": "Two independently controlled brushed DC motors",
+      "value": 2,
+      "evaluable": true
+    },
+    {
+      "id": "fwd_rev",
+      "kind": "h_bridge_per_motor",
+      "label": "Forward and reverse per motor",
+      "value": true,
+      "evaluable": true
+    },
+    {
+      "id": "pwm",
+      "kind": "pwm_speed_control",
+      "label": "PWM speed control",
+      "value": true,
+      "evaluable": true
+    },
+    {
+      "id": "battery",
+      "kind": "power_mode",
+      "label": "Battery powered",
+      "value": "battery",
+      "evaluable": true
+    },
+    {
+      "id": "runtime",
+      "kind": "runtime_minutes",
+      "label": "15 to 30 minute runtime",
+      "value": {
+        "min": 15,
+        "max": 30
+      },
+      "evaluable": true
+    },
+    {
+      "id": "envelope",
+      "kind": "envelope",
+      "label": "About 6 in x 6 in overall",
+      "value": {
+        "x_in": 6,
+        "y_in": 6
+      },
+      "evaluable": false
+    },
+    {
+      "id": "proto",
+      "kind": "build_mode",
+      "label": "Hobbyist prototype build with boards and modules",
+      "value": "hobby_prototype",
+      "evaluable": false
+    },
+    {
+      "id": "no_camera",
+      "kind": "exclusion",
+      "label": "No camera, no Wi-Fi requirement",
+      "evaluable": false
+    }
   ],
-  "power": { "sourceInstance": "battery", "mode": "battery" },
+  "power": {
+    "sourceInstance": "battery",
+    "mode": "battery"
+  },
   "instances": [
-    { "id": "battery", "registryId": "battery.3s_lipo_1000_1500mah_class", "label": "3S LiPo pack", "props": {} },
-    { "id": "diode", "registryId": "diode.onsemi_1n5822", "label": "Reverse-polarity Schottky", "props": {} },
-    { "id": "buck", "registryId": "regulator.lm2596_adjustable_module_common", "label": "LM2596 buck module", "props": { "outputV": { "value": 5.0, "provenance": "fixture_assumption", "note": "Single 5 V rail shared by the XIAO VBUS input and the motor driver" } } },
-    { "id": "bulk_cap", "registryId": "cap.electrolytic_470uf_class", "label": "Motor rail bulk cap", "props": {} },
-    { "id": "mcu", "registryId": "board.seeed_xiao_esp32s3", "label": "XIAO ESP32-S3", "props": {} },
-    { "id": "driver", "registryId": "driver.adafruit_tb6612_breakout", "label": "TB6612 motor driver", "props": {} },
-    { "id": "motor_left", "registryId": "motor.pololu_2365", "label": "Left motor", "props": {} },
-    { "id": "motor_right", "registryId": "motor.pololu_2365", "label": "Right motor", "props": {} }
+    {
+      "id": "battery",
+      "registryId": "battery.3s_lipo_1000_1500mah_class",
+      "label": "3S LiPo pack",
+      "props": {}
+    },
+    {
+      "id": "diode",
+      "registryId": "diode.onsemi_1n5822",
+      "label": "Reverse-polarity Schottky",
+      "props": {}
+    },
+    {
+      "id": "buck",
+      "registryId": "regulator.lm2596_adjustable_module_common",
+      "label": "LM2596 buck module",
+      "props": {
+        "outputV": {
+          "value": 5.0,
+          "provenance": "fixture_assumption",
+          "note": "Single 5 V rail shared by the XIAO VBUS input and the motor driver"
+        }
+      }
+    },
+    {
+      "id": "bulk_cap",
+      "registryId": "cap.electrolytic_470uf_class",
+      "label": "Motor rail bulk cap",
+      "props": {}
+    },
+    {
+      "id": "mcu",
+      "registryId": "board.seeed_xiao_esp32s3",
+      "label": "XIAO ESP32-S3",
+      "props": {}
+    },
+    {
+      "id": "driver",
+      "registryId": "driver.adafruit_tb6612_breakout",
+      "label": "TB6612 motor driver",
+      "props": {}
+    },
+    {
+      "id": "motor_left",
+      "registryId": "motor.pololu_2365",
+      "label": "Left motor",
+      "props": {}
+    },
+    {
+      "id": "motor_right",
+      "registryId": "motor.pololu_2365",
+      "label": "Right motor",
+      "props": {}
+    }
   ],
   "nets": [
-    { "id": "BATT_PLUS", "name": "BATT+", "kind": "power", "pins": [ { "instance": "battery", "pin": "+" }, { "instance": "diode", "pin": "A" } ] },
-    { "id": "VIN_PROT", "name": "VIN (protected)", "kind": "power", "pins": [ { "instance": "diode", "pin": "K" }, { "instance": "buck", "pin": "IN+" } ] },
-    { "id": "GND", "name": "GND", "kind": "ground", "pins": [
-      { "instance": "battery", "pin": "-" }, { "instance": "buck", "pin": "IN-" }, { "instance": "buck", "pin": "OUT-" },
-      { "instance": "bulk_cap", "pin": "-" }, { "instance": "mcu", "pin": "GND" }, { "instance": "driver", "pin": "GND" } ] },
-    { "id": "RAIL_5V", "name": "5V", "kind": "power", "pins": [
-      { "instance": "buck", "pin": "OUT+" }, { "instance": "bulk_cap", "pin": "+" }, { "instance": "mcu", "pin": "5V" }, { "instance": "driver", "pin": "VMOT" } ] },
-    { "id": "RAIL_3V3", "name": "3V3", "kind": "power", "pins": [ { "instance": "mcu", "pin": "3V3" }, { "instance": "driver", "pin": "VCC" } ] },
-    { "id": "CTRL_PWMA", "name": "PWMA", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D0" }, { "instance": "driver", "pin": "PWMA" } ] },
-    { "id": "CTRL_AIN1", "name": "AIN1", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D1" }, { "instance": "driver", "pin": "AIN1" } ] },
-    { "id": "CTRL_AIN2", "name": "AIN2", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D2" }, { "instance": "driver", "pin": "AIN2" } ] },
-    { "id": "CTRL_PWMB", "name": "PWMB", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D3" }, { "instance": "driver", "pin": "PWMB" } ] },
-    { "id": "CTRL_BIN1", "name": "BIN1", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D4" }, { "instance": "driver", "pin": "BIN1" } ] },
-    { "id": "CTRL_BIN2", "name": "BIN2", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D5" }, { "instance": "driver", "pin": "BIN2" } ] },
-    { "id": "STBY", "name": "STBY", "kind": "signal", "pins": [ { "instance": "mcu", "pin": "D6" }, { "instance": "driver", "pin": "STBY" } ] },
-    { "id": "MOTA_1", "name": "MOTA1", "kind": "motor", "pins": [ { "instance": "driver", "pin": "MOTORA1" }, { "instance": "motor_left", "pin": "M+" } ] },
-    { "id": "MOTA_2", "name": "MOTA2", "kind": "motor", "pins": [ { "instance": "driver", "pin": "MOTORA2" }, { "instance": "motor_left", "pin": "M-" } ] },
-    { "id": "MOTB_1", "name": "MOTB1", "kind": "motor", "pins": [ { "instance": "driver", "pin": "MOTORB1" }, { "instance": "motor_right", "pin": "M+" } ] },
-    { "id": "MOTB_2", "name": "MOTB2", "kind": "motor", "pins": [ { "instance": "driver", "pin": "MOTORB2" }, { "instance": "motor_right", "pin": "M-" } ] }
+    {
+      "id": "BATT_PLUS",
+      "name": "BATT+",
+      "kind": "power",
+      "pins": [
+        {
+          "instance": "battery",
+          "pin": "+"
+        },
+        {
+          "instance": "diode",
+          "pin": "A"
+        }
+      ]
+    },
+    {
+      "id": "VIN_PROT",
+      "name": "VIN (protected)",
+      "kind": "power",
+      "pins": [
+        {
+          "instance": "diode",
+          "pin": "K"
+        },
+        {
+          "instance": "buck",
+          "pin": "IN+"
+        }
+      ]
+    },
+    {
+      "id": "GND",
+      "name": "GND",
+      "kind": "ground",
+      "pins": [
+        {
+          "instance": "battery",
+          "pin": "-"
+        },
+        {
+          "instance": "buck",
+          "pin": "IN-"
+        },
+        {
+          "instance": "buck",
+          "pin": "OUT-"
+        },
+        {
+          "instance": "bulk_cap",
+          "pin": "-"
+        },
+        {
+          "instance": "mcu",
+          "pin": "GND"
+        },
+        {
+          "instance": "driver",
+          "pin": "GND"
+        }
+      ]
+    },
+    {
+      "id": "RAIL_5V",
+      "name": "5V",
+      "kind": "power",
+      "pins": [
+        {
+          "instance": "buck",
+          "pin": "OUT+"
+        },
+        {
+          "instance": "bulk_cap",
+          "pin": "+"
+        },
+        {
+          "instance": "mcu",
+          "pin": "5V"
+        },
+        {
+          "instance": "driver",
+          "pin": "VMOT"
+        }
+      ]
+    },
+    {
+      "id": "RAIL_3V3",
+      "name": "3V3",
+      "kind": "power",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "3V3"
+        },
+        {
+          "instance": "driver",
+          "pin": "VCC"
+        }
+      ]
+    },
+    {
+      "id": "CTRL_PWMA",
+      "name": "PWMA",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D0"
+        },
+        {
+          "instance": "driver",
+          "pin": "PWMA"
+        }
+      ]
+    },
+    {
+      "id": "CTRL_AIN1",
+      "name": "AIN1",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D1"
+        },
+        {
+          "instance": "driver",
+          "pin": "AIN1"
+        }
+      ]
+    },
+    {
+      "id": "CTRL_AIN2",
+      "name": "AIN2",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D2"
+        },
+        {
+          "instance": "driver",
+          "pin": "AIN2"
+        }
+      ]
+    },
+    {
+      "id": "CTRL_PWMB",
+      "name": "PWMB",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D3"
+        },
+        {
+          "instance": "driver",
+          "pin": "PWMB"
+        }
+      ]
+    },
+    {
+      "id": "CTRL_BIN1",
+      "name": "BIN1",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D4"
+        },
+        {
+          "instance": "driver",
+          "pin": "BIN1"
+        }
+      ]
+    },
+    {
+      "id": "CTRL_BIN2",
+      "name": "BIN2",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D5"
+        },
+        {
+          "instance": "driver",
+          "pin": "BIN2"
+        }
+      ]
+    },
+    {
+      "id": "STBY",
+      "name": "STBY",
+      "kind": "signal",
+      "pins": [
+        {
+          "instance": "mcu",
+          "pin": "D6"
+        },
+        {
+          "instance": "driver",
+          "pin": "STBY"
+        }
+      ]
+    },
+    {
+      "id": "MOTA_1",
+      "name": "MOTA1",
+      "kind": "motor",
+      "pins": [
+        {
+          "instance": "driver",
+          "pin": "MOTORA1"
+        },
+        {
+          "instance": "motor_left",
+          "pin": "M+"
+        }
+      ]
+    },
+    {
+      "id": "MOTA_2",
+      "name": "MOTA2",
+      "kind": "motor",
+      "pins": [
+        {
+          "instance": "driver",
+          "pin": "MOTORA2"
+        },
+        {
+          "instance": "motor_left",
+          "pin": "M-"
+        }
+      ]
+    },
+    {
+      "id": "MOTB_1",
+      "name": "MOTB1",
+      "kind": "motor",
+      "pins": [
+        {
+          "instance": "driver",
+          "pin": "MOTORB1"
+        },
+        {
+          "instance": "motor_right",
+          "pin": "M+"
+        }
+      ]
+    },
+    {
+      "id": "MOTB_2",
+      "name": "MOTB2",
+      "kind": "motor",
+      "pins": [
+        {
+          "instance": "driver",
+          "pin": "MOTORB2"
+        },
+        {
+          "instance": "motor_right",
+          "pin": "M-"
+        }
+      ]
+    }
   ],
   "assumptions": [
-    { "key": "battery_class", "value": "3S LiPo, 1000-1500 mAh", "reason": "3S instead of the handoff's 2S: with a series Schottky and a 5 V LM2596 output, 2S leaves under 1 V of regulator headroom at end of discharge. 3S keeps about 4 V. Exact pack and connector deferred.", "source": "template", "status": "active" },
-    { "key": "reverse_polarity_strategy", "value": "series 1N5822 Schottky before the buck", "reason": "Simple, through-hole, protects the buck and everything downstream; costs about 0.45 V that 3S can afford", "source": "template", "status": "active" },
-    { "key": "motor_rail_v", "value": 5.0, "reason": "One buck output feeds both the XIAO 5V input and the driver motor rail. Motors are 6 V nominal, so this trades roughly 17 percent top speed for one regulator.", "source": "template", "status": "active" },
-    { "key": "motor_bulk_cap_uf", "value": 470, "reason": "Heuristic bulk capacitance on the shared 5 V rail to soften motor start and stall transients. Not a component-spec invariant.", "source": "template", "status": "active" },
-    { "key": "avg_motor_current_a", "value": 0.25, "reason": "Per motor, averaged over a mixed drive cycle at about 40 percent duty. Runtime estimate depends on this.", "source": "template", "status": "active" },
-    { "key": "mcu_avg_current_a", "value": 0.12, "reason": "XIAO ESP32-S3 with BLE active, no Wi-Fi", "source": "template", "status": "active" },
-    { "key": "buck_efficiency", "value": 0.85, "reason": "Typical for an LM2596 module at this ratio and load", "source": "template", "status": "active" },
-    { "key": "gpio_assignment", "value": "D0-D5 to PWMA, AIN1, AIN2, PWMB, BIN1, BIN2; D6 to STBY", "reason": "Arbitrary; any PWM-capable XIAO GPIO works", "source": "template", "status": "active" }
+    {
+      "key": "battery_class",
+      "value": "3S LiPo, 1000-1500 mAh",
+      "reason": "3S instead of the handoff's 2S: with a series Schottky and a 5 V LM2596 output, 2S leaves under 1 V of regulator headroom at end of discharge. 3S keeps about 4 V. Exact pack and connector deferred.",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "reverse_polarity_strategy",
+      "value": "series 1N5822 Schottky before the buck",
+      "reason": "Simple, through-hole, protects the buck and everything downstream; costs about 0.45 V that 3S can afford",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "motor_rail_v",
+      "value": 5.0,
+      "reason": "One buck output feeds both the XIAO 5V input and the driver motor rail. Motors are 6 V nominal, so this trades roughly 17 percent top speed for one regulator.",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "motor_bulk_cap_uf",
+      "value": 470,
+      "reason": "Heuristic bulk capacitance on the shared 5 V rail to soften motor start and stall transients. Not a component-spec invariant.",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "avg_motor_current_a",
+      "value": 0.25,
+      "reason": "Per motor, averaged over a mixed drive cycle at about 40 percent duty. Runtime estimate depends on this.",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "mcu_avg_current_a",
+      "value": 0.12,
+      "reason": "XIAO ESP32-S3 with BLE active, no Wi-Fi",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "buck_efficiency",
+      "value": 0.85,
+      "reason": "Typical for an LM2596 module at this ratio and load",
+      "source": "template",
+      "status": "active"
+    },
+    {
+      "key": "gpio_assignment",
+      "value": "D0-D5 to PWMA, AIN1, AIN2, PWMB, BIN1, BIN2; D6 to STBY",
+      "reason": "Arbitrary; any PWM-capable XIAO GPIO works",
+      "source": "template",
+      "status": "active"
+    }
   ],
   "overrides": [],
   "unresolved": [],
@@ -66,91 +467,281 @@
       "id": "remove_power_source",
       "label": "Remove the battery",
       "description": "Deletes the battery instance and clears the power source. The project becomes incomplete and voltage-dependent rules stop evaluating.",
-      "ops": [ { "op": "clear_power_source" }, { "op": "remove_instance", "instance": "battery" } ],
-      "expected": [ { "ruleId": "power_source_present", "severity": "violation", "category": "power" } ],
+      "ops": [
+        {
+          "op": "clear_power_source"
+        },
+        {
+          "op": "remove_instance",
+          "instance": "battery"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "power_source_present",
+          "severity": "violation",
+          "category": "power"
+        }
+      ],
       "expectStatus": "incomplete"
     },
     {
       "id": "split_driver_reference",
       "label": "Break the driver's ground",
       "description": "Moves the driver GND pin onto its own net. The driver still receives 5 V and control signals but shares no reference with the XIAO.",
-      "ops": [ { "op": "move_pin", "instance": "driver", "pin": "GND", "net": "GND_DRIVER_ONLY" } ],
-      "expected": [ { "ruleId": "signal_reference", "severity": "violation", "category": "reference", "affectedInstance": "driver" } ]
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "driver",
+          "pin": "GND",
+          "net": "GND_DRIVER_ONLY"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "signal_reference",
+          "severity": "violation",
+          "category": "reference",
+          "affectedInstance": "driver"
+        }
+      ]
     },
     {
       "id": "force_stby_low",
       "label": "Tie STBY to ground",
       "description": "Moves the driver STBY pin from the XIAO GPIO to GND. The driver is held in standby.",
-      "ops": [ { "op": "move_pin", "instance": "driver", "pin": "STBY", "net": "GND" } ],
-      "expected": [ { "ruleId": "driver_enable_state", "severity": "violation", "category": "control_state", "affectedInstance": "driver" } ]
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "driver",
+          "pin": "STBY",
+          "net": "GND"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "driver_enable_state",
+          "severity": "violation",
+          "category": "control_state",
+          "affectedInstance": "driver"
+        }
+      ]
     },
     {
       "id": "disconnect_stby",
       "label": "Leave STBY unconnected",
       "description": "Disconnects STBY entirely. On this exact Adafruit breakout the 10 kOhm pull-up keeps the driver enabled, so no finding is expected.",
-      "ops": [ { "op": "move_pin", "instance": "driver", "pin": "STBY", "net": null } ],
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "driver",
+          "pin": "STBY",
+          "net": null
+        }
+      ],
       "expected": [],
-      "expectAbsent": ["driver_enable_state"]
+      "expectAbsent": [
+        "driver_enable_state"
+      ]
     },
     {
       "id": "connect_motor_to_mcu",
       "label": "Wire the left motor to XIAO GPIO",
       "description": "Moves the left motor off the driver and onto XIAO D7 and D8.",
       "ops": [
-        { "op": "move_pin", "instance": "motor_left", "pin": "M+", "net": "MCU_DRIVE_1" },
-        { "op": "move_pin", "instance": "mcu", "pin": "D7", "net": "MCU_DRIVE_1" },
-        { "op": "move_pin", "instance": "motor_left", "pin": "M-", "net": "MCU_DRIVE_2" },
-        { "op": "move_pin", "instance": "mcu", "pin": "D8", "net": "MCU_DRIVE_2" }
+        {
+          "op": "move_pin",
+          "instance": "motor_left",
+          "pin": "M+",
+          "net": "MCU_DRIVE_1"
+        },
+        {
+          "op": "move_pin",
+          "instance": "mcu",
+          "pin": "D7",
+          "net": "MCU_DRIVE_1"
+        },
+        {
+          "op": "move_pin",
+          "instance": "motor_left",
+          "pin": "M-",
+          "net": "MCU_DRIVE_2"
+        },
+        {
+          "op": "move_pin",
+          "instance": "mcu",
+          "pin": "D8",
+          "net": "MCU_DRIVE_2"
+        }
       ],
-      "expected": [ { "ruleId": "motor_load_path", "severity": "violation", "category": "load_path", "affectedInstance": "motor_left" } ]
+      "expected": [
+        {
+          "ruleId": "motor_load_path",
+          "severity": "violation",
+          "category": "load_path",
+          "affectedInstance": "motor_left"
+        }
+      ]
     },
     {
       "id": "set_motor_rail_3v3",
       "label": "Set the buck output to 3.3 V",
       "description": "Changes the buck module output. The driver motor supply minimum is 4.5 V and the XIAO 5V input expects about 5 V.",
-      "ops": [ { "op": "set_prop", "instance": "buck", "prop": "outputV", "value": 3.3, "provenance": "user" } ],
+      "ops": [
+        {
+          "op": "set_prop",
+          "instance": "buck",
+          "prop": "outputV",
+          "value": 3.3,
+          "provenance": "user"
+        }
+      ],
       "expected": [
-        { "ruleId": "supply_in_range", "severity": "violation", "category": "voltage", "affectedInstance": "driver" },
-        { "ruleId": "supply_in_range", "severity": "violation", "category": "voltage", "affectedInstance": "mcu" }
+        {
+          "ruleId": "supply_in_range",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "driver"
+        },
+        {
+          "ruleId": "supply_in_range",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "mcu"
+        }
       ]
     },
     {
       "id": "set_motor_rail_14v",
       "label": "Set the buck output to 14 V",
       "description": "Exceeds the driver's 13.5 V motor supply maximum and the XIAO 5V input.",
-      "ops": [ { "op": "set_prop", "instance": "buck", "prop": "outputV", "value": 14.0, "provenance": "user" } ],
+      "ops": [
+        {
+          "op": "set_prop",
+          "instance": "buck",
+          "prop": "outputV",
+          "value": 14.0,
+          "provenance": "user"
+        }
+      ],
       "expected": [
-        { "ruleId": "supply_in_range", "severity": "violation", "category": "voltage", "affectedInstance": "driver" },
-        { "ruleId": "supply_in_range", "severity": "violation", "category": "voltage", "affectedInstance": "mcu" }
+        {
+          "ruleId": "supply_in_range",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "driver"
+        },
+        {
+          "ruleId": "supply_in_range",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "mcu"
+        }
       ]
     },
     {
       "id": "remove_reverse_polarity_diode",
       "label": "Remove the Schottky diode",
       "description": "Deletes the diode and wires the battery straight into the buck. The circuit still runs; the reverse-polarity strategy is gone.",
-      "ops": [ { "op": "remove_instance", "instance": "diode" }, { "op": "move_pin", "instance": "buck", "pin": "IN+", "net": "BATT_PLUS" } ],
-      "expected": [ { "ruleId": "reverse_polarity_strategy", "severity": "warning", "category": "protection", "affectedInstance": "battery" } ]
+      "ops": [
+        {
+          "op": "remove_instance",
+          "instance": "diode"
+        },
+        {
+          "op": "move_pin",
+          "instance": "buck",
+          "pin": "IN+",
+          "net": "BATT_PLUS"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "reverse_polarity_strategy",
+          "severity": "warning",
+          "category": "protection",
+          "affectedInstance": "battery"
+        }
+      ]
     },
     {
       "id": "remove_bulk_capacitance",
       "label": "Remove the bulk capacitor",
       "description": "Deletes the 470 uF capacitor from the 5 V rail. Heuristic rule; expect a warning, not a failure.",
-      "ops": [ { "op": "remove_instance", "instance": "bulk_cap" } ],
-      "expected": [ { "ruleId": "bulk_capacitance", "severity": "warning", "category": "transients", "affectedInstance": "driver" } ]
+      "ops": [
+        {
+          "op": "remove_instance",
+          "instance": "bulk_cap"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "bulk_capacitance",
+          "severity": "warning",
+          "category": "transients",
+          "affectedInstance": "driver"
+        }
+      ]
     },
     {
       "id": "swap_battery_2s",
       "label": "Swap the battery to 2S",
       "description": "Uses the handoff's original 2S class. With the series diode, the buck sees about 5.95 V at end of discharge for a 5 V output.",
-      "ops": [ { "op": "swap_registry", "instance": "battery", "registryId": "battery.2s_lipo_1000_1500mah_class" } ],
-      "expected": [ { "ruleId": "regulator_headroom", "severity": "warning", "category": "voltage", "affectedInstance": "buck" } ]
+      "ops": [
+        {
+          "op": "swap_registry",
+          "instance": "battery",
+          "registryId": "battery.2s_lipo_1000_1500mah_class"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "regulator_headroom",
+          "severity": "warning",
+          "category": "voltage",
+          "affectedInstance": "buck"
+        }
+      ]
     },
     {
       "id": "substitute_high_current_motor",
       "label": "Substitute a 2.5 A stall motor",
       "description": "Replaces the left motor with a class whose stall current exceeds the driver's 1.2 A continuous limit.",
-      "ops": [ { "op": "swap_registry", "instance": "motor_left", "registryId": "motor.generic_high_current_class" } ],
-      "expected": [ { "ruleId": "driver_load_current", "severity": "violation", "category": "current", "affectedInstance": "motor_left" } ]
+      "ops": [
+        {
+          "op": "swap_registry",
+          "instance": "motor_left",
+          "registryId": "motor.generic_high_current_class"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "driver_load_current",
+          "severity": "violation",
+          "category": "current",
+          "affectedInstance": "motor_left"
+        }
+      ]
+    },
+    {
+      "id": "substitute_bare_tb6612",
+      "label": "Swap the driver for a bare TB6612 IC",
+      "description": "Replaces the Adafruit breakout with the bare Toshiba IC. Same limits, but no onboard decoupling and no STBY pull-up.",
+      "ops": [
+        {
+          "op": "swap_registry",
+          "instance": "driver",
+          "registryId": "driver.toshiba_tb6612fng_bare_class"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "decoupling",
+          "severity": "warning",
+          "category": "transients",
+          "affectedInstance": "driver"
+        }
+      ]
     }
   ]
 }

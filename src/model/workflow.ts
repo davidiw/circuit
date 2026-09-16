@@ -3,9 +3,16 @@ import type { HistoryEvent } from './history';
 
 export type ProjectState = 'intent' | 'requirements' | 'parts_unresolved' | 'design_incomplete' | 'unevaluated' | 'evaluated_current' | 'evaluated_stale' | 'reviewed';
 
+export type Edit = { label: string; ops: import('./schema').MutationOp[]; mutationId?: string };
+export type EvalSummary = { at: string; added: number; resolved: number; persisting: number };
+
 export type Session = {
+  base: Project;                 // template snapshot or imported project; edits replay on top of it
+  edits: Edit[];
   project: Project;
   history: HistoryEvent[];
+  lastSummary?: EvalSummary;
+  selectedNet?: string;
   currentHash: string;
   aiReview?: { stateHash: string; observations: Finding[]; model: string; latencyMs: number; dropped: number; error?: string };
   dismissedTips: string[];

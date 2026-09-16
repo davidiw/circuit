@@ -82,7 +82,13 @@ code { font-family: var(--mono); font-size: 12px; background: var(--unknown-soft
 .dia .node rect { fill: var(--paper); stroke: var(--ink); stroke-width: 1.1; } .dia .node { cursor: pointer; } .dia .node:hover rect { stroke: var(--accent); }
 .dia .node.sel rect { stroke: var(--accent); stroke-width: 2; } .dia .node.bad rect { stroke: var(--bad); stroke-width: 2; } .dia .node.warn rect { stroke: var(--warn); stroke-width: 2; } .dia .node.ai rect { stroke: var(--ai); stroke-width: 2; }
 .dia .node:focus-visible { outline: none; } .dia .node:focus-visible rect { stroke: var(--accent); stroke-dasharray: 3 2; }
-.dia .pin circle { fill: var(--ink); } .dia .pin.bad circle { fill: var(--bad); } .dia .pin.warn circle { fill: var(--warn); }
+.dia .pin circle { fill: var(--ink); } .dia .pin.bad circle { fill: var(--bad); } .dia .pin.warn circle { fill: var(--warn); } .dia .pin.sel circle { fill: var(--accent); }
+.dia .pinlab { font-size: 8px; fill: var(--muted); } .dia .flag { font-size: 9px; font-weight: 600; fill: var(--ink); } .dia .flagline { stroke: var(--ink); stroke-width: 1.4; } .dia .gndsym line { stroke: var(--muted); stroke-width: 1.4; }
+.dia .pin.bad .flag, .dia .pin.bad .flagline { fill: var(--bad); stroke: var(--bad); } .dia .pin.sel .flag, .dia .pin.sel .flagline { fill: var(--accent); stroke: var(--accent); }
+.dia .hop path { fill: none; stroke: var(--accent); stroke-width: 1.2; } .dia .hop.bad path { stroke: var(--bad); } .dia .hop .mask { stroke: var(--paper); stroke-width: 3; }
+.dia .junction { fill: var(--accent); } .dia .junction.bad { fill: var(--bad); }
+.dia .edge .hit { stroke: transparent; stroke-width: 10; fill: none; cursor: pointer; } .dia .edge.sel polyline:not(.hit) { stroke: var(--accent); stroke-width: 2.4; }
+.dia.busy svg { opacity: .6; transition: opacity .2s; }
 .dia .bus line, .dia .bus polyline { stroke: var(--ink); stroke-width: 2; fill: none; } .dia .bus polyline { stroke-width: 1.1; }
 .dia .bus.ground line, .dia .bus.ground polyline { stroke: var(--muted); }
 .dia .bus.bad line, .dia .bus.bad polyline, .dia .edge.bad polyline { stroke: var(--bad); stroke-width: 2; }
@@ -102,10 +108,23 @@ code { font-family: var(--mono); font-size: 12px; background: var(--unknown-soft
 .detail { border-top: 1px dashed var(--line-soft); margin-top: 8px; padding-top: 8px; font-size: 12.5px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
 @media (max-width: 700px) { .detail { grid-template-columns: 1fr; } }
 .detail h5 { margin: 0 0 3px; } .detail .ev { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; } .detail ul { margin: 0; padding-left: 18px; }
-.cov { list-style: none; margin: 0; padding: 0; font-size: 12px; } .cov li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; } .cov .grp { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+.cov { list-style: none; margin: 0; padding: 0; font-size: 12px; } .cov li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; } .cov li.failed span:first-child { color: var(--bad); font-weight: 500; } .cov .sts { display: inline-flex; gap: 4px; }
+.st.bad { background: var(--bad-soft); color: var(--bad); } .st.warn { background: var(--warn-soft); color: var(--warn); } .st.unk { background: var(--unknown-soft); color: var(--unknown); } .cov .grp { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
 .st { font-family: var(--mono); font-size: 10.5px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
 .st.ok { background: var(--ok-soft); color: var(--ok); } .st.part { background: var(--warn-soft); color: var(--warn); } .st.est, .st.heur { background: var(--accent-soft); color: var(--accent); } .st.no { background: var(--unknown-soft); color: var(--unknown); }
 .ai-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--ai-soft); color: var(--ai); border-radius: 6px; font-weight: 500; margin: 0 0 8px; font-size: 12.5px; flex-wrap: wrap; }
 .ai-head .m { font-family: var(--mono); font-weight: 400; margin-left: auto; font-size: 11px; } .panel.ai .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .facts { width: 100%; border-collapse: collapse; font-size: 12px; } .facts td { padding: 3px 6px 3px 0; border-bottom: 1px dashed var(--line-soft); vertical-align: top; } .facts td:first-child { font-family: var(--mono); white-space: nowrap; }
 .inspector { overflow-x: auto; }
+
+/* Evaluate feel, editing, toast */
+.appbar .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn.working { position: relative; overflow: hidden; } .btn.working::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: sweep .7s linear infinite; }
+@keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.flash-on-mount { animation: flash 1s ease-out; } @keyframes flash { 0% { box-shadow: 0 0 0 3px var(--accent-soft); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--ground); padding: 10px 16px; border-radius: 8px; font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.2); animation: rise .25s ease-out; z-index: 20; max-width: calc(100vw - 32px); }
+@keyframes rise { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.evalbar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--paper); border-top: 1px solid var(--line); z-index: 10; }
+.has-evalbar { padding-bottom: 80px; } .has-evalbar .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+@media (prefers-reduced-motion: reduce) { .btn.working::after, .flash-on-mount, .toast { animation: none; } }

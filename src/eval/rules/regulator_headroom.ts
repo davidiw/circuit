@@ -4,7 +4,8 @@ export const regulator_headroom: Rule = {
   id: 'regulator_headroom', origin: 'deterministic', dimensions: ['regulator_headroom'],
   analyze(ctx) {
     const regs = ctx.project.instances.filter((i) => ctx.fact(i.id, 'dropout_v'));
-    if (!ctx.hasPower || regs.length === 0) return { findings: [], coverage: [{ dimension: 'regulator_headroom', group: 'electrical', status: 'not_evaluated', note: ctx.hasPower ? 'No regulator with dropout data' : 'No power source' }] };
+    if (regs.length === 0) return { findings: [], coverage: [] };
+    if (!ctx.hasPower) return { findings: [], coverage: [{ dimension: 'regulator_headroom', group: 'electrical', status: 'not_evaluated', note: 'No power source' }] };
     const findings = [] as ReturnType<typeof finding>[];
     const notes: string[] = [];
     for (const reg of regs) {

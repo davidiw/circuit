@@ -1,13 +1,14 @@
 import type { Session } from '../model/workflow';
 import type { Ctx } from '../eval/context';
+import type { Action } from './store';
 
-export function Inspector({ session, ctx, onClose }: { session: Session; ctx: Ctx; onClose: () => void }) {
+export function Inspector({ session, ctx, onClose, dispatch }: { session: Session; ctx: Ctx; onClose: () => void; dispatch: React.Dispatch<Action> }) {
   const id = session.selectedInstance!; const inst = ctx.inst(id); const c = inst && ctx.comp(id);
   if (!inst || !c) return null;
   const fact = (v: unknown) => Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v ? JSON.stringify(v) : String(v);
   return (
     <section className="panel inspector" id="panel-inspector">
-      <h4>{inst.label} <span><button className="btn ghost small" onClick={onClose}>close</button></span></h4>
+      <h4>{inst.label} <span><button className="btn small danger" onClick={() => dispatch({ type: 'EDIT', label: `Remove ${inst.label}`, ops: [...(session.project.power.sourceInstance === id ? [{ op: 'clear_power_source' as const }] : []), { op: 'remove_instance' as const, instance: id }] })}>Remove part</button> <button className="btn ghost small" onClick={onClose}>close</button></span></h4>
       <div className="kv">
         <div>Registry</div><div className="v">{c.id}</div>
         <div>Part</div><div className="v">{c.manufacturer ? `${c.manufacturer} ${c.mpn}` : 'class, no exact part'}</div>
