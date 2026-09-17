@@ -2,7 +2,7 @@
 
 Turns an AI-generated engineering proposal into an explicit artifact you can inspect, challenge, modify, and re-evaluate. Phase 1 proves one loop on one template: open the Bluetooth Race Car, evaluate it with deterministic rules, break something, read the finding, fix it, and watch the result change.
 
-Design docs: plan and system design live in the shared Claude Doc linked from the handoff conversation; the handoff folder (`/media/data2/circuit_factory_handoff`) holds the PRD, execution spec, templates, and sources.
+The plan, system design, and done/to-do tracker live in the shared design doc: https://claude.ai/code/artifact/6cc888ac-45ce-4a00-a660-9b4d7f334a32 (three tabs; edited there, not mirrored here). The screenshot walkthrough is published alongside it and regenerated from a running build by `npm run walkthrough` (writes to the git-ignored `out/walkthrough/`; needs `GATE_USER` and `GATE_PASS`). [docs/pin-sweep.md](docs/pin-sweep.md) records which wrong wiring the rules reveal, produced by `npm run sweep`. The handoff folder (`/media/data2/circuit_factory_handoff`) holds the PRD, execution spec, templates, and sources.
 
 ## Run locally
 

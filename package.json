@@ -15,7 +15,8 @@
     "sweep": "tsx bench/pin-sweep.ts",
     "hooks": "git config core.hooksPath .githooks && echo \"pre-push hook installed\"",
     "validate": "./scripts/validate.sh",
-    "smoke": "node deploy/smoke.mjs"
+    "smoke": "node deploy/smoke.mjs",
+    "walkthrough": "node scripts/walkthrough.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
