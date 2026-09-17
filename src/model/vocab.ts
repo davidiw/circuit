@@ -11,7 +11,7 @@ export const FINDING_CATEGORIES = [
 
 export const COVERAGE_DIMENSIONS = {
   electrical: [
-    'power_source', 'signal_reference', 'rail_voltages', 'driver_control_state', 'motor_wiring', 'driver_motor_current',
+    'power_source', 'signal_reference', 'net_conflicts', 'rail_voltages', 'driver_control_state', 'motor_wiring', 'driver_motor_current',
     'reverse_polarity', 'regulator_headroom', 'decoupling', 'regulator_current_thermal', 'bulk_capacitance', 'transients_emi', 'thermal', 'physical_layout',
   ],
   product: ['product_requirements', 'runtime', 'size_envelope', 'streaming_latency', 'standby_life'],

@@ -17,6 +17,7 @@ function applyOne(p: Project, op: MutationOp) {
       return;
     }
     case 'move_pin': {
+      if (!p.instances.some((i) => i.id === op.instance)) return;   // the part is gone (removed earlier in the edit list): nothing to move
       for (const n of p.nets) n.pins = n.pins.filter((pin) => !(pin.instance === op.instance && pin.pin === op.pin));
       p.nets = p.nets.filter((n) => n.pins.length > 0);
       if (op.net === null) return;

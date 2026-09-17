@@ -7,39 +7,20 @@ import { registry, freshProject, getTemplate } from '../data';
 import { evaluate } from '../eval/evaluate';
 import { applyOps, connectPins } from '../eval/mutations';
 import { stateHash } from '../eval/hash';
+import { loadSessions, saveSessions } from './storage';
 
 export type AIStatus = { configured: boolean; provider?: string; model?: string };
-export type AppState = { view: 'gate' | 'library' | 'project'; sessions: Record<string, Session>; activeId?: string; aiStatus?: AIStatus; aiBusy: boolean };
+export type AppState = { view: 'gate' | 'library' | 'project'; sessions: Record<string, Session>; activeId?: string; aiStatus?: AIStatus; aiBusy: boolean; notice?: string };
 
 export type Action =
-  | { type: 'AUTHED' } | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project }
+  | { type: 'AUTHED' } | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' }
   | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[]; kind?: EventKind } | { type: 'UNDO' } | { type: 'RESET' }
   | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation: EvaluationResult } | { type: 'COMPARE'; id?: string }
   | { type: 'VIEW_FINDING'; id: string } | { type: 'VIEW_COVERAGE' } | { type: 'SELECT_INSTANCE'; id?: string } | { type: 'SELECT_NET'; id?: string } | { type: 'SELECT_PIN'; pin?: PinRef } | { type: 'DESELECT' } | { type: 'DISMISS_TIP'; id: string } | { type: 'DISMISS_INTRO' }
   | { type: 'AI_START' } | { type: 'AI_RESULT'; result: { observations: Finding[]; model: string; provider: string; latencyMs: number; dropped: number } } | { type: 'AI_ERROR'; error: string }
   | { type: 'SET_AI_STATUS'; status: AIStatus };
 
-const STORAGE_KEY = 'circuit-factory.sessions.v1';
 const isDev = import.meta.env.DEV;
-
-function load(): Pick<AppState, 'sessions' | 'activeId'> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Pick<AppState, 'sessions' | 'activeId'>;
-      for (const [id, s] of Object.entries(parsed.sessions ?? {})) {
-        const t = getTemplate(s.project?.id ?? id);
-        if (!s.base || !s.project) { if (!t) { delete parsed.sessions[id]; continue; } s.base = structuredClone(t); s.edits = (s.appliedMutations ?? []).map((m) => ({ label: m, ops: t.mutations.find((x) => x.id === m)?.ops ?? [], mutationId: m })); }
-        // Templates evolve between builds: rebase a template session on the current template so new data (optimizations, labels) shows up.
-        if (t && s.base.source === 'template') { s.base = structuredClone(t); try { s.project = applyOps(structuredClone(t), (s.edits ?? []).flatMap((e) => e.ops)); s.project.lastEvaluation = undefined; } catch { delete parsed.sessions[id]; continue; } }
-        s.edits ??= []; s.appliedMutations ??= []; s.dismissedTips ??= []; s.history ??= []; s.currentHash = stateHash(s.project); s.connectFrom = undefined; s.compareId = undefined;
-      }
-      return parsed;
-    }
-  } catch { /* storage unavailable */ }
-  return { sessions: {} };
-}
-function save(s: AppState) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ sessions: s.sessions, activeId: s.activeId })); } catch { /* ignore */ } }
 
 const ev = (kind: EventKind, hash: string, ref?: string): HistoryEvent => ({ kind, at: new Date().toISOString(), stateHash: hash, ref });
 
@@ -86,6 +67,8 @@ export function reducer(state: AppState, a: Action): AppState {
       const session = newSession(base, 'open_template'); session.project.lastEvaluation = a.project.lastEvaluation;
       return { ...state, view: 'project', activeId: id, sessions: { ...state.sessions, [id]: session } };
     }
+    case 'NEW_SESSION': return { ...state, view: 'project', activeId: a.id, sessions: { ...state.sessions, [a.id]: newSession(freshProject(a.id)) } };
+    case 'DISMISS_NOTICE': return { ...state, notice: undefined };
     case 'BACK': return { ...state, view: 'library' };
     case 'EVALUATE': return withSession(state, (s) => {
       const result = evaluate(s.project, registry); const prev = s.project.lastEvaluation;
@@ -128,11 +111,11 @@ export function reducer(state: AppState, a: Action): AppState {
 
 export function useAppStore() {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
-    const persisted = load();
+    const persisted = loadSessions();
     let authed = !isDev; try { authed = authed || sessionStorage.getItem('cf.dev.authed') === '1'; } catch { /* ignore */ }
-    return { view: authed ? 'library' : 'gate', aiBusy: false, ...persisted } as AppState;
+    return { view: authed ? 'library' : 'gate', aiBusy: false, sessions: persisted.sessions, activeId: persisted.activeId, notice: persisted.notice } as AppState;
   });
-  useEffect(() => { save(state); }, [state.sessions, state.activeId]);
+  useEffect(() => { saveSessions(state.sessions, state.activeId); }, [state.sessions, state.activeId]);
   useEffect(() => {
     fetch('/api/ai/status', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : { configured: false })).then((s) => dispatch({ type: 'SET_AI_STATUS', status: s })).catch(() => dispatch({ type: 'SET_AI_STATUS', status: { configured: false } }));
   }, []);

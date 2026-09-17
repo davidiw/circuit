@@ -29,7 +29,18 @@ For UI work: `npm run dev` (Vite on 5173, proxies /api to 8797, shows a browser-
 
 ## Tests
 
-`npm test` runs registry integrity, template integrity, the mutation corpus (every mutation in every fixture asserts structured findings, never prose), voltage propagation, layout, the AI output gate with a fake provider, and server auth.
+`npm test` runs eight suites:
+
+- **Corpus**: registry integrity, template integrity, every mutation and optimization in every fixture asserting structured findings (never prose), voltage propagation, connect-pins semantics, and a sweep that applies every fix offered on every mutation and asserts the finding clears.
+- **Finding contract** (`src/eval/__tests__/contract.ts`): every finding names something that exists, carries evidence with provenance, a consequence, and a remediation or an explicit missing list. Used by the sweep, the sequence property, and the corpus.
+- **Pin-pair sweep** (`sweep.test.ts`): every pin connected to every other pin in every template; no crash, valid project, contract-clean evaluation. A role table (`src/eval/sweep.ts`) says which pin-role pairs must produce a finding, which are allowed, and which are documented gaps. `npm run sweep` writes `docs/pin-sweep.md`, the honest best-effort statement of what wrong wiring the rules reveal.
+- **Edit sequences** (`sequences.test.ts`, fast-check): random sequences of connect, disconnect, remove, guided change, fix, optimize, and undo keep the project valid and evaluable; failures shrink to a minimal repro.
+- **Render** (`src/ui/__tests__/render.test.tsx`, jsdom): the project view renders every corpus state (fresh, evaluated, each mutation, resolved after undo, sheets, connect mode, each optimization's compare and applied state) and a migrated old evaluation, with no thrown error and no console error.
+- **Storage** (`storage.test.ts`): a payload written by an earlier build migrates; unreadable, newer, and invalid payloads are dropped with a notice.
+- **Layout**: no node overlap, every net routed, no wire through a box or symbol, no overlapping labels.
+- **AI gate** and **server auth** as before.
+
+Saved sessions are versioned (`src/ui/storage.ts`). A change to the saved shape needs a migration step or it is a breaking change that drops saved work with a notice; each report classifies which.
 
 ## Benchmark
 

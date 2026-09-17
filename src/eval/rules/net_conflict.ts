@@ -1,0 +1,32 @@
+import { finding, type Rule } from '../context';
+import type { PinRole } from '../../model/schema';
+
+const SOURCE: PinRole[] = ['supply_out', 'battery_pos'];
+const DRIVEN_OUT: PinRole[] = ['logic_out', 'analog_out', 'cathode', 'speaker_out'];
+
+/** Structural conflicts on a net: supplies tied together, a supply or an output shorted to ground, outputs tied to outputs, a GPIO tied straight to a rail. */
+export const net_conflict: Rule = {
+  id: 'net_conflict', origin: 'deterministic', dimensions: ['net_conflicts'],
+  analyze(ctx) {
+    const findings = [] as ReturnType<typeof finding>[];
+    for (const net of ctx.project.nets) {
+      const pins = ctx.netPins(net);
+      const by = (roles: PinRole[]) => pins.filter((p) => roles.includes(p.def.role));
+      const sources = by(SOURCE), grounds = by(['ground']), outs = by(DRIVEN_OUT), motorOuts = by(['motor_out']), gpios = by(['gpio']), supplyIns = by(['supply_in']);
+      const driven = [...outs, ...motorOuts];
+      const label = (p: { instance: string; pin: string }) => `${ctx.inst(p.instance)?.label ?? p.instance} ${p.pin}`;
+      const distinct = (xs: typeof pins) => [...new Set(xs.map((p) => p.instance))];
+      const affected = (xs: typeof pins) => xs.map((p) => ({ instanceId: p.instance, pin: p.pin, netId: net.id }));
+      const evidence = [{ label: `pins on ${net.name}`, value: pins.map((p) => `${label(p)} (${p.def.role.replace('_', ' ')})`).join(', '), provenance: 'user' as const }];
+      if (distinct(sources).length > 1) findings.push(finding({ ruleId: 'net_conflict', basis: 'component_spec', severity: 'violation', category: 'load_path', title: `Two supplies are tied together on ${net.name}: ${sources.map(label).join(' and ')}`, affected: affected(sources), evidence, consequence: 'Two sources fight over one node. The stronger one back-drives the other; regulators and batteries can be damaged and the rail voltage is undefined.', remediation: ['Keep one source per rail', 'If the second source is meant to be a load, connect its input pin instead of its output'] }));
+      if ((sources.length || driven.length) && grounds.length) findings.push(finding({ ruleId: 'net_conflict', basis: 'component_spec', severity: 'violation', category: 'load_path', title: `${[...sources, ...driven].map(label).join(', ')} shorted to ground on ${net.name}`, affected: affected([...sources, ...driven, ...grounds]), evidence, consequence: 'A direct short. The source delivers its maximum current into the ground return until something opens: a fuse, a trace, or the part.', remediation: ['Disconnect the ground pin from this net', 'Route the source to a load input, not to a ground pin'] }));
+      if (driven.length && sources.length) findings.push(finding({ ruleId: 'net_conflict', basis: 'component_spec', severity: 'violation', category: 'load_path', title: `${driven.map(label).join(', ')} tied to a supply (${sources.map(label).join(', ')}) on ${net.name}`, affected: affected([...driven, ...sources]), evidence, consequence: 'A driven output fights the supply whenever it switches low; the output stage or the regulator absorbs the short.', remediation: ['Move the output to its own net', 'If the intent is to power something, use a supply input pin'] }));
+      if (supplyIns.length && grounds.length && !sources.length) findings.push(finding({ ruleId: 'net_conflict', basis: 'component_spec', severity: 'violation', category: 'load_path', title: `${supplyIns.map(label).join(', ')} tied to ground on ${net.name}`, affected: affected([...supplyIns, ...grounds]), evidence, consequence: 'The supply input sits at 0 V: the part is unpowered, and if a source is later added to this net it is shorted.', remediation: ['Connect the supply input to a power rail instead'] }));
+      if (motorOuts.length && outs.length) findings.push(finding({ ruleId: 'net_conflict', basis: 'component_spec', severity: 'violation', category: 'load_path', title: `Motor output ${motorOuts.map(label).join(', ')} tied to ${outs.map(label).join(', ')} on ${net.name}`, affected: affected([...motorOuts, ...outs]), evidence, consequence: 'An H-bridge output swings the full motor rail into another driven output; one of them absorbs the difference as a short.', remediation: ['Give the motor output its own net to the motor terminal'] }));
+      if (gpios.length && driven.length) findings.push(finding({ ruleId: 'net_conflict', basis: 'heuristic', severity: 'warning', category: 'load_path', title: `${gpios.map(label).join(', ')} tied to a driven output (${[...outs, ...motorOuts].map(label).join(', ')}) on ${net.name}`, affected: affected([...gpios, ...outs, ...motorOuts]), evidence, consequence: 'If the GPIO is driven, two outputs contend; if it is an input, a motor or supply-level output can exceed its rating. The rules cannot see the firmware.', remediation: ['Drive logic inputs from GPIOs, not outputs', 'Read an output through a divider or level shifter if monitoring is the intent'] }));
+      if (driven.length > 1 && !(motorOuts.length && outs.length)) findings.push(finding({ ruleId: 'net_conflict', basis: 'component_spec', severity: 'violation', category: 'load_path', title: `Outputs tied together on ${net.name}: ${driven.map(label).join(' and ')}`, affected: affected(driven), evidence, consequence: 'Two driven outputs on one node contend; whichever is stronger wins and the other sinks the difference as heat.', remediation: ['Give each output its own net', 'If both are meant to feed one load, use a driver designed for it'] }));
+      if (gpios.length && (sources.length || grounds.length)) findings.push(finding({ ruleId: 'net_conflict', basis: 'heuristic', severity: 'warning', category: 'load_path', title: `${gpios.map(label).join(', ')} tied directly to ${sources.length ? sources.map(label).join(', ') : 'ground'} on ${net.name}`, affected: affected([...gpios, ...sources, ...grounds]), evidence, consequence: 'A GPIO driven as an output against a rail is a short through the pin; as an input it reads a fixed level, which may be intended. The rules cannot tell which the firmware does.', remediation: ['Read a fixed level through a resistor or use a dedicated enable pin', 'If the pin is meant to control something, connect it to a logic input instead'] }));
+    }
+    return { findings, coverage: [{ dimension: 'net_conflicts', group: 'electrical', status: 'checked', note: `${ctx.project.nets.length} nets checked for tied supplies, shorts to ground, tied outputs, and GPIO on rails` }] };
+  },
+};
