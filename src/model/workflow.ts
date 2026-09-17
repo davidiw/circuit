@@ -91,10 +91,13 @@ export function stepState(s: Session, lifecycles: LifecycleFinding[]): StepState
   if (state === 'design_incomplete') return { current: 'change', done, hint: 'This design has no power source. Undo, or connect a source.', target: { kind: 'panel', id: 'design' } };
   if (state === 'unevaluated') return { current: 'evaluate', done, hint: 'Run the deterministic rules on this design. Nothing leaves the browser.', target: { kind: 'button', id: 'evaluate' } };
   if (state === 'evaluated_stale') return { current: 'reevaluate', done, hint: `The circuit changed${s.edits.length ? ` (${s.edits[s.edits.length - 1].label})` : ''}. Re-evaluate to see the consequence.`, target: { kind: 'button', id: 'evaluate' } };
-  const firstViolation = lifecycles.find((f) => f.severity === 'violation' && f.lifecycle === 'new');
+  // Any standing violation sends the loop back to Inspect, whether it is new or has persisted across evaluations, and before
+  // any celebration of a resolved finding: the design is not sound until it clears.
+  const violations = lifecycles.filter((f) => f.severity === 'violation' && f.lifecycle !== 'resolved');
+  const firstViolation = violations.find((f) => f.lifecycle === 'new') ?? violations[0];
+  if (firstViolation) return { current: 'inspect', done: done.filter((d) => d !== 'inspect'), hint: `${violations.length > 1 ? `${violations.length} violations` : 'A violation'}. Open it: the evidence names the pins, and the fix buttons change the circuit for you.`, target: { kind: 'finding', id: firstViolation.id } };
   const resolved = lifecycles.find((f) => f.lifecycle === 'resolved');
   if (resolved) return { current: evaluatedAfterChange ? 'optimize' : 'change', done, hint: `"${resolved.title}" cleared because the circuit changed. ${evaluatedAfterChange ? 'Now improve the design toward its goals: Optimize.' : ''}`.trim(), target: { kind: 'finding', id: resolved.id } };
-  if (firstViolation) return { current: 'change', done, hint: 'A violation. Open it: the evidence names the pins, and the fix buttons change the circuit for you.', target: { kind: 'finding', id: firstViolation.id } };
   if (!changed) {
     const stby = s.project.mutations.find((m) => m.id === 'force_stby_low');
     return { current: 'change', done, hint: stby ? `Nothing wrong yet. Try "${stby.label}", or tap a pin to wire it somewhere else.` : 'Change the circuit: tap a pin to wire it, or try a change.', target: stby ? { kind: 'mutation', id: stby.id } : { kind: 'panel', id: 'changes' } };

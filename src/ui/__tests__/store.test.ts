@@ -101,3 +101,27 @@ describe('import trust boundary', () => {
     expect(s.project.lastEvaluation).toBe(before.project.lastEvaluation);
   });
 });
+
+describe('stepper: a standing violation sends the loop back to Inspect', () => {
+  const lc = (st: AppState) => { const s = sess(st); return findingLifecycles(s.project.lastEvaluation, s.previousEvaluation, s.history, s.project.overrides); };
+  it('new violation, viewed violation, and a violation persisting across evaluations all read Inspect with the finding as target', () => {
+    const v1 = run([{ type: 'APPLY_MUTATION', id: 'force_stby_low' }, { type: 'EVALUATE' }], evaluated());
+    let st = stepState(sess(v1), lc(v1)); expect(st.current).toBe('inspect'); expect(st.done).not.toContain('inspect'); expect(st.target?.kind).toBe('finding');
+    const id = st.target!.id; expect(sess(v1).project.lastEvaluation!.findings.find((f) => f.id === id)?.severity).toBe('violation');
+    const viewed = run([{ type: 'VIEW_FINDING', id }], v1); expect(stepState(sess(viewed), lc(viewed)).current).toBe('inspect');
+    // A harmless extra edit and another evaluation: the violation now persists rather than being new, and still holds the loop.
+    const persisting = run([{ type: 'EDIT', label: 'assumption only', ops: [{ op: 'set_assumption', key: 'avg_motor_current_a', value: 0.3 }] }, { type: 'EVALUATE' }], viewed);
+    expect(['acknowledged', 'persisting']).toContain(lc(persisting).find((f) => f.severity === 'violation')?.lifecycle);   // viewed earlier: not new any more
+    st = stepState(sess(persisting), lc(persisting)); expect(st.current).toBe('inspect'); expect(st.hint).toMatch(/^A violation/);
+  });
+  it('a violation outranks a resolved finding; once every violation clears the loop moves on', () => {
+    // Two violations: fix one, leave the other. The resolved one must not hide the standing one.
+    const two = run([{ type: 'APPLY_MUTATION', id: 'force_stby_low' }, { type: 'APPLY_MUTATION', id: 'disconnect_channel_b_inputs' }, { type: 'EVALUATE' }], evaluated());
+    expect(stepState(sess(two), lc(two)).hint).toMatch(/^2 violations/);
+    const one = run([{ type: 'UNDO' }, { type: 'EVALUATE' }], two);   // channel B inputs back; STBY still grounded
+    const l = lc(one); expect(l.some((f) => f.lifecycle === 'resolved')).toBe(true); expect(l.some((f) => f.severity === 'violation' && f.lifecycle !== 'resolved')).toBe(true);
+    expect(stepState(sess(one), l).current).toBe('inspect');
+    const clear = run([{ type: 'UNDO' }, { type: 'EVALUATE' }], one);
+    const st = stepState(sess(clear), lc(clear)); expect(st.current).toBe('optimize'); expect(st.hint).toMatch(/cleared because the circuit changed/);
+  });
+});
