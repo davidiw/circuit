@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import type { Project, Registry } from '../../model/schema';
-import type { Layout } from '../layout';
+import { partGeometry, type Layout } from '../layout';
 
 const finite = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
 
@@ -44,6 +44,15 @@ export function assertLayoutInvariants(l: Layout, p: Project, registry: Registry
   for (const h of l.hops) { expect(finite(h.x) && finite(h.y), ctx('hop position')).toBe(true); expect(netIds.has(h.netId), ctx(`hop net ${h.netId}`)).toBe(true); }
   for (const j of l.junctions) { expect(finite(j.x) && finite(j.y), ctx('junction position')).toBe(true); expect(netIds.has(j.netId), ctx(`junction net ${j.netId}`)).toBe(true); }
   for (const r of l.rails) expect(netIds.has(r.netId), ctx(`rail net ${r.netId}`)).toBe(true);
-  // Every pin the layout places belongs to a net the project has (an unconnected pin is never drawn).
-  for (const n of l.nodes) for (const q of n.pins) expect(q.netId && netIds.has(q.netId), ctx(`${n.id}.${q.name} placed without a net`)).toBeTruthy();
+  // Every registry pin is placed exactly once, connected or not, and a part's geometry is the pure function of its component:
+  // wiring can neither hide nor move a pin, so a disconnected pin stays where it was and stays selectable.
+  for (const inst of p.instances) {
+    const c = registry.components.find((x) => x.id === inst.registryId); const n = l.nodes.find((x) => x.id === inst.id)!;
+    expect(n.pins.map((q) => q.name), ctx(`${inst.id} places every registry pin once, in order`)).toEqual((c?.pins ?? []).map((q) => q.name).sort((a, b) => n.pins.findIndex((q) => q.name === a) - n.pins.findIndex((q) => q.name === b)));
+    expect(new Set(n.pins.map((q) => q.name)), ctx(`${inst.id} pin set`)).toEqual(new Set((c?.pins ?? []).map((q) => q.name)));
+    const g = partGeometry(c, inst.label, inst.registryId);
+    expect({ w: n.w, h: n.h, head: n.head, margin: n.margin }, ctx(`${inst.id} box size is a function of the component`)).toEqual({ w: g.w, h: g.h, head: g.head, margin: g.margin });
+    expect(n.pins.map((q) => ({ name: q.name, side: q.side, x: q.x, y: q.y })), ctx(`${inst.id} pin positions are a function of the component`)).toEqual(g.pins.map((q) => ({ name: q.name, side: q.side, x: q.x, y: q.y })));
+    for (const q of n.pins) { const onSomeNet = p.nets.some((x) => x.pins.some((y) => y.instance === inst.id && y.pin === q.name && x.pins.length >= 2)); expect(q.wired, ctx(`${inst.id}.${q.name} wired flag`)).toBe(onSomeNet); }
+  }
 }

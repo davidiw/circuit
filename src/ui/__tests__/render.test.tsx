@@ -111,6 +111,40 @@ describe('render every corpus state without errors', () => {
       finally { (globalThis as unknown as { __narrow: boolean }).__narrow = false; }
     });
   }
+  it('a disconnected pin stays drawn, muted, and selectable from the diagram and from the part sheet', async () => {
+    const st0 = run([{ type: 'EVALUATE' }], open(templates[0].id));
+    const pin = { instance: 'driver', pin: 'MOTORB2' };
+    const st = run([{ type: 'SELECT_PIN', pin }, { type: 'EDIT', label: 'Disconnect driver.MOTORB2 from MOTB_2', ops: [{ op: 'move_pin', instance: 'driver', pin: 'MOTORB2', net: null }] }], st0);
+    expect(st.sessions[templates[0].id].project.nets.find((n) => n.id === 'MOTB_2')?.pins.some((q) => q.instance === 'driver')).toBe(false);
+    // Diagram: the pin is still drawn (muted), at the same place as before the edit, and the pin sheet is open for it.
+    const before = await renderState(st0, 'before disconnect');
+    const at = (out: ReturnType<typeof render>, name: string, node = 'TB6612') => { const g = [...out.container.querySelectorAll('.node')].find((n) => n.querySelector('.title')?.textContent?.includes(node))!; const q = [...g.querySelectorAll('.pin')].find((x) => x.querySelector('text')?.textContent === name); return q && { cls: q.getAttribute('class') ?? '', cx: q.querySelector('circle.hitpin')?.getAttribute('cx'), cy: q.querySelector('circle.hitpin')?.getAttribute('cy') }; };
+    const b = at(before, 'MOTORB2'); const bm = at(before, 'M-', 'Right motor'); expect(b, 'MOTORB2 drawn before').toBeTruthy(); cleanup();
+    const after = await renderState(st, 'after disconnect'); const a = at(after, 'MOTORB2');
+    expect(a, 'MOTORB2 still drawn after the disconnect').toBeTruthy();
+    expect({ cx: a!.cx, cy: a!.cy }, 'MOTORB2 did not move').toEqual({ cx: b!.cx, cy: b!.cy });
+    expect(a!.cls, 'MOTORB2 reads unconnected').toMatch(/\bnc\b/); expect(b!.cls).not.toMatch(/\bnc\b/);
+    const rm = at(after, 'M-', 'Right motor'); expect(rm, 'the motor side of the freed net is drawn').toBeTruthy(); expect(rm!.cls, 'a one-pin net reads unconnected').toMatch(/\bnc\b/);
+    expect({ cx: rm!.cx, cy: rm!.cy }, 'M- did not move when it became the only pin on its net').toEqual({ cx: bm!.cx, cy: bm!.cy });
+    expect(after.container.querySelector('#panel-pin')?.textContent, 'pin sheet for the freed pin').toMatch(/MOTORB2/);
+    expect(after.container.querySelector('#panel-pin')?.textContent).toMatch(/unconnected/);
+    expect([...after.container.querySelectorAll('#panel-pin .btn')].some((x) => /Connect to another pin/.test(x.textContent ?? '')), 'connect is offered').toBe(true);
+    cleanup();
+    // Part sheet: the unconnected row is clickable and selects the pin.
+    const st2 = run([{ type: 'SELECT_INSTANCE', id: 'driver' }], st);
+    const errors: unknown[] = []; const spy = vi.spyOn(console, 'error').mockImplementation((...x) => { errors.push(x); }); const dispatch = vi.fn();
+    const out = render(<ProjectView session={st2.sessions[templates[0].id]} state={st2} dispatch={dispatch} />);
+    await waitFor(() => expect(out.container.querySelector('.dia svg')).toBeTruthy(), { timeout: 4000 }); spy.mockRestore(); expect(errors).toEqual([]);
+    const row = [...out.container.querySelectorAll('#panel-inspector li')].find((li) => li.querySelector('code')?.textContent === 'MOTORB2')!;
+    expect(row.className).toContain('clickable'); expect(row.textContent).toMatch(/unconnected/);
+    row.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SELECT_PIN', pin });
+    // And reconnecting from the freed pin through the reducer restores the net.
+    const st3 = run([{ type: 'SELECT_PIN', pin }, { type: 'ARM_CONNECT', pin }, { type: 'CONNECT_TO', pin: { instance: 'motor_right', pin: 'M-' } }, { type: 'EVALUATE' }], st);
+    const net = st3.sessions[templates[0].id].project.nets.find((n) => n.pins.some((q) => q.instance === 'driver' && q.pin === 'MOTORB2'));
+    expect(net?.pins.length).toBe(2); expect(net?.id).toBe('MOTB_2');
+    cleanup(); const fin = await renderState(st3, 'reconnected'); expect(fin.container.querySelector('.finding.bad:not(.res)')).toBeNull();
+  });
   it('AI review surface: absent when the server reports no provider, present with Run when configured', async () => {
     const st = run([{ type: 'EVALUATE' }], open(templates[0].id));
     for (const aiStatus of [undefined, { configured: false }]) {

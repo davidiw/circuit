@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-16 · pins never move or vanish
+- Storage: **no shape change; saved sessions stay compatible.**
+- Diagram: a part's geometry is now a pure function of its component. Every registry pin is drawn, connected or not (unconnected pins muted), on a side decided by the pin's role (inputs west, outputs and a controller board's GPIO and buses east, ground south) instead of by which pin happens to be a net's source. Disconnecting a pin no longer removes it from the diagram or flips the other pin of its net to the opposite side. Flags on east and west pins draw as short stubs. Part-sheet rows for unconnected pins select the pin so it can be wired from there.
+- Tests: the layout contract asserts every node equals `partGeometry`; a disconnect sweep (every pin of every template, regular and compact) checks geometry against the template layout; a render test checks the freed pin stays drawn, in place, muted, and selectable from the diagram and the part sheet, and can be reconnected; the live smoke disconnects and reconnects a pin.
+
 ## 2026-09-16 · hardening and documentation round
 - Storage: **no shape change; saved sessions stay compatible.**
 - Arbitrary connect through layout: every merge-mode pin pair in every template now runs `connectPins → applyOps → evaluate → layout` with a layout contract (finite geometry, nodes are instances, edge endpoints are real pins on their net). A named adversarial topology corpus (`src/eval/__tests__/adversarial.ts`) plus the largest single merges run through regular and compact layout, and the named topologies render through `ProjectView` with valid SVG attributes and the page mounted, stale and re-evaluated, desktop and phone.

@@ -1,14 +1,18 @@
-import type { Project, Registry, PinRole } from '../model/schema';
+import type { Project, Registry, PinRole, RegistryComponent } from '../model/schema';
 
 /**
  * Pure geometry for the system diagram, computed by ELK's layered algorithm with orthogonal routing.
- * Conventions: wires leave a part on the right and enter on the left, so pin sides follow wire direction;
- * ground nets with three or more pins are drawn as ground symbols at each pin (never routed); power rails are
- * routed as wires with junction dots unless they have more than six pins, then they become flags; crossings
- * between unrelated wires get a hop marker on the horizontal wire. The renderer only draws what this returns.
+ * Conventions: a part's geometry (box size, which pins sit on which side, and where) is a pure function of the
+ * component (`partGeometry`), never of the wiring, so editing nets never moves or hides a pin: inputs sit on the
+ * west edge, outputs and a controller board's GPIO and buses on the east edge, ground on the south edge, and every
+ * registry pin is always drawn, unconnected ones muted. Ground nets with three or more pins are drawn as ground
+ * symbols at each pin (never routed); power rails are routed as wires with junction dots unless they have more than
+ * six pins, then they become flags; crossings between unrelated wires get a hop marker on the horizontal wire.
+ * The renderer only draws what this returns.
  */
 export type Side = 'north' | 'south' | 'west' | 'east';
-export type LayoutPin = { name: string; role: PinRole; side: Side; x: number; y: number; netId?: string; flag?: string; flagKind?: 'power' | 'ground'; source?: boolean };
+export type LayoutPin = { name: string; role: PinRole; side: Side; x: number; y: number; netId?: string; wired: boolean; flag?: string; flagKind?: 'power' | 'ground'; source?: boolean };
+export type PartGeometry = { w: number; h: number; head: number; margin: { top: number; bottom: number }; pins: { name: string; role: PinRole; side: Side; x: number; y: number }[] };
 export type LayoutNode = { id: string; label: string; sub: string; kind: string; x: number; y: number; w: number; h: number; head: number; margin: { top: number; bottom: number }; pins: LayoutPin[] };
 export type LayoutEdge = { netId: string; name: string; kind: string; points: { x: number; y: number }[]; from: { nodeId: string; pin: string }; to: { nodeId: string; pin: string }; label?: { x: number; y: number } };
 export type Hop = { x: number; y: number; netId: string };
@@ -17,6 +21,36 @@ export type Layout = { width: number; height: number; nodes: LayoutNode[]; edges
 
 const OUTPUT_ROLES: PinRole[] = ['supply_out', 'battery_pos', 'motor_out', 'gpio', 'cathode', 'analog_out', 'speaker_out', 'logic_out'];
 const PIN_H = 13, HEAD_H = 30, CHAR_W = 6.2, PAD = 10, MIN_W = 120, FLAG_MARGIN = 26, MAX_ROUTED_POWER_PINS = 6;
+const EAST_ROLES: PinRole[] = ['supply_out', 'battery_pos', 'motor_out', 'logic_out', 'analog_out', 'speaker_out', 'cathode'];
+const BOARD_EAST_ROLES: PinRole[] = ['gpio', 'csi', 'i2s'];
+
+/** Which edge a pin sits on, from its role and the kind of part it is on. Never from the nets. */
+export function pinSide(role: PinRole, kind: string): Side {
+  if (role === 'ground') return 'south';
+  if (EAST_ROLES.includes(role)) return 'east';
+  if (BOARD_EAST_ROLES.includes(role) && kind === 'dev_board') return 'east';
+  return 'west';
+}
+
+/**
+ * The box and pin positions for one part: a pure function of the component and its label. Every registry pin is placed,
+ * in registry order within its side, so wiring edits can neither move nor hide a pin. An unknown component is an empty box.
+ */
+export function partGeometry(c: RegistryComponent | undefined, label: string, registryId: string): PartGeometry {
+  const kind = c?.kind ?? 'unknown'; const sub = c?.label ?? registryId;
+  const bySide: Record<Side, { name: string; role: PinRole }[]> = { north: [], south: [], west: [], east: [] };
+  for (const p of c?.pins ?? []) bySide[pinSide(p.role, kind)].push({ name: p.name, role: p.role });
+  const w = Math.max(MIN_W, label.length * CHAR_W + 2 * PAD, Math.min(sub.length, 28) * 5 + 2 * PAD, (bySide.south.length + 1) * 34,
+    (Math.max(...bySide.west.map((p) => p.name.length), 0) + Math.max(...bySide.east.map((p) => p.name.length), 0)) * CHAR_W + 3 * PAD);
+  const rows = Math.max(bySide.west.length, bySide.east.length);
+  const head = HEAD_H;
+  const h = head + rows * PIN_H + (bySide.south.length ? 14 : 8);
+  const margin = { top: 0, bottom: bySide.south.length ? FLAG_MARGIN : 0 };
+  const pos = (side: Side, i: number, count: number) => side === 'west' ? { x: 0, y: head + i * PIN_H + 8 } : side === 'east' ? { x: w, y: head + i * PIN_H + 8 } : { x: (w * (i + 1)) / (count + 1), y: side === 'north' ? 0 : h };
+  const pins: PartGeometry['pins'] = [];
+  (['west', 'east', 'south', 'north'] as Side[]).forEach((side) => bySide[side].forEach((p, i) => { const at = pos(side, i, bySide[side].length); pins.push({ name: p.name, role: p.role, side, x: at.x, y: at.y }); }));
+  return { w, h, head, margin, pins };
+}
 
 type ElkPort = { id: string; width: number; height: number; x?: number; y?: number; layoutOptions: Record<string, string> };
 type ElkNode = { id: string; width: number; height: number; x?: number; y?: number; ports: ElkPort[]; layoutOptions: Record<string, string> };
@@ -58,40 +92,24 @@ export async function layout(project: Project, registry: Registry, opts: { compa
     const src = pins.find((p) => OUTPUT_ROLES.includes(roleOf(p) as PinRole)) ?? pins.find((p) => kindOf(p.instance) === 'dev_board') ?? pins[0];
     if (src) sourceOf.set(n.id, `${src.instance}.${src.pin}`);
   }
-  const sideOfPin = (instId: string, pinName: string, role: PinRole): Side => {
-    const key = `${instId}.${pinName}`; const netId = netOfPin.get(key)!;
-    if (flagIds.has(netId)) return project.nets.find((n) => n.id === netId)!.kind === 'ground' ? 'south' : 'north';
-    return sourceOf.get(netId) === key ? 'east' : 'west';
-  };
-
-  // Nodes and ports
+  // Nodes and ports: geometry from the component alone; net membership only decorates the pins (net, flag, wired, source).
   const nodes: LayoutNode[] = []; const elkNodes: ElkNode[] = [];
+  const netById = new Map(project.nets.map((n) => [n.id, n]));
   for (const inst of project.instances) {
     const c = comp(inst.registryId); const kind = c?.kind ?? 'unknown';
-    const used = (c?.pins ?? []).filter((p) => netOfPin.has(`${inst.id}.${p.name}`));
-    const bySide: Record<Side, typeof used> = { north: [], south: [], west: [], east: [] };
-    for (const p of used) bySide[sideOfPin(inst.id, p.name, p.role)].push(p);
-    const sub = c?.label ?? inst.registryId;
-    const w = Math.max(MIN_W, inst.label.length * CHAR_W + 2 * PAD, Math.min(sub.length, 28) * 5 + 2 * PAD, (bySide.north.length + 1) * 34, (bySide.south.length + 1) * 34,
-      (Math.max(...bySide.west.map((p) => p.name.length), 0) + Math.max(...bySide.east.map((p) => p.name.length), 0)) * CHAR_W + 3 * PAD);
-    const rows = Math.max(bySide.west.length, bySide.east.length);
-    const head = HEAD_H + (bySide.north.length ? 12 : 0);
-    const h = head + rows * PIN_H + (bySide.south.length ? 14 : 8);
-    const margin = { top: bySide.north.length ? FLAG_MARGIN : 0, bottom: bySide.south.length ? FLAG_MARGIN : 0 };
-    const node: LayoutNode = { id: inst.id, label: inst.label, sub, kind, x: 0, y: 0, w, h, head, margin, pins: [] };
+    const g = partGeometry(c, inst.label, inst.registryId);
+    const node: LayoutNode = { id: inst.id, label: inst.label, sub: c?.label ?? inst.registryId, kind, x: 0, y: 0, w: g.w, h: g.h, head: g.head, margin: g.margin, pins: [] };
     const ports: ElkPort[] = [];
-    const pos = (side: Side, i: number, count: number) => side === 'west' ? { x: -2, y: head + i * PIN_H + 6 } : side === 'east' ? { x: w - 2, y: head + i * PIN_H + 6 }
-      : side === 'north' ? { x: (w * (i + 1)) / (count + 1) - 2, y: -2 } : { x: (w * (i + 1)) / (count + 1) - 2, y: h - 2 };
-    (['north', 'south', 'west', 'east'] as Side[]).forEach((side) => bySide[side].forEach((p, i) => {
-      const key = `${inst.id}.${p.name}`; const netId = netOfPin.get(key)!; const net = project.nets.find((n) => n.id === netId)!;
-      const at = pos(side, i, bySide[side].length);
-      node.pins.push({ name: p.name, role: p.role, side, x: at.x + 2, y: at.y + 2, netId, flag: flagIds.has(netId) ? net.name : undefined, flagKind: flagIds.has(netId) ? (net.kind === 'ground' ? 'ground' : 'power') : undefined, source: sourceOf.get(netId) === key || OUTPUT_ROLES.includes(p.role) });
-      ports.push({ id: key, width: 4, height: 4, x: at.x, y: at.y + margin.top, layoutOptions: { 'elk.port.side': ELK_SIDE[side] } });
-    }));
+    for (const p of g.pins) {
+      const key = `${inst.id}.${p.name}`; const netId = netOfPin.get(key); const net = netId ? netById.get(netId) : undefined;
+      const flagged = !!netId && flagIds.has(netId);
+      node.pins.push({ ...p, netId, wired: !!net && net.pins.length >= 2, flag: flagged ? net!.name : undefined, flagKind: flagged ? (net!.kind === 'ground' ? 'ground' : 'power') : undefined, source: (!!netId && sourceOf.get(netId) === key) || OUTPUT_ROLES.includes(p.role) });
+      ports.push({ id: key, width: 4, height: 4, x: p.x - 2, y: p.y - 2 + g.margin.top, layoutOptions: { 'elk.port.side': ELK_SIDE[p.side] } });
+    }
     nodes.push(node);
     const lo: Record<string, string> = { 'elk.portConstraints': 'FIXED_POS' };
     if (inst.id === project.power.sourceInstance) lo['elk.layered.layering.layerConstraint'] = 'FIRST';
-    elkNodes.push({ id: inst.id, width: w, height: h + margin.top + margin.bottom, ports, layoutOptions: lo });
+    elkNodes.push({ id: inst.id, width: g.w, height: g.h + g.margin.top + g.margin.bottom, ports, layoutOptions: lo });
   }
 
   // Edges: every routed net from its source pin to each other pin. Power edges get priority so cycle breaking reverses signals, not supplies.

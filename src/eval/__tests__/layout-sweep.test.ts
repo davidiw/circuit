@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { registry, templates } from '../../data';
 import { pinRefs } from '../sweep';
-import { applyOps, connectPins } from '../mutations';
+import { applyOps, connectPins, disconnectPin } from '../mutations';
 import { evaluate } from '../evaluate';
 import { layout } from '../layout';
 import { assertProjectInvariants } from './contract';
@@ -32,6 +32,26 @@ describe('pin-pair sweep through layout', () => {
       expect(failures).toEqual([]);
       expect(tested).toBeGreaterThan(t.id === 'water_leak_detector_v1' ? 30 : 200);
     }, 120_000);
+  }
+});
+
+describe('disconnect sweep: a pin taken off its net neither moves nor disappears', () => {
+  for (const t of templates) {
+    it(`${t.id}: every single disconnect keeps every part's pins where the template drew them, and the freed pin stays drawn`, async () => {
+      const ref = await layout(t, registry);
+      const shape = (l: Awaited<ReturnType<typeof layout>>) => Object.fromEntries(l.nodes.map((n) => [n.id, { w: n.w, h: n.h, pins: n.pins.map((q) => `${q.name}@${q.side}:${q.x},${q.y}`) }]));
+      const refShape = shape(ref);
+      for (const { ref: pin } of pinRefs(t, registry)) {
+        const ops = disconnectPin(pin); const p2 = applyOps(t, ops); const where = `${t.id} disconnect ${pin.instance}.${pin.pin}`;
+        assertProjectInvariants(p2, where); evaluate(p2, registry);
+        for (const compact of [false, true]) {
+          const l = await layout(p2, registry, { compact }); assertLayoutInvariants(l, p2, registry, `${where} compact=${compact}`);
+          expect(shape(l), `${where} compact=${compact}: part geometry unchanged by the edit`).toEqual(refShape);
+          const q = l.nodes.find((n) => n.id === pin.instance)!.pins.find((x) => x.name === pin.pin)!;
+          expect(q.wired, `${where}: freed pin reads unwired`).toBe(false);
+        }
+      }
+    }, 60_000);
   }
 });
 

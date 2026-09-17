@@ -47,6 +47,7 @@ Preserve these in every change. A change that needs to break one is a product de
 - Import and storage boundaries validate (schema, integrity against the registry) before state is trusted, and an imported or stored evaluation is discarded and recomputed.
 - Unsupported and unmodeled dimensions remain visible as such. Coverage is never upgraded to make a result look cleaner.
 - Any structurally valid user edit must not crash evaluation or rendering. It may produce a violation, a warning, an unknown, a documented coverage gap, or an ugly diagram.
+- A part's diagram geometry is a pure function of its component (`partGeometry` in `src/eval/layout.ts`): every registry pin is always drawn, on a side decided by its role, at a position that does not depend on the nets. Wiring edits can neither hide nor move a pin, so a disconnected pin stays selectable. The layout contract asserts every node equals that function's output, across the pin-pair and disconnect sweeps.
 
 ## Failure-handling philosophy
 

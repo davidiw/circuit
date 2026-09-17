@@ -86,6 +86,23 @@ try {
   if (!(await page.$('.finding.res'))) await fail('the cleared violation is not shown as resolved');
   step('fix applied, violation cleared');
 
+  // 11b. disconnect a pin, then wire it back from the freed pin itself: the pin stays drawn and selectable
+  if (!(await clickPin('TB6612', 'MOTORB2'))) await fail('could not click pin TB6612 MOTORB2');
+  await page.waitForSelector('#panel-pin', { timeout: 5000 });
+  if (!(await clickText('#panel-pin .btn', /^Disconnect$/))) await fail('pin sheet has no Disconnect button');
+  await expectChip('stale', 'after the disconnect');
+  const freed = await page.evaluate(() => { const g = [...document.querySelectorAll('.node')].find((n) => n.querySelector('.title')?.textContent?.includes('TB6612')); const p = g && [...g.querySelectorAll('.pin')].find((x) => x.querySelector('text')?.textContent === 'MOTORB2'); return p ? p.getAttribute('class') : null; });
+  if (!freed) await fail('MOTORB2 disappeared from the diagram after the disconnect');
+  if (!/\bnc\b/.test(freed)) await fail('MOTORB2 is not drawn as unconnected after the disconnect');
+  if (!(await clickPin('TB6612', 'MOTORB2'))) await fail('could not select the freed pin MOTORB2');
+  if (!(await clickText('#panel-pin .btn', /Connect to another pin/))) await fail('freed pin sheet has no Connect button');
+  await page.waitForSelector('.dia.connecting', { timeout: 5000 });
+  if (!(await clickPin('Right motor', 'M-'))) await fail('could not click pin Right motor M-');
+  await wait(400); if (await page.$('.dia.connecting')) await fail('connect mode did not finish after picking M-');
+  await evaluate(); await expectChip('cur', 'after the reconnect');
+  if (await page.$('.finding.bad:not(.res)')) await fail('a violation remains after reconnecting MOTORB2');
+  step('disconnect and reconnect a pin');
+
   // 12. preview one optimization: the before/after comparison renders with modeled quantities
   if (!(await clickText('#panel-optimize .btn', /Preview before/))) await fail('no optimization preview button');
   await page.waitForSelector('.overlay .compare', { timeout: 5000 });

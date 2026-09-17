@@ -81,11 +81,15 @@ export function Diagram({ project, highlight, selection, connectFrom, compact, f
             {n.pins.map((p) => {
               const ref = { instance: n.id, pin: p.name }; const x = n.x + p.x, y = n.y + p.y;
               const cand = isCandidate(ref); const isFrom = samePin(ref, connectFrom); const isSel = samePin(ref, selection.pin); const isHover = samePin(ref, hoverPin);
-              const cls = `pin ${netClass(p.netId)} ${cand ? 'cand' : ''} ${isFrom ? 'from' : ''} ${isSel ? 'selpin' : ''} ${connectFrom && !cand && !isFrom ? 'dim' : ''}`;
+              const cls = `pin ${netClass(p.netId)} ${p.wired ? '' : 'nc'} ${cand ? 'cand' : ''} ${isFrom ? 'from' : ''} ${isSel ? 'selpin' : ''} ${connectFrom && !cand && !isFrom ? 'dim' : ''}`;
               const handlers = { onClick: (ev: React.MouseEvent) => { ev.stopPropagation(); clickPin(ref); }, onMouseEnter: () => { setHoverPin(ref); if (p.netId) setHoverNet(p.netId); }, onMouseLeave: () => { setHoverPin(undefined); setHoverNet(undefined); } };
-              const tip = `${n.label} ${p.name} · ${p.role.replace('_', ' ')}${p.netId ? ` · ${project.nets.find((q) => q.id === p.netId)?.name}` : ' · unconnected'}`;
-              if (p.side === 'west' || p.side === 'east') return <g key={p.name} className={cls} {...handlers}><title>{tip}</title><circle className="hitpin" cx={x} cy={y} r={7} /><circle cx={x} cy={y} r={cand || isSel || isFrom ? 3.4 : 2.2} />{cand && <circle className="ring" cx={x} cy={y} r={6} />}<text x={x + (p.side === 'west' ? 8 : -8)} y={y + 3} textAnchor={p.side === 'west' ? 'start' : 'end'}>{p.name}</text>
-                {cand && isHover && <text x={x + (p.side === 'west' ? 8 : -8)} y={y - 8} textAnchor={p.side === 'west' ? 'start' : 'end'} className="cand-label">{targetLabel(ref)}</text>}</g>;
+              const tip = `${n.label} ${p.name} · ${p.role.replace('_', ' ')}${p.wired ? ` · ${project.nets.find((q) => q.id === p.netId)?.name}` : ' · unconnected'}`;
+              if (p.side === 'west' || p.side === 'east') {
+                const out = p.side === 'west' ? -1 : 1;   // direction away from the box
+                return <g key={p.name} className={cls} {...handlers}><title>{tip}</title><circle className="hitpin" cx={x} cy={y} r={7} /><circle cx={x} cy={y} r={cand || isSel || isFrom ? 3.4 : 2.2} />{cand && <circle className="ring" cx={x} cy={y} r={6} />}<text x={x - out * 8} y={y + 3} textAnchor={p.side === 'west' ? 'start' : 'end'}>{p.name}</text>
+                  {p.flag && <><line x1={x} y1={y} x2={x + out * 12} y2={y} className="flagline" /><text x={x + out * 14} y={y + 3} textAnchor={p.side === 'west' ? 'end' : 'start'} className="flag">{p.flag}</text></>}
+                  {cand && isHover && <text x={x - out * 8} y={y - 8} textAnchor={p.side === 'west' ? 'start' : 'end'} className="cand-label">{targetLabel(ref)}</text>}</g>;
+              }
               const up = p.side === 'north'; const fy = up ? y - FLAG : y + FLAG;
               return (
                 <g key={p.name} className={cls} {...handlers}>
@@ -93,7 +97,8 @@ export function Diagram({ project, highlight, selection, connectFrom, compact, f
                   <text x={x} y={up ? y + 10 : y - 4} textAnchor="middle" className="pinlab">{p.name}</text>
                   {p.flag && <><line x1={x} y1={y} x2={x} y2={fy} className="flagline" />
                     {up ? <g><line x1={x - 7} y1={fy} x2={x + 7} y2={fy} className="flagline" /><text x={x} y={fy - 4} textAnchor="middle" className="flag">{p.flag}</text></g>
-                      : <g className="gndsym"><line x1={x - 6} y1={fy} x2={x + 6} y2={fy} /><line x1={x - 4} y1={fy + 3} x2={x + 4} y2={fy + 3} /><line x1={x - 2} y1={fy + 6} x2={x + 2} y2={fy + 6} /><text x={x + 9} y={fy + 4} className="flag">{p.flag}</text></g>}</>}
+                      : p.flagKind === 'ground' ? <g className="gndsym"><line x1={x - 6} y1={fy} x2={x + 6} y2={fy} /><line x1={x - 4} y1={fy + 3} x2={x + 4} y2={fy + 3} /><line x1={x - 2} y1={fy + 6} x2={x + 2} y2={fy + 6} /><text x={x + 9} y={fy + 4} className="flag">{p.flag}</text></g>
+                      : <g><line x1={x - 7} y1={fy} x2={x + 7} y2={fy} className="flagline" /><text x={x} y={fy + 10} textAnchor="middle" className="flag">{p.flag}</text></g>}</>}
                   {cand && isHover && <text x={x} y={up ? y - 8 : y + 18} textAnchor="middle" className="cand-label">{targetLabel(ref)}</text>}
                 </g>
               );
@@ -114,7 +119,7 @@ export function Diagram({ project, highlight, selection, connectFrom, compact, f
           </>}
         </div>
       )}
-      <div className="legend"><span><i className="pw"></i>power</span><span><i className="gnd"></i>ground</span><span><i className="sig"></i>signal</span><span><i className="mot"></i>motor</span><span>⌒ hop, no connection</span><span>● junction</span>{l.rails.length > 0 && <span className="muted">{l.rails.map((r) => r.name).join(', ')} as symbols at each pin</span>}</div>
+      <div className="legend"><span><i className="pw"></i>power</span><span><i className="gnd"></i>ground</span><span><i className="sig"></i>signal</span><span><i className="mot"></i>motor</span><span>⌒ hop, no connection</span><span>○ unconnected pin</span><span>● junction</span>{l.rails.length > 0 && <span className="muted">{l.rails.map((r) => r.name).join(', ')} as symbols at each pin</span>}</div>
     </div>
   );
 }
