@@ -9,10 +9,13 @@ Design docs: plan and system design live in the shared Claude Doc linked from th
 ```bash
 npm install
 npm run build          # SPA -> dist/
-SESSION_SECRET=dev npm run start   # http://127.0.0.1:8797, login with the credentials from the environment
+cp .env.example .env   # set GATE_USER, GATE_PASS, SESSION_SECRET; git-ignored
+npm run start          # http://127.0.0.1:8797, login with the credentials from .env
 ```
 
-For UI work: `npm run dev` (Vite on 5173, proxies /api to 8797, shows a browser-only dev gate).
+For UI work: `npm run dev` (Vite on 5173, proxies /api to 8797, shows a browser-only dev gate that checks `VITE_DEV_GATE_USER` / `VITE_DEV_GATE_PASS` from `.env`).
+
+No credential or key is committed. The server reads `.env` locally and `/etc/circuit/env` in production; both are git-ignored templates of `.env.example` and `deploy/env.example`.
 
 ## Layout
 

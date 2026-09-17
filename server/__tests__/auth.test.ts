@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+// Credentials for the test gate come from the environment, never from code; set before the server module reads its config.
+const { TEST_USER, TEST_PASS } = vi.hoisted(() => { process.env.GATE_USER = 'test-user'; process.env.GATE_PASS = 'test-pass'; return { TEST_USER: 'test-user', TEST_PASS: 'test-pass' }; });
 import { app, resetLimits, setProvider, mintSession } from '../index';
 
 const form = (username: string, password: string) => ({ method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ username, password }).toString() });
@@ -15,11 +17,11 @@ describe('gate', () => {
     const r = await app.request('/login'); expect(r.status).toBe(200); expect(await r.text()).toContain('Circuit Factory');
   });
   it('rejects a wrong password without a cookie', async () => {
-    const r = await app.request('/login', form('test-user', 'wrong'));
+    const r = await app.request('/login', form(TEST_USER, 'wrong'));
     expect(r.status).toBe(303); expect(r.headers.get('location')).toBe('/login?error=1'); expect(r.headers.get('set-cookie')).toBeNull();
   });
   it('sets a cookie on the right password', async () => {
-    const r = await app.request('/login', form('test-user', 'test-pass'));
+    const r = await app.request('/login', form(TEST_USER, TEST_PASS));
     expect(r.status).toBe(303); expect(r.headers.get('location')).toBe('/');
     expect(r.headers.get('set-cookie')).toMatch(/cf_session=\d+\.[0-9a-f]{64}; Max-Age=604800; Path=\/; HttpOnly; SameSite=Lax/);
   });

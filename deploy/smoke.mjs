@@ -2,7 +2,8 @@
 // Usage: node deploy/smoke.mjs [base-url]   (run from the repo checkout; needs puppeteer-core and the Chrome binary below)
 import puppeteer from 'puppeteer-core';
 const base = process.argv[2] ?? 'https://circuit.davidwolinsky.com';
-const user = process.env.GATE_USER ?? '', pass = process.env.GATE_PASS ?? '';
+const user = process.env.GATE_USER, pass = process.env.GATE_PASS;
+if (!user || !pass) { console.error('SMOKE FAIL: set GATE_USER and GATE_PASS in the environment'); process.exit(1); }
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME ?? '/opt/google/chrome/chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] });
 const fail = async (msg) => { console.error(`SMOKE FAIL: ${msg}`); await browser.close(); process.exit(1); };
 try {

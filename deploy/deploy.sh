@@ -39,7 +39,7 @@ if sudo test -d /etc/letsencrypt/live/circuit.davidwolinsky.com; then install_if
 sudo nginx -t >/dev/null && sudo systemctl reload nginx
 
 say "Live smoke test against $URL"
-node deploy/smoke.mjs "$URL" || rollback
+GATE_USER="$(sudo grep -E '^GATE_USER=' "$ENV_FILE" | cut -d= -f2-)" GATE_PASS="$(sudo grep -E '^GATE_PASS=' "$ENV_FILE" | cut -d= -f2-)" node deploy/smoke.mjs "$URL" || rollback
 
 say "Pruning old releases (keeping 3)"
 ls -1dt "$RELEASES"/*/ | tail -n +4 | while read -r old; do [ "$(readlink -f "$old")" != "$(readlink -f "$CURRENT")" ] && rm -rf "$old" && echo "removed $old"; done || true

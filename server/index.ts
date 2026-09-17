@@ -9,10 +9,14 @@ import { integrityProblems } from '../src/model/integrity';
 import { Project } from '../src/model/schema';
 import { registry } from '../src/data';
 import { loadAi, type Provider } from './ai-stub';
+import { loadDotEnv } from './env';
 
 // ---------- Config ----------
+loadDotEnv();                       // .env in the working directory, git-ignored; never overrides variables already set
 const env = process.env;
+if (PROD_CHECK(env) && (!env.GATE_USER || !env.GATE_PASS)) throw new Error('GATE_USER and GATE_PASS are required in production');
 const PROD = env.NODE_ENV === 'production';
+function PROD_CHECK(e: NodeJS.ProcessEnv) { return e.NODE_ENV === 'production'; }
 export const config = {
   port: Number(env.PORT ?? 8797),
   sessionSecret: env.SESSION_SECRET ?? (() => {
@@ -90,7 +94,7 @@ app.post('/login', async (c) => {
   if (!loginLimiter.hit(clientIp(c))) return c.text('Too many login attempts. Try again in a minute.', 429);
   const body = await c.req.parseBody();
   const u = String(body['username'] ?? ''), p = String(body['password'] ?? '');
-  const ok = safeEq(u, config.gateUser) && safeEq(p, config.gatePass);
+  const ok = config.gateUser.length > 0 && config.gatePass.length > 0 && safeEq(u, config.gateUser) && safeEq(p, config.gatePass);
   if (!ok) return c.redirect('/login?error=1', 303);
   setCookie(c, COOKIE, mintSession(), { httpOnly: true, sameSite: 'Lax', path: '/', secure: PROD, maxAge: SESSION_MS / 1000 });
   return c.redirect('/', 303);

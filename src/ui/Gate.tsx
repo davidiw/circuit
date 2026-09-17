@@ -5,7 +5,9 @@ export function Gate({ onAuthed, dev }: { onAuthed: () => void; dev: boolean }) 
   const [u, setU] = useState(''); const [p, setP] = useState(''); const [err, setErr] = useState('');
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (u === (import.meta.env.VITE_DEV_GATE_USER ?? '') && p === (import.meta.env.VITE_DEV_GATE_PASS ?? '') && u) { try { sessionStorage.setItem('cf.dev.authed', '1'); } catch { /* ignore */ } onAuthed(); } else setErr('Wrong username or password.');
+    // Development gate only. Credentials come from .env (VITE_DEV_GATE_USER / VITE_DEV_GATE_PASS); production authenticates on the server.
+    const devUser = import.meta.env.VITE_DEV_GATE_USER ?? '', devPass = import.meta.env.VITE_DEV_GATE_PASS ?? '';
+    if (devUser && devPass && u === devUser && p === devPass) { try { sessionStorage.setItem('cf.dev.authed', '1'); } catch { /* ignore */ } onAuthed(); } else setErr('Wrong username or password.');
   };
   return (
     <div className="gate-wrap">
