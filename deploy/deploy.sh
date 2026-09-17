@@ -32,7 +32,7 @@ install_if_changed "$UNIT_SRC" "$UNIT_DST"; sudo systemctl daemon-reload
 ln -sfn "$REL" "$CURRENT"; sudo systemctl enable --now circuit >/dev/null; sudo systemctl restart circuit; sleep 2
 rollback() { echo "!! rolling back to ${PREV:-nothing}" >&2; if [ -n "$PREV" ] && [ -d "$PREV" ]; then ln -sfn "$PREV" "$CURRENT"; sudo systemctl restart circuit; sleep 2; sudo systemctl is-active circuit && echo "rolled back; current -> $PREV"; fi; exit 1; }
 sudo systemctl is-active --quiet circuit || rollback
-curl -fsS "http://127.0.0.1:$(grep -E '^PORT=' "$ENV_FILE" | cut -d= -f2 || echo 8797)/healthz" >/dev/null || rollback
+curl -fsS "http://127.0.0.1:$(sudo grep -E '^PORT=' "$ENV_FILE" | cut -d= -f2 || echo 8797)/healthz" >/dev/null || rollback
 
 say "nginx site"
 if sudo test -d /etc/letsencrypt/live/circuit.davidwolinsky.com; then install_if_changed "$NGX_SRC" "$NGX_DST"; else TMP80="$(mktemp)"; awk '/^server \{/{n++} n==1' "$NGX_SRC" > "$TMP80"; install_if_changed "$TMP80" "$NGX_DST"; rm -f "$TMP80"; echo "No certificate yet; port-80 site only. Once DNS points here: sudo certbot certonly --webroot -w /var/lib/letsencrypt -d circuit.davidwolinsky.com" >&2; fi
