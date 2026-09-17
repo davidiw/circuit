@@ -171,6 +171,24 @@ code { font-family: var(--mono); font-size: 12px; background: var(--unknown-soft
 .dia .rubber { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 3; pointer-events: none; }
 .dia .edge.hover polyline:not(.hit) { stroke: var(--accent); stroke-width: 2.4; }
 .dia .node.opt rect, .dia .edge.opt polyline:not(.hit) { stroke: var(--accent); }
+.dia .node.focus rect { stroke: var(--accent); stroke-width: 2.2; } .dia .edge.focus polyline:not(.hit) { stroke: var(--accent); stroke-width: 2.4; } .dia .pin.focus circle:not(.hitpin):not(.ring) { fill: var(--accent); }
+/* Learn: the compact card and the guide sheet */
+.learn-card { border-left: 3px solid var(--accent); } .learn-card p { margin: 4px 0 6px; font-size: 12.5px; line-height: 1.45; } .learn-card .btn { white-space: normal; text-align: left; }
+.learn-line { margin: 6px 0 0; display: flex; gap: 8px; align-items: center; } .learn-line .btn { flex: 1 1 auto; white-space: normal; text-align: left; }
+.learn .chain { list-style: none; margin: 4px 0 6px; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.learn .chain li { display: flex; align-items: center; gap: 4px; } .learn .chain li::after { content: "→"; color: var(--muted); font-size: 11px; } .learn .chain li:last-child::after { content: ""; }
+.learn .chain button { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 2px 9px; font-size: 12px; cursor: pointer; color: var(--ink); font-family: inherit; }
+.learn .chain button.on, .learn .chain button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.learn .explain { font-size: 12.5px; line-height: 1.5; margin: 4px 0 8px; } .learn .paths div { margin: 3px 0; font-size: 12.5px; line-height: 1.45; } .learn .paths b { font-weight: 600; }
+.learn .parts li { display: block; padding: 6px 0; } .learn .parts li.on { background: var(--accent-soft); margin-inline: -6px; padding-inline: 6px; border-radius: 4px; }
+.learn .parts .head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; cursor: pointer; } .learn .parts .head b { font-weight: 600; } .learn .parts .role { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.learn .parts .does, .learn .parts .why { font-size: 12.5px; line-height: 1.45; margin: 3px 0 0; } .learn .parts .why::before { content: "Why it is here: "; font-weight: 600; }
+.learn .decisions { list-style: none; margin: 0; padding: 0; } .learn .decisions li { padding: 5px 0; border-bottom: 1px dashed var(--line-soft); } .learn .decisions li:last-child { border-bottom: 0; }
+.learn .decisions .q { display: flex; gap: 8px; align-items: flex-start; width: 100%; background: none; border: 0; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); text-align: left; cursor: pointer; }
+.learn .decisions li.on .q { color: var(--accent); } .learn .decisions .q::before { content: "▸"; color: var(--muted); font-weight: 400; } .learn .decisions li.on .q::before { content: "▾"; }
+.learn .related { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; } .learn .related .tag { font-size: 11px; white-space: normal; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
+@media (min-width: 641px) { .dia-wrap .sheet-host:has(.learn) { max-height: 640px; } }
+.learn .trust { font-size: 11.5px; color: var(--muted); margin-top: 10px; border-top: 1px dashed var(--line-soft); padding-top: 6px; }
 .dia .node:hover rect { stroke: var(--accent); }
 .covdock { margin-top: 10px; border-top: 1px dashed var(--line-soft); padding-top: 6px; } .covbody { padding: 6px 0 0; }
 .ai-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line-soft); }
@@ -200,6 +218,7 @@ table.cmp { width: 100%; border-collapse: collapse; font-size: 12.5px; } table.c
 .evalbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
 .evalbar .btn { flex: 1; }
 @media (max-width: 640px) {
+  .learn .chain li::after { content: ""; } .learn .chain { gap: 6px; }
   .strip { gap: 8px; font-size: 12px; } .stepper li { padding: 3px 8px 3px 12px; font-size: 11.5px; } .stepper li.hint { flex-basis: 100%; padding-left: 0; margin-top: 4px; }
   .dia-wrap .sheet-host { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 55vh; z-index: 25; padding: 0 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
   .dia-wrap .sheet-host .sheet { border-radius: 12px 12px 0 0; box-shadow: 0 -8px 28px rgba(0,0,0,.2); }

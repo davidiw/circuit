@@ -48,6 +48,7 @@ describe('freshness state machine', () => {
     const ui: Action[] = [
       { type: 'SELECT_INSTANCE', id: 'driver' }, { type: 'SELECT_NET', id: 'STBY' }, { type: 'SELECT_PIN', pin: { instance: 'mcu', pin: 'D6' } }, { type: 'ARM_CONNECT', pin: { instance: 'mcu', pin: 'D6' } }, { type: 'ARM_CONNECT', pin: undefined },
       { type: 'VIEW_FINDING', id: before.project.lastEvaluation!.findings[0].id }, { type: 'VIEW_COVERAGE' }, { type: 'DISMISS_TIP', id: 'x' }, { type: 'COMPARE', id: 'right_size_battery' }, { type: 'COMPARE' }, { type: 'DESELECT' },
+      { type: 'LEARN_OPEN' }, { type: 'LEARN_FOCUS', id: 'decision:separate_driver' }, { type: 'LEARN_FOCUS', id: 'part:driver' }, { type: 'LEARN_CLOSE' },
       { type: 'AI_RESULT', result: { observations: [], model: 'm', provider: 'fake', latencyMs: 1, dropped: 0 } },
     ];
     let cur = st;

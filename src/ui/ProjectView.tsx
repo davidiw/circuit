@@ -13,6 +13,7 @@ import { Findings } from './Findings';
 import { InstanceSheet, NetSheet, PinSheet, Prov } from './Sheet';
 import { Changes, Optimize } from './Changes';
 import { Compare } from './Compare';
+import { LearnCard, LearnLine, LearnSheet, guideFocus } from './Learn';
 
 const STEPS: { id: Step; label: string }[] = [{ id: 'inspect', label: 'Inspect' }, { id: 'evaluate', label: 'Evaluate' }, { id: 'change', label: 'Change' }, { id: 'reevaluate', label: 'Re-evaluate' }, { id: 'optimize', label: 'Optimize' }];
 const RSTAT: Record<string, [string, string]> = { pass: ['met', 'ok'], fail: ['not met', 'bad'], above_target: ['above target', 'opt'], not_evaluated: ['informational', 'no'], unknown: ['unknown', 'unk'] };
@@ -56,13 +57,20 @@ export function ProjectView({ session, state, dispatch }: { session: Session; st
     window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
   }, [session.selectedInstance, session.selectedNet, session.selectedPin, session.connectFrom, session.compareId, full, p, ctx, dispatch]);
 
+  // Phones: the guide is a bottom sheet over the lower half, so bring the first highlighted part into the visible part of the diagram.
+  // Opening the guide from the card below the diagram scrolls the sheet into view on desktop.
+  const learnOpen = !!session.learn;
+  useEffect(() => { if (!learnOpen) return; const el = document.querySelector('.dia-wrap .sheet-host') as Element | null; if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest' }); }, [learnOpen]);
+  useEffect(() => { if (!narrow || !session.learn?.focus) return; const el = document.querySelector('.dia .node.focus') as Element | null; if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }, [narrow, session.learn?.focus]);
   const openF = lifecycles.find((f) => f.id === session.openFinding) ?? session.aiReview?.observations.find((f) => f.id === session.openFinding);
   const selectedNetFromPin = session.selectedPin ? ctx.netOf(session.selectedPin.instance, session.selectedPin.pin)?.id : undefined;
   const highlight = useMemo(() => {
+    const lf = session.learn && !session.selectedInstance && !session.selectedNet && !session.selectedPin ? guideFocus(p, session.learn.focus) : undefined;
+    if (lf) return { instances: lf.instances, nets: lf.nets, severity: 'selection' };
     if (session.selectedInstance) { const nets = new Set<string>(); for (const n of p.nets) if (n.pins.some((x) => x.instance === session.selectedInstance)) nets.add(n.id); return { instances: new Set<string>(), nets, severity: 'selection' }; }
     const src = openF ? [openF] : lifecycles.filter((f) => f.severity === 'violation' && f.lifecycle !== 'resolved');
     return { instances: new Set(src.flatMap((f) => f.affected.map((a) => a.instanceId).filter(Boolean) as string[])), nets: new Set(src.flatMap((f) => f.affected.map((a) => a.netId).filter(Boolean) as string[])), severity: openF?.severity ?? 'violation' };
-  }, [openF, lifecycles, session.selectedInstance, p.nets]);
+  }, [openF, lifecycles, session.selectedInstance, session.selectedNet, session.selectedPin, session.learn, p]);
 
   const current = st === 'evaluated_current' || st === 'reviewed';
   const actionable = st === 'unevaluated' || st === 'evaluated_stale' || st === 'design_incomplete';
@@ -102,9 +110,10 @@ export function ProjectView({ session, state, dispatch }: { session: Session; st
     onSelect: (id: string) => dispatch({ type: 'SELECT_INSTANCE', id }), onSelectNet: (id: string) => dispatch({ type: 'SELECT_NET', id }), onSelectPin: (pin: { instance: string; pin: string }) => dispatch({ type: 'SELECT_PIN', pin }),
     onConnectTo: (pin: { instance: string; pin: string }) => dispatch({ type: 'CONNECT_TO', pin }), onCancelConnect: () => dispatch({ type: 'ARM_CONNECT', pin: undefined }), onDeselect: () => dispatch({ type: 'DESELECT' }),
   };
-  const sheet = session.selectedInstance ? <InstanceSheet session={session} ctx={ctx} lifecycles={lifecycles} dispatch={dispatch} /> : session.selectedNet ? <NetSheet session={session} ctx={ctx} lifecycles={lifecycles} dispatch={dispatch} /> : session.selectedPin ? <PinSheet session={session} ctx={ctx} dispatch={dispatch} /> : null;
+  const sheet = session.selectedInstance ? <InstanceSheet session={session} ctx={ctx} lifecycles={lifecycles} dispatch={dispatch} /> : session.selectedNet ? <NetSheet session={session} ctx={ctx} lifecycles={lifecycles} dispatch={dispatch} /> : session.selectedPin ? <PinSheet session={session} ctx={ctx} dispatch={dispatch} /> : session.learn && p.designGuide ? <LearnSheet session={session} ctx={ctx} dispatch={dispatch} reqStatus={reqStatus} /> : null;
   const design = (
     <div className="design" id="panel-design">
+      <LearnCard session={session} dispatch={dispatch} />
       <section className="panel"><h4 className="tog" onClick={() => setOpen({ ...open, req: !open.req })}>Requirements <span>{p.requirements.length} {open.req ? '▾' : '▸'}</span></h4>
         {open.req && <ul className="list tight">{p.requirements.map((r) => { const [w, c] = RSTAT[reqStatus[r.id]] ?? ['', '']; return <li key={r.id}><span>{r.label}</span><span className={`st ${c}`}>{w}</span></li>; })}</ul>}
         {open.req && <div className="muted small top">Met means the hardware capability and wiring path exist. Application behavior, firmware, and streaming performance are not evaluated.</div>}</section>
@@ -145,6 +154,7 @@ export function ProjectView({ session, state, dispatch }: { session: Session; st
         {sheet && !full && <div className="sheet-host">{sheet}</div>}
       </div>
       {narrow && <button className="btn small fullbtn wide" onClick={() => setFull(true)}>Open the diagram full-screen to select pins and wire</button>}
+      {narrow && <LearnLine session={session} dispatch={dispatch} />}
       {full && <div className="overlay dia-full" onClick={() => setFull(false)}><div onClick={(e) => e.stopPropagation()}>
         <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}><b>{p.title}</b><div className="row"><button className="btn small" onClick={() => setZoom(Math.max(1, zoom / 1.5))} disabled={zoom <= 1} aria-label="Zoom out">−</button><span className="muted small">{Math.round(zoom * 100)}%</span><button className="btn small" onClick={() => setZoom(Math.min(6, zoom * 1.5))} aria-label="Zoom in">+</button><button className="btn small primary" onClick={() => setFull(false)}>Done</button></div></div>
         <Diagram {...diagramProps} big compact={false} zoom={zoom} />

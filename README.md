@@ -11,15 +11,16 @@ Access credentials are supplied separately. Nothing in this repository grants ac
 ## Quick tour
 
 1. Open **Bluetooth Race Car**.
-2. Press **Evaluate**. The deterministic rules run in the browser and the design reads *evaluated · current*.
-3. Open the coverage line under the findings to see what was checked, what is partial because it rests on an assumption, and what is not evaluated at all.
-4. Tap a real pin in the diagram (the XIAO's **D6** is a good one), choose **Connect to another pin**, and wire it somewhere wrong, such as the driver's **GND**. Confirm the merge.
-5. Notice the state chip now reads *changed since evaluation* and the findings say they are from the previous state.
-6. Press **Re-evaluate**.
-7. Open the new violation. It shows the rule, the evidence with the source of each value, the consequence, and a structured fix.
-8. Apply the fix (or press **Undo**) and re-evaluate. The violation shows once more, marked resolved.
-9. Open **Optimize** and preview *right-size the battery*.
-10. Read the before/after comparison: modeled quantities, requirement status, changed assumptions, and the risk you accept. Apply it or keep the current design.
+2. Read the **How this design works** card and open it. Click a step in the flow to see its parts light up in the diagram; open a decision to read why the design is built this way.
+3. Press **Evaluate**. The deterministic rules run in the browser and the design reads *evaluated · current*.
+4. Open the coverage line under the findings to see what was checked, what is partial because it rests on an assumption, and what is not evaluated at all.
+5. Tap a real pin in the diagram (the XIAO's **D6** is a good one), choose **Connect to another pin**, and wire it somewhere wrong, such as the driver's **GND**. Confirm the merge.
+6. Notice the state chip now reads *changed since evaluation* and the findings say they are from the previous state.
+7. Press **Re-evaluate**.
+8. Open the new violation. It shows the rule, the evidence with the source of each value, the consequence, and a structured fix.
+9. Apply the fix (or press **Undo**) and re-evaluate. The violation shows once more, marked resolved.
+10. Open **Optimize** and preview *right-size the battery*.
+11. Read the before/after comparison: modeled quantities, requirement status, changed assumptions, and the risk you accept. Apply it or keep the current design.
 
 ## What the product is
 
@@ -31,6 +32,7 @@ Access credentials are supplied separately. Nothing in this repository grants ac
 - **Stale and current are distinct.** An evaluation is bound to a hash of the design and a rules version. Any edit makes it stale; a rules change makes old results stale. A stale result is never shown as current.
 - **Fixes are structured edits.** A finding's fix is the same kind of operation a manual edit is, applied through the same path, undoable, and re-evaluated by the same rules.
 - **Optimization is an edit plus the same evaluator.** An optimization applies canonical edits to a candidate, runs the normal evaluator on it, and shows the before/after difference. No ranking, no score.
+- **An engineering guide, not a tutorial.** Each project carries a structured explanation: how power and control flow, what each part does and why it is here, and the engineering decisions behind the design, each tied to real parts, wires, requirements, assumptions, and optimizations. Numbers in the guide are live facts or assumptions with their provenance tag. It explains the design; the rules check it.
 - **AI review is a separate trust domain.** When a provider is configured, an AI reviewer can add labeled observations. They are kept apart from deterministic findings and can never change the design. When no provider is configured, the surface is simply absent.
 
 Three example projects ship with the app: the Bluetooth Race Car (the fully worked reference path with guided changes and optimizations), a video doorbell, and a water-leak detector. Sessions persist per browser with a versioned format, and projects can be exported and imported as JSON.
@@ -123,7 +125,7 @@ automatic rollback if smoke fails
 | `src/model/` | Zod schemas (Project, Registry, Finding, Coverage, MutationOp), vocabularies, history, integrity check, workflow state machine |
 | `src/data/` | `registry.json` and the three template projects with their guided changes and optimizations |
 | `src/eval/` | Evaluation context with net-voltage propagation, `evaluate.ts`, `rules/` (one file per rule), structured mutations, the KiCad ERC matrix, the pin-pair sweep, and the ELK diagram layout |
-| `src/ui/` | React app: store and reducer, versioned storage, library, project view, SVG diagram, findings, coverage, sheets, changes, compare |
+| `src/ui/` | React app: store and reducer, versioned storage, library, project view, SVG diagram, findings, coverage, sheets, the Learn guide, changes, compare |
 | `src/ai/` | Provider interface, Anthropic and Gemini adapters, a scripted provider, the review prompt, and the output gate |
 | `server/` | Hono server: signed-cookie gate, static serving, `/api/review` with limits |
 | `bench/` | Model-selection benchmark over the frozen corpus |

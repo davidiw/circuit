@@ -24,6 +24,7 @@ export type Session = {
   compareId?: string;            // optimization being previewed
   openFinding?: string;
   introDismissed?: boolean;
+  learn?: { focus?: string };   // the Learn sheet is open; focus is `flow:<id>` | `part:<instance>` | `decision:<id>` and only drives highlighting
 };
 
 /** Derived, never stored. */

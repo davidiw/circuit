@@ -25,6 +25,7 @@ Circuit Factory presents an electronics design as explicit state and lets a pers
 - A finding may carry fixes: structured operations applied through the same path as a manual edit.
 - Optimizations are curated canonical edits. Preview applies them to a candidate, runs the normal evaluator, and shows the before/after difference; Apply records the edit like any other.
 - Sessions persist per browser in a versioned localStorage format with migrations; projects export and import as JSON, and imported files are validated and re-evaluated before they are trusted.
+- Each template carries a `designGuide` (system flow, power/control/result, why each part is here, engineering decisions) and each registry component a `guide` (role, summary). The Learn sheet renders them beside the diagram and highlights the related artifacts. It is explanatory content, read-only with respect to engineering state.
 - The server (`server/`) is a signed-cookie access gate plus static serving plus one AI review endpoint.
 - AI review is optional and architecturally separate: a provider interface (`src/ai/`), an output gate, a benchmark to select a model, and a labeled observation list in the UI that appears only when a provider is configured.
 
@@ -47,6 +48,7 @@ Preserve these in every change. A change that needs to break one is a product de
 - Import and storage boundaries validate (schema, integrity against the registry) before state is trusted, and an imported or stored evaluation is discarded and recomputed.
 - Unsupported and unmodeled dimensions remain visible as such. Coverage is never upgraded to make a result look cleaner.
 - Any structurally valid user edit must not crash evaluation or rendering. It may produce a violation, a warning, an unknown, a documented coverage gap, or an ugly diagram.
+- The design guide explains; it never checks. The evaluator does not read `designGuide` or registry `guide`, neither is in the state hash, and opening or browsing the guide cannot change project state or freshness. Numbers in guide prose come through `{{instance.fact}}` / `{{assumption.key}}` tokens so they render with provenance; a guide must not state an electrical value the registry or an assumption does not carry, and every related id must resolve (the learn tests enforce this).
 - A part's diagram geometry is a pure function of its component (`partGeometry` in `src/eval/layout.ts`): every registry pin is always drawn, on a side decided by its role, at a position that does not depend on the nets. Wiring edits can neither hide nor move a pin, so a disconnected pin stays selectable. The layout contract asserts every node equals that function's output, across the pin-pair and disconnect sweeps.
 
 ## Failure-handling philosophy
@@ -87,6 +89,7 @@ Each layer catches a different kind of bug. Put a new test where its failure wou
 | Boundary and numeric | `boundary.test.ts` | Hand-derived numbers, supply-range edges from registry limits, connect-pins survivor rules, pin-exact attribution | A threshold or formula changes |
 | Layout | `layout.test.ts`, `layout-sweep.test.ts`, `layout-contract.ts` | Template diagrams: no overlap, every net routed, wires clear of boxes. Every merge-mode pin pair and every adversarial topology: finite geometry, nodes are instances, edge endpoints are real pins, regular and compact modes | Geometry is wrong or a topology breaks layout |
 | React render | `src/ui/__tests__/render.test.tsx` | Every corpus state, sheet, compare, applied optimization, phone layout, AI state, migrated evaluation, and adversarial topology renders with no thrown error, no console error, valid SVG attributes, and the page mounted | A state white-screens or a component throws |
+| Design guide | `src/ui/__tests__/learn.test.tsx` | Guide references and tokens resolve; every registry part has a guide; Learn is read-only (project, hash, edits, evaluation state unchanged); renders for every template on desktop and phone; steps, parts, and decisions highlight exactly their artifacts | Guide content or the Learn sheet changes |
 | Layout failure | `layout-failure.test.tsx` | When layout rejects, the page stays up with a fallback and Undo, Reset, Re-evaluate, and Back still work | The fallback regresses |
 | Storage | `storage.test.ts`, `fixtures/` | Payloads from earlier builds migrate; unreadable, newer, and invalid payloads are dropped with a notice; stored evaluations are never restored as current | The saved-session shape changes |
 | Reducer and freshness | `store.test.ts` | Every semantic edit makes the evaluation stale; UI-only actions are hash-neutral; undo and reset restore the template hash; rules-version staleness; optimization apply path | State-machine semantics change |
@@ -102,7 +105,7 @@ Each layer catches a different kind of bug. Put a new test where its failure wou
 - `src/data/` — the registry and the three template projects, loaded and schema-parsed at import.
 - `src/eval/` — the evaluation context (indexing, net-voltage propagation, provenance tracking), `evaluate.ts` with `RULES_VERSION`, structured mutations and `connectPins`, the KiCad ERC matrix, the pin-pair sweep, the state hash, and the ELK layout.
 - `src/eval/rules/` — one analyzer per file; each declares its id, dimensions, and what it read.
-- `src/ui/` — React application: store and reducer, versioned storage, library, project view, diagram, findings, coverage, sheets, changes and optimize, compare, gate, error boundary.
+- `src/ui/` — React application: store and reducer, versioned storage, library, project view, diagram, findings, coverage, sheets, the Learn guide (`Learn.tsx`), changes and optimize, compare, gate, error boundary.
 - `src/ai/` — provider interface, Anthropic and Gemini adapters, scripted provider, prompt text, review orchestration and output gate.
 - `server/` — Hono application (gate, static, `/api/review`), environment loading, entry point.
 - `bench/` — the frozen benchmark cases, runner, and price table for selecting an AI model.

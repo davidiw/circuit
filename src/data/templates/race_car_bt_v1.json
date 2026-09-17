@@ -461,6 +461,218 @@
   ],
   "overrides": [],
   "unresolved": [],
+  "designGuide": {
+    "summary": "A 3S battery feeds a protected, regulated power path. The XIAO ESP32-S3 handles the Bluetooth link and sends low-current control signals to the TB6612 motor driver, which switches and reverses the larger motor current for the two gearmotors, so each side of the car can be driven on its own for steering.",
+    "flow": [
+      {
+        "id": "battery",
+        "label": "Battery",
+        "explanation": "Three LiPo cells in series, about {{battery.nominal_v}} V when nominal and falling toward {{battery.min_usable_v}} V as they discharge. Everything else in the car runs from this pack.",
+        "relatedInstances": [
+          "battery"
+        ],
+        "relatedNets": [
+          "BATT_PLUS"
+        ]
+      },
+      {
+        "id": "protection",
+        "label": "Protection",
+        "explanation": "The Schottky diode passes current only in the right direction, so a pack plugged in backwards pushes nothing into the rest of the circuit. It costs about {{diode.forward_drop_v}} V of the battery voltage.",
+        "relatedInstances": [
+          "diode"
+        ],
+        "relatedNets": [
+          "BATT_PLUS",
+          "VIN_PROT"
+        ]
+      },
+      {
+        "id": "regulation",
+        "label": "Regulation",
+        "explanation": "The LM2596 buck module steps the battery voltage down to the {{assumption.motor_rail_v}} V rail that powers both the controller and the motors. The bulk capacitor on that rail steadies it when the motors draw a sudden gulp of current.",
+        "relatedInstances": [
+          "buck",
+          "bulk_cap"
+        ],
+        "relatedNets": [
+          "VIN_PROT",
+          "RAIL_5V"
+        ]
+      },
+      {
+        "id": "controller",
+        "label": "Controller",
+        "explanation": "The XIAO ESP32-S3 runs the software and the Bluetooth LE link. It powers itself from the 5 V rail, makes its own 3.3 V, and drives seven pins on the motor driver: for each motor, one speed signal (PWM, a fast on/off pulse whose on-time sets the speed) and two direction signals, plus one standby line that keeps the driver switched on.",
+        "relatedInstances": [
+          "mcu"
+        ],
+        "relatedNets": [
+          "RAIL_5V",
+          "RAIL_3V3",
+          "CTRL_PWMA",
+          "CTRL_AIN1",
+          "CTRL_AIN2",
+          "CTRL_PWMB",
+          "CTRL_BIN1",
+          "CTRL_BIN2",
+          "STBY"
+        ]
+      },
+      {
+        "id": "driver",
+        "label": "Motor driver",
+        "explanation": "The TB6612 holds two H-bridges: four switches around each motor that let current be sent through it in either direction. It reads the XIAO's logic signals and switches the 5 V motor supply: forward, reverse, or brake per motor, with speed set by how long the PWM signal is on. Its logic side runs from the XIAO's 3.3 V.",
+        "relatedInstances": [
+          "driver"
+        ],
+        "relatedNets": [
+          "RAIL_5V",
+          "RAIL_3V3",
+          "MOTA_1",
+          "MOTA_2",
+          "MOTB_1",
+          "MOTB_2"
+        ]
+      },
+      {
+        "id": "motors",
+        "label": "Left and right motors",
+        "explanation": "Each gearmotor spins at a speed set by the voltage across it and reverses when the driver swaps its two terminals. Driving the two sides at different speeds or directions steers the car.",
+        "relatedInstances": [
+          "motor_left",
+          "motor_right"
+        ],
+        "relatedNets": [
+          "MOTA_1",
+          "MOTA_2",
+          "MOTB_1",
+          "MOTB_2"
+        ]
+      }
+    ],
+    "paths": {
+      "power": "Battery → diode → buck module → 5 V rail → XIAO and motor driver. The motors draw from the 5 V rail through the driver; the XIAO's onboard regulator makes 3.3 V for its own logic and for the driver's logic side.",
+      "control": "Bluetooth LE → XIAO software → seven logic pins → TB6612 inputs → the driver's two H-bridges → motors. Only low-current logic signals leave the controller; the driver does the heavy switching.",
+      "outcome": "Two independently driven wheels: the same direction and speed on both goes straight, different speeds turn, opposite directions spin in place. The rules check that this hardware path exists; what the software does with the link and the signals is not evaluated."
+    },
+    "parts": [
+      {
+        "instance": "battery",
+        "why": "Provides the energy. Three cells give the regulator enough headroom to hold 5 V all the way to the pack's cutoff, which is why the design uses 3S rather than 2S."
+      },
+      {
+        "instance": "diode",
+        "why": "A hobbyist build gets plugged in backwards eventually. This diode makes that a non-event instead of a dead board, for about {{diode.forward_drop_v}} V and one part."
+      },
+      {
+        "instance": "buck",
+        "why": "The motors and the XIAO both want about 5 V, not the pack's 9.6 to 12.6 V. The buck makes that rail efficiently, so little of the battery's energy is lost as heat."
+      },
+      {
+        "instance": "bulk_cap",
+        "why": "Motors starting or stalling pull sudden current. This reservoir keeps the 5 V rail from sagging in those moments. Its size is a rule of thumb, not a calculated value."
+      },
+      {
+        "instance": "mcu",
+        "why": "Runs the control software and the Bluetooth link, and produces the direction and speed signals. It cannot drive the motors itself: a pin can source only about {{mcu.gpio_max_source_current_a}} A and cannot reverse the current through a motor."
+      },
+      {
+        "instance": "driver",
+        "why": "Turns the XIAO's signals into motor current, up to {{driver.continuous_current_per_channel_a}} A per channel continuously, and reverses each motor on command. Without it there is no forward and reverse, and the XIAO would be damaged trying."
+      },
+      {
+        "instance": "motor_left",
+        "why": "Converts electrical power into wheel motion on the left side."
+      },
+      {
+        "instance": "motor_right",
+        "why": "Converts electrical power into wheel motion on the right side. Two motors driven independently give steering with no steering mechanism at all."
+      }
+    ],
+    "decisions": [
+      {
+        "id": "separate_driver",
+        "title": "Why a separate motor driver, instead of wiring the motors to the XIAO?",
+        "explanation": "A microcontroller pin is a signal, not a power source: it can source only about {{mcu.gpio_max_source_current_a}} A, and it can only push current out, never pull it back the other way through a motor. Each motor can draw up to {{motor_left.stall_current_a}} A (its rated stall current at 6 V) when stalled and has to run in both directions. An H-bridge driver switches that current from the motor rail and reverses it under logic control; the TB6612 has two, one per motor. Try \"What if a motor is wired to a GPIO?\" under Try a change to see the rule that catches the shortcut.",
+        "relatedInstances": [
+          "mcu",
+          "driver",
+          "motor_left",
+          "motor_right"
+        ],
+        "relatedNets": [
+          "CTRL_PWMA",
+          "CTRL_AIN1",
+          "CTRL_AIN2",
+          "MOTA_1",
+          "MOTA_2"
+        ],
+        "relatedRequirement": "fwd_rev"
+      },
+      {
+        "id": "three_s_with_regulator",
+        "title": "Why a 3S battery and a regulator, rather than running everything from the pack?",
+        "explanation": "The motors are rated {{motor_left.nominal_v}} V and the XIAO takes 5 V on its supply pin, so the pack's 9.6 to 12.6 V cannot feed either directly. A buck module makes a steady {{assumption.motor_rail_v}} V rail from it. The buck needs its input to stay about {{buck.dropout_v}} V above its output, so roughly 6.5 V, and the protection diode takes another {{diode.forward_drop_v}} V before that, so the pack must stay above about 7 V. A 3S pack is still at {{battery.min_usable_v}} V at its cutoff, with margin to spare; a 2S pack's cutoff sits below that line, so it runs out of headroom before it runs out of charge. Try \"What if the battery is 2S?\" under Try a change to see the warning.",
+        "relatedInstances": [
+          "battery",
+          "diode",
+          "buck"
+        ],
+        "relatedNets": [
+          "BATT_PLUS",
+          "VIN_PROT",
+          "RAIL_5V"
+        ],
+        "relatedAssumption": "motor_rail_v"
+      },
+      {
+        "id": "motors_on_5v",
+        "title": "Why run 6 V motors from the 5 V rail?",
+        "explanation": "One shared {{assumption.motor_rail_v}} V rail keeps the design to a single regulator that feeds both the controller and the motors. The motors are rated {{motor_left.nominal_v}} V, so at 5 V they run below their rated speed and torque; the evaluation estimates how much, from the rating, not from a measurement. That is the tradeoff: a simpler power path against some top speed. The optimization below shows the alternative: a 6 V motor rail plus a second regulator so the controller's supply stays in range.",
+        "relatedInstances": [
+          "buck",
+          "driver",
+          "motor_left",
+          "motor_right"
+        ],
+        "relatedNets": [
+          "RAIL_5V"
+        ],
+        "relatedAssumption": "motor_rail_v",
+        "relatedOptimization": "motors_at_rated_voltage"
+      },
+      {
+        "id": "reverse_polarity",
+        "title": "Why include reverse-polarity protection?",
+        "explanation": "A series Schottky costs about {{diode.forward_drop_v}} V of battery voltage and one part. In exchange, a pack connected backwards simply does nothing, instead of forcing reverse voltage into the buck and everything behind it. This pack class is assumed to have no reverse protection of its own. Dropping the diode is the optimization below: fewer parts and a little more headroom, and one wiring mistake becomes destructive.",
+        "relatedInstances": [
+          "diode",
+          "battery"
+        ],
+        "relatedNets": [
+          "BATT_PLUS",
+          "VIN_PROT"
+        ],
+        "relatedAssumption": "reverse_polarity_strategy",
+        "relatedOptimization": "drop_reverse_polarity_protection"
+      },
+      {
+        "id": "battery_size",
+        "title": "Why can the battery be smaller?",
+        "explanation": "The runtime target is 15 to 30 minutes. With the assumed average motor current of {{assumption.avg_motor_current_a}} A per motor and controller current of {{assumption.mcu_avg_current_a}} A, a {{battery.capacity_mah_min}} mAh pack runs roughly six times longer than the target, and that unused capacity is mass and cost on a small car. The optimization below swaps in a 200 to 300 mAh 3S pack with the same voltage window and the same protection. The estimate moves because the assumed inputs moved, not because anything was measured.",
+        "relatedInstances": [
+          "battery"
+        ],
+        "relatedNets": [
+          "BATT_PLUS"
+        ],
+        "relatedRequirement": "runtime",
+        "relatedAssumption": "avg_motor_current_a",
+        "relatedOptimization": "right_size_battery"
+      }
+    ]
+  },
   "expectedBaseline": [],
   "mutations": [
     {

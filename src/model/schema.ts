@@ -62,6 +62,8 @@ export const RegistryComponent = z.object({
   board_features: z.array(z.string()).default([]),
   sources: z.array(z.string()).default([]),
   notes: z.string().optional(),
+  // Reusable, hobbyist-facing explanation of what this kind of part does. Project-specific "why it is here" lives in the project's designGuide.
+  guide: z.object({ role: z.string(), summary: z.string() }).optional(),
 });
 export type RegistryComponent = z.infer<typeof RegistryComponent>;
 
@@ -195,6 +197,24 @@ export const Optimization = z.object({
 });
 export type Optimization = z.infer<typeof Optimization>;
 
+/**
+ * Structured, read-only explanation of a design for a technically curious hobbyist: how power and control flow, why each
+ * part is here, and the engineering decisions behind the shape of the design. Text may embed `{{instance.fact}}` or
+ * `{{assumption.key}}` tokens, which render as the live value with its provenance tag, so an assumed number never reads as
+ * a verified one. Every related id must resolve to a real instance, net, requirement, assumption, or optimization.
+ */
+export const GuideFlowStep = z.object({ id: z.string(), label: z.string(), explanation: z.string(), relatedInstances: z.array(z.string()).default([]), relatedNets: z.array(z.string()).default([]) });
+export const GuidePart = z.object({ instance: z.string(), why: z.string() });
+export const GuideDecision = z.object({ id: z.string(), title: z.string(), explanation: z.string(), relatedInstances: z.array(z.string()).default([]), relatedNets: z.array(z.string()).default([]), relatedRequirement: z.string().optional(), relatedAssumption: z.string().optional(), relatedOptimization: z.string().optional() });
+export const DesignGuide = z.object({
+  summary: z.string(),
+  flow: z.array(GuideFlowStep),
+  paths: z.object({ power: z.string(), control: z.string(), outcome: z.string() }),
+  parts: z.array(GuidePart),
+  decisions: z.array(GuideDecision),
+});
+export type DesignGuide = z.infer<typeof DesignGuide>;
+
 export const Project = z.object({
   id: z.string(),
   title: z.string(),
@@ -212,6 +232,7 @@ export const Project = z.object({
   mutations: z.array(Mutation).default([]),
   optimizations: z.array(Optimization).default([]),
   expectedBaseline: z.array(ExpectedFinding).default([]),
+  designGuide: DesignGuide.optional(),   // explanatory only; never read by the evaluator and not part of the state hash
   lastEvaluation: EvaluationResult.optional(),
 });
 export type Project = z.infer<typeof Project>;

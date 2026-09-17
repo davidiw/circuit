@@ -143,7 +143,11 @@
       "sources": [
         "https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/",
         "https://wiki.seeedstudio.com/xiao_esp32s3_pin_multiplexing/"
-      ]
+      ],
+      "guide": {
+        "role": "Controller",
+        "summary": "A thumb-sized microcontroller board with Wi-Fi and Bluetooth LE. It runs the software and puts out low-current 3.3 V logic signals on its pins; it is not built to power motors or other loads directly."
+      }
     },
     {
       "id": "driver.adafruit_tb6612_breakout",
@@ -276,7 +280,11 @@
       "sources": [
         "https://www.adafruit.com/product/2448",
         "https://learn.adafruit.com/adafruit-tb6612-h-bridge-dc-stepper-motor-driver-breakout/pinouts"
-      ]
+      ],
+      "guide": {
+        "role": "Motor driver",
+        "summary": "A dual H-bridge on a breakout board. Each channel switches current from a separate motor supply and can reverse it, steered by logic-level direction and PWM inputs. Its standby input must be high for the outputs to run; this breakout pulls it high on the board."
+      }
     },
     {
       "id": "motor.pololu_2365",
@@ -333,7 +341,11 @@
       ],
       "sources": [
         "https://www.pololu.com/product/2365/specs"
-      ]
+      ],
+      "guide": {
+        "role": "Gearmotor",
+        "summary": "A brushed DC motor with a 50:1 gearbox. It turns when current flows through it, reverses when the current reverses, and its speed follows the voltage across it."
+      }
     },
     {
       "id": "motor.generic_high_current_class",
@@ -371,7 +383,11 @@
         "brushed_dc_motor"
       ],
       "sources": [],
-      "notes": "Exists only to exercise the driver current rule."
+      "notes": "Exists only to exercise the driver current rule.",
+      "guide": {
+        "role": "Gearmotor",
+        "summary": "A brushed DC gearmotor class that draws considerably more current, used to test what a heavier motor does to the driver and supply."
+      }
     },
     {
       "id": "regulator.lm2596_adjustable_module_common",
@@ -457,7 +473,11 @@
         "onboard_input_capacitor",
         "onboard_output_capacitor",
         "onboard_decoupling"
-      ]
+      ],
+      "guide": {
+        "role": "Voltage regulator",
+        "summary": "A step-down (buck) switching regulator module. It turns a higher input voltage into a lower, adjustable output efficiently, as long as the input stays some margin above the output."
+      }
     },
     {
       "id": "diode.onsemi_1n5822",
@@ -509,7 +529,11 @@
       ],
       "sources": [
         "https://www.onsemi.com/pub/Collateral/1N5820-D.PDF"
-      ]
+      ],
+      "guide": {
+        "role": "Reverse-polarity protection",
+        "summary": "A Schottky diode: current flows one way with a small voltage drop and is blocked the other way. In series with a battery it makes a backwards connection harmless."
+      }
     },
     {
       "id": "battery.3s_lipo_1000_1500mah_class",
@@ -586,7 +610,11 @@
         "battery"
       ],
       "sources": [],
-      "notes": "Chosen over 2S so the series Schottky plus LM2596 keeps about 4 V of regulator headroom at end of discharge."
+      "notes": "Chosen over 2S so the series Schottky plus LM2596 keeps about 4 V of regulator headroom at end of discharge.",
+      "guide": {
+        "role": "Battery",
+        "summary": "Three lithium-polymer cells in series. Its voltage falls as it discharges, from full charge down to a cutoff the design must stay above."
+      }
     },
     {
       "id": "battery.2s_lipo_1000_1500mah_class",
@@ -659,7 +687,11 @@
         "battery"
       ],
       "sources": [],
-      "notes": "Original handoff choice. With a series Schottky and a 5 V LM2596 output it leaves under 1 V of headroom at end of discharge."
+      "notes": "Original handoff choice. With a series Schottky and a 5 V LM2596 output it leaves under 1 V of headroom at end of discharge.",
+      "guide": {
+        "role": "Battery",
+        "summary": "Two lithium-polymer cells in series: lower voltage than a 3S pack, with the same falling curve as it discharges."
+      }
     },
     {
       "id": "cap.electrolytic_470uf_class",
@@ -697,7 +729,11 @@
       "capabilities": [
         "bulk_capacitance"
       ],
-      "sources": []
+      "sources": [],
+      "guide": {
+        "role": "Bulk capacitor",
+        "summary": "A reservoir of charge placed on a supply rail near a load whose current jumps, such as motors starting. It smooths the dips those jumps cause."
+      }
     },
     {
       "id": "class.external_5v_3a_supply",
@@ -744,7 +780,11 @@
       "capabilities": [
         "regulated_dc"
       ],
-      "sources": []
+      "sources": [],
+      "guide": {
+        "role": "Power supply",
+        "summary": "A regulated wall supply that provides a steady 5 V."
+      }
     },
     {
       "id": "class.single_cell_lipo",
@@ -801,7 +841,11 @@
       "capabilities": [
         "battery"
       ],
-      "sources": []
+      "sources": [],
+      "guide": {
+        "role": "Battery",
+        "summary": "One lithium-polymer cell, about 3.7 V nominal, falling toward its cutoff as it discharges."
+      }
     },
     {
       "id": "board.dfrobot_dfr1172",
@@ -894,7 +938,11 @@
       "sources": [
         "https://wiki.dfrobot.com/dfr1172/",
         "https://dfimg.dfrobot.com/wiki/21103/DFR1172_firebeetle-esp32-p4r32-development-board_datasheet_V1.0.pdf"
-      ]
+      ],
+      "guide": {
+        "role": "Controller",
+        "summary": "An ESP32-P4 board with a camera (MIPI CSI) connector, an onboard microphone, I2S digital audio output, and an onboard radio for Wi-Fi and Bluetooth LE."
+      }
     },
     {
       "id": "camera.dfrobot_sen0173",
@@ -941,7 +989,11 @@
       "sources": [
         "https://www.dfrobot.com/product-1179.html",
         "https://wiki.dfrobot.com/dfr1172/docs/22906"
-      ]
+      ],
+      "guide": {
+        "role": "Camera",
+        "summary": "A 5 MP camera module on a CSI ribbon cable, streaming frames to the board."
+      }
     },
     {
       "id": "audio.adafruit_max98357a",
@@ -1007,7 +1059,11 @@
       ],
       "board_features": [
         "onboard_decoupling"
-      ]
+      ],
+      "guide": {
+        "role": "Audio amplifier",
+        "summary": "Takes a digital I2S audio stream and drives a small speaker directly."
+      }
     },
     {
       "id": "speaker.4ohm_3w_class",
@@ -1039,7 +1095,11 @@
       "capabilities": [
         "speaker"
       ],
-      "sources": []
+      "sources": [],
+      "guide": {
+        "role": "Speaker",
+        "summary": "Turns the amplifier's output into sound."
+      }
     },
     {
       "id": "switch.momentary_no_class",
@@ -1062,7 +1122,11 @@
       "capabilities": [
         "momentary_button"
       ],
-      "sources": []
+      "sources": [],
+      "guide": {
+        "role": "Pushbutton",
+        "summary": "A momentary contact that closes only while it is pressed."
+      }
     },
     {
       "id": "board.seeed_xiao_esp32c6",
@@ -1140,7 +1204,11 @@
       ],
       "sources": [
         "https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/"
-      ]
+      ],
+      "guide": {
+        "role": "Controller",
+        "summary": "A small microcontroller board with Wi-Fi and Bluetooth LE, a battery input with onboard charging, and a deep-sleep mode for long battery life."
+      }
     },
     {
       "id": "sensor.dfrobot_sen0121",
@@ -1197,7 +1265,11 @@
       "sources": [
         "https://www.dfrobot.com/product-798.html"
       ],
-      "notes": "Prototype leak sensor; does not by itself validate year-scale battery life or corrosion behavior."
+      "notes": "Prototype leak sensor; does not by itself validate year-scale battery life or corrosion behavior.",
+      "guide": {
+        "role": "Water sensor",
+        "summary": "Exposed traces whose conductivity changes when wet. It outputs an analog voltage the controller reads."
+      }
     },
     {
       "id": "cap.ceramic_100nf_class",
@@ -1236,7 +1308,11 @@
         "decoupling"
       ],
       "board_features": [],
-      "sources": []
+      "sources": [],
+      "guide": {
+        "role": "Decoupling capacitor",
+        "summary": "A small capacitor right at a chip's supply pins that absorbs the fast current spikes the chip makes."
+      }
     },
     {
       "id": "driver.toshiba_tb6612fng_bare_class",
@@ -1369,7 +1445,11 @@
       "sources": [
         "https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf"
       ],
-      "notes": "Same electrical limits as the Adafruit breakout, none of the board conveniences: no STBY pull-up, no decoupling, not breadboard-usable. Pin names mirror the breakout so a design can swap between them."
+      "notes": "Same electrical limits as the Adafruit breakout, none of the board conveniences: no STBY pull-up, no decoupling, not breadboard-usable. Pin names mirror the breakout so a design can swap between them.",
+      "guide": {
+        "role": "Motor driver",
+        "summary": "The bare TB6612FNG dual H-bridge chip. It switches and reverses motor current like the breakout, but nothing holds its standby input high, so the design has to drive or pull that pin."
+      }
     },
     {
       "id": "battery.3s_lipo_200_300mah_class",
@@ -1446,7 +1526,11 @@
         "battery"
       ],
       "sources": [],
-      "notes": "Right-sized alternative for the 15-30 minute runtime target. Same voltage window as the larger class."
+      "notes": "Right-sized alternative for the 15-30 minute runtime target. Same voltage window as the larger class.",
+      "guide": {
+        "role": "Battery",
+        "summary": "Three lithium-polymer cells in series in a small pack: the same voltage window as the larger 3S class at about a quarter of the capacity and mass."
+      }
     }
   ]
 }

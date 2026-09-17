@@ -169,6 +169,111 @@
   ],
   "overrides": [],
   "unresolved": [],
+  "designGuide": {
+    "summary": "A single LiPo cell powers a XIAO ESP32-C6 through its battery input. The board's 3.3 V output powers a water sensor whose analog signal the board reads. The board sleeps most of the time, wakes to check the sensor, provisions over Bluetooth LE, and alerts over Wi-Fi.",
+    "flow": [
+      {
+        "id": "battery",
+        "label": "Battery",
+        "explanation": "One cell at about {{battery.nominal_v}} V nominal. Its capacity is still to be chosen, so no battery life is estimated.",
+        "relatedInstances": [
+          "battery"
+        ],
+        "relatedNets": [
+          "BATT_PLUS"
+        ]
+      },
+      {
+        "id": "controller",
+        "label": "Controller",
+        "explanation": "The XIAO ESP32-C6 takes the cell on its battery input, charges it over USB, makes 3.3 V, reads the sensor on an analog pin, and runs the Wi-Fi and Bluetooth LE radio. It can sleep at about {{mcu.deep_sleep_ua}} µA.",
+        "relatedInstances": [
+          "mcu"
+        ],
+        "relatedNets": [
+          "BATT_PLUS",
+          "RAIL_3V3",
+          "SENSE"
+        ]
+      },
+      {
+        "id": "sensor",
+        "label": "Sensor",
+        "explanation": "The water sensor runs from the board's 3.3 V and returns an analog voltage that changes when its traces get wet.",
+        "relatedInstances": [
+          "sensor"
+        ],
+        "relatedNets": [
+          "RAIL_3V3",
+          "SENSE"
+        ]
+      }
+    ],
+    "paths": {
+      "power": "Cell → board battery input → onboard regulator → 3.3 V → sensor. The board charges the cell when USB is connected.",
+      "control": "Sensor analog voltage → ADC pin → software decides wet or dry → Wi-Fi alert. Bluetooth LE is used once, to hand the board its Wi-Fi credentials.",
+      "outcome": "A small detector that reports a leak. Standby life depends on the sleep schedule and on the sensor's idle current, which is not known for this part, so the rules do not claim a battery life."
+    },
+    "parts": [
+      {
+        "instance": "battery",
+        "why": "A single cell is enough because the board accepts it directly and charges it itself. The capacity is an open decision."
+      },
+      {
+        "instance": "mcu",
+        "why": "Radio, analog input, battery input, charger, and deep sleep in one small board, which is the whole electronics budget of a device that must fit under a sink."
+      },
+      {
+        "instance": "sensor",
+        "why": "The wet-or-dry input. It is a prototype part: its idle current and how it holds up to corrosion are not established."
+      }
+    ],
+    "decisions": [
+      {
+        "id": "single_cell",
+        "title": "Why a single cell and no regulator of our own?",
+        "explanation": "The board has a battery input with an onboard charger and its own 3.3 V regulator, so one cell connects straight to it and the sensor runs from the board's 3.3 V. There is nothing else to power, so a separate regulator would be a part with no job.",
+        "relatedInstances": [
+          "battery",
+          "mcu"
+        ],
+        "relatedNets": [
+          "BATT_PLUS",
+          "RAIL_3V3"
+        ],
+        "relatedRequirement": "battery"
+      },
+      {
+        "id": "standby_unverified",
+        "title": "Why is long standby life not verified?",
+        "explanation": "Battery life depends on how long the board sleeps, how often it wakes, and what the sensor draws while idle. The sensor's idle current is unknown for this part, and whether its power gets switched off between checks is {{assumption.sensor_power_gating}}. Until those are settled, claiming a standby life would be a guess, so the requirement stays informational.",
+        "relatedInstances": [
+          "sensor",
+          "mcu"
+        ],
+        "relatedNets": [
+          "RAIL_3V3"
+        ],
+        "relatedRequirement": "standby",
+        "relatedAssumption": "sensor_power_gating"
+      },
+      {
+        "id": "sensor_on_3v3",
+        "title": "Why does the sensor run from 3.3 V?",
+        "explanation": "The board's analog input reads up to its 3.3 V logic level, so powering the sensor from the same 3.3 V keeps its output inside the range the board can read. The {{assumption.sensor_supply_v}} V supply is an assumption about this sensor module; the rules check the wiring path, not the sensor's calibration.",
+        "relatedInstances": [
+          "sensor",
+          "mcu"
+        ],
+        "relatedNets": [
+          "RAIL_3V3",
+          "SENSE"
+        ],
+        "relatedRequirement": "sense",
+        "relatedAssumption": "sensor_supply_v"
+      }
+    ]
+  },
   "expectedBaseline": [],
   "mutations": [
     {

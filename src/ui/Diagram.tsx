@@ -42,7 +42,7 @@ export function Diagram({ project, highlight, selection, connectFrom, compact, f
   const pxPerUnit = baseW.key === key && baseW.w > 0 && hostW > 0 ? Math.max(hostW, 480) / baseW.w : 0;
   const pxW = pxPerUnit > 0 ? Math.round(l.width * pxPerUnit) : undefined;
 
-  const sevClass = highlight.severity === 'violation' ? 'bad' : highlight.severity === 'warning' ? 'warn' : highlight.severity === 'optimization' ? 'opt' : 'ai';
+  const sevClass = highlight.severity === 'violation' ? 'bad' : highlight.severity === 'warning' ? 'warn' : highlight.severity === 'optimization' ? 'opt' : highlight.severity === 'selection' ? 'focus' : 'ai';
   const netClass = (id?: string) => [id && highlight.nets.has(id) ? sevClass : '', id && selection.net === id ? 'sel' : '', id && hoverNet === id ? 'hover' : ''].join(' ');
   const netOfPin = (p: PinRef) => project.nets.find((n) => n.pins.some((x) => x.instance === p.instance && x.pin === p.pin));
   const fromNet = connectFrom && netOfPin(connectFrom);

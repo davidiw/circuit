@@ -45,6 +45,15 @@ try {
   if (!/Race Car/i.test((await text('.appbar .brand')) ?? '')) await fail('the opened project is not the Race Car');
   step('open race car');
 
+  // 2b. Learn: the guide opens beside the diagram, a step highlights its parts, Esc closes it, nothing else changes
+  if (!(await page.$('#btn-learn'))) await fail('no Learn card in the design panel');
+  await page.click('#btn-learn'); await page.waitForSelector('#panel-learn', { timeout: 5000 });
+  if (!(await clickText('#panel-learn .chain button', /Motor driver/))) await fail('Learn has no Motor driver step');
+  await wait(300); if (!(await page.$('.node.focus'))) await fail('a Learn step did not highlight a part in the diagram');
+  await page.keyboard.press('Escape'); await wait(300); if (await page.$('#panel-learn')) await fail('Esc did not close Learn');
+  if (await page.$('.chip.cur, .chip.stale')) await fail('Learn changed the evaluation state before any evaluation');
+  step('learn');
+
   // 3. Evaluate
   await evaluate(); await expectChip('cur', 'after Evaluate');
   const header = (await text('#panel-findings h4')) ?? '';

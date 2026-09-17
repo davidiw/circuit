@@ -285,6 +285,150 @@
   ],
   "overrides": [],
   "unresolved": [],
+  "designGuide": {
+    "summary": "A wall supply powers one ESP32-P4 board that does the heavy lifting: camera frames in over a ribbon cable, a microphone on the board, Wi-Fi and Bluetooth on its radio, and a digital audio stream out to a small amplifier and speaker. A pushbutton on one input pin is the doorbell.",
+    "flow": [
+      {
+        "id": "supply",
+        "label": "Wall supply",
+        "explanation": "A regulated {{psu.output_v}} V supply rated {{psu.continuous_current_a}} A. The board and the amplifier both run from it directly; there is no battery and no regulator of our own.",
+        "relatedInstances": [
+          "psu"
+        ],
+        "relatedNets": [
+          "RAIL_5V"
+        ]
+      },
+      {
+        "id": "controller",
+        "label": "Controller",
+        "explanation": "The FireBeetle 2 ESP32-P4 encodes video, runs the Wi-Fi and Bluetooth radio, listens on its onboard microphone, and reads the button. It makes its own 3.3 V internally.",
+        "relatedInstances": [
+          "mcu"
+        ],
+        "relatedNets": [
+          "RAIL_5V",
+          "GND"
+        ]
+      },
+      {
+        "id": "camera",
+        "label": "Camera",
+        "explanation": "The 5 MP camera sends frames to the board over the CSI ribbon connector, the same interface the camera was demonstrated with on this board.",
+        "relatedInstances": [
+          "camera"
+        ],
+        "relatedNets": [
+          "CSI"
+        ]
+      },
+      {
+        "id": "audio",
+        "label": "Audio out",
+        "explanation": "The board sends digital audio over three I2S lines to the amplifier, which turns it into speaker current for the {{speaker.impedance_ohm}} ohm speaker.",
+        "relatedInstances": [
+          "amp",
+          "speaker"
+        ],
+        "relatedNets": [
+          "I2S_BCLK",
+          "I2S_LRCLK",
+          "I2S_DOUT",
+          "SPK_P",
+          "SPK_N"
+        ]
+      },
+      {
+        "id": "button",
+        "label": "Button",
+        "explanation": "Pressing the doorbell closes the contact to ground; the board reads that pin with its internal pull-up.",
+        "relatedInstances": [
+          "button"
+        ],
+        "relatedNets": [
+          "BTN",
+          "GND"
+        ]
+      }
+    ],
+    "paths": {
+      "power": "Wall supply → 5 V rail → board and amplifier. No regulator is needed because the supply is already regulated and the board makes its own 3.3 V.",
+      "control": "Camera frames → CSI → board software → Wi-Fi stream. Audio out leaves the board as a digital I2S stream the amplifier converts to speaker current. The button pulls one input pin to ground when pressed.",
+      "outcome": "A streaming doorbell camera with two-way audio and a button. Motion detection and streaming latency are software behaviors; the rules check the hardware paths, not those."
+    },
+    "parts": [
+      {
+        "instance": "psu",
+        "why": "Continuous power at 5 V with headroom for the board's {{mcu.peak_current_a}} A peak plus the amplifier."
+      },
+      {
+        "instance": "mcu",
+        "why": "One board with the camera interface, the microphone, the radio, and enough compute to encode video. That is what makes a one-board design possible."
+      },
+      {
+        "instance": "camera",
+        "why": "Supplies the video. It is the camera demonstrated with this board over CSI, so the interface is known to work."
+      },
+      {
+        "instance": "amp",
+        "why": "The board outputs digital audio, not speaker-level power. This amplifier bridges that gap with up to {{amp.output_power_w}} W."
+      },
+      {
+        "instance": "speaker",
+        "why": "Makes the amplifier's output audible to the visitor."
+      },
+      {
+        "instance": "button",
+        "why": "The doorbell itself. Pressed, it connects the input pin to ground; the board's internal pull-up reads it, which is the assumed wiring."
+      }
+    ],
+    "decisions": [
+      {
+        "id": "one_board",
+        "title": "Why one board instead of a camera module plus a separate radio?",
+        "explanation": "The ESP32-P4 board already has the camera connector, an onboard microphone, and an onboard Wi-Fi and Bluetooth radio, so video, audio in, and networking all land on one part. That removes two interfaces a two-board design would need to get right and keeps the parts list short.",
+        "relatedInstances": [
+          "mcu",
+          "camera"
+        ],
+        "relatedNets": [
+          "CSI"
+        ],
+        "relatedRequirement": "video"
+      },
+      {
+        "id": "separate_amp",
+        "title": "Why a separate audio amplifier?",
+        "explanation": "The board's audio output is a digital I2S stream, which cannot move a speaker cone. The amplifier converts it and supplies up to {{amp.output_power_w}} W into the {{speaker.impedance_ohm}} ohm speaker. Speaker power is enough for a doorbell; the rules check that the output path exists, not how loud it is.",
+        "relatedInstances": [
+          "amp",
+          "speaker"
+        ],
+        "relatedNets": [
+          "I2S_BCLK",
+          "I2S_LRCLK",
+          "I2S_DOUT",
+          "SPK_P",
+          "SPK_N"
+        ],
+        "relatedRequirement": "audio_out"
+      },
+      {
+        "id": "wall_power",
+        "title": "Why a wall supply and no battery?",
+        "explanation": "A streaming camera and radio draw continuously; the board alone peaks at {{mcu.peak_current_a}} A. A battery would need frequent charging, so the design assumes a regulated {{psu.output_v}} V supply and skips battery management entirely.",
+        "relatedInstances": [
+          "psu",
+          "mcu"
+        ],
+        "relatedNets": [
+          "RAIL_5V"
+        ],
+        "relatedRequirement": "power",
+        "relatedAssumption": "power_supply"
+      }
+    ]
+  },
   "expectedBaseline": [],
   "mutations": [
     {

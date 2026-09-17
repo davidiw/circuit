@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const EventKind = z.enum([
   'open_template', 'submit_intent', 'answer_question', 'accept_defaults', 'resolve_part', 'evaluate', 'view_finding', 'view_coverage',
-  'select_instance', 'apply_mutation', 'edit', 'connect', 'fix', 'optimize', 'override_finding', 'ai_review', 'reset', 'dismiss_tip',
+  'select_instance', 'view_guide', 'apply_mutation', 'edit', 'connect', 'fix', 'optimize', 'override_finding', 'ai_review', 'reset', 'dismiss_tip',
 ]);
 export type EventKind = z.infer<typeof EventKind>;
 

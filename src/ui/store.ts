@@ -16,6 +16,7 @@ export type Action =
   | { type: 'AUTHED' } | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' }
   | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[]; kind?: EventKind } | { type: 'UNDO' } | { type: 'RESET' }
   | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation?: EvaluationResult } | { type: 'COMPARE'; id?: string }
+  | { type: 'LEARN_OPEN' } | { type: 'LEARN_CLOSE' } | { type: 'LEARN_FOCUS'; id?: string }
   | { type: 'VIEW_FINDING'; id: string } | { type: 'VIEW_COVERAGE' } | { type: 'SELECT_INSTANCE'; id?: string } | { type: 'SELECT_NET'; id?: string } | { type: 'SELECT_PIN'; pin?: PinRef } | { type: 'DESELECT' } | { type: 'DISMISS_TIP'; id: string } | { type: 'DISMISS_INTRO' }
   | { type: 'AI_START' } | { type: 'AI_RESULT'; result: { observations: Finding[]; model: string; provider: string; latencyMs: number; dropped: number } } | { type: 'AI_ERROR'; error: string }
   | { type: 'SET_AI_STATUS'; status: AIStatus };
@@ -102,10 +103,13 @@ export function reducer(state: AppState, a: Action): AppState {
     case 'RESET': return withSession(state, (s) => ({ ...replay(s, [], 'reset'), aiReview: undefined, openFinding: undefined }));
     case 'VIEW_FINDING': return withSession(state, (s) => ({ ...s, openFinding: s.openFinding === a.id ? undefined : a.id, history: s.openFinding === a.id ? s.history : [...s.history, ev('view_finding', s.currentHash, a.id)] }));
     case 'VIEW_COVERAGE': return withSession(state, (s) => s.history.some((e) => e.kind === 'view_coverage') ? s : ({ ...s, history: [...s.history, ev('view_coverage', s.currentHash)] }));
-    case 'SELECT_INSTANCE': return withSession(state, (s) => ({ ...s, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined, selectedInstance: s.selectedInstance === a.id ? undefined : a.id, history: a.id ? [...s.history, ev('select_instance', s.currentHash, a.id)] : s.history }));
-    case 'SELECT_NET': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedPin: undefined, connectFrom: undefined, selectedNet: s.selectedNet === a.id ? undefined : a.id }));
-    case 'SELECT_PIN': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedNet: undefined, connectFrom: undefined, selectedPin: a.pin }));
-    case 'DESELECT': return withSession(state, (s) => ({ ...s, selectedInstance: undefined, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined }));
+    case 'LEARN_OPEN': return withSession(state, (s) => ({ ...s, learn: s.learn ?? { focus: s.project.designGuide?.decisions[0] ? `decision:${s.project.designGuide.decisions[0].id}` : undefined }, selectedInstance: undefined, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined, history: s.learn ? s.history : [...s.history, ev('view_guide', s.currentHash)] }));
+    case 'LEARN_CLOSE': return withSession(state, (s) => ({ ...s, learn: undefined }));
+    case 'LEARN_FOCUS': return withSession(state, (s) => (s.learn ? { ...s, learn: { focus: s.learn.focus === a.id ? undefined : a.id } } : s));
+    case 'SELECT_INSTANCE': return withSession(state, (s) => ({ ...s, learn: undefined, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined, selectedInstance: s.selectedInstance === a.id ? undefined : a.id, history: a.id ? [...s.history, ev('select_instance', s.currentHash, a.id)] : s.history }));
+    case 'SELECT_NET': return withSession(state, (s) => ({ ...s, learn: undefined, selectedInstance: undefined, selectedPin: undefined, connectFrom: undefined, selectedNet: s.selectedNet === a.id ? undefined : a.id }));
+    case 'SELECT_PIN': return withSession(state, (s) => ({ ...s, learn: undefined, selectedInstance: undefined, selectedNet: undefined, connectFrom: undefined, selectedPin: a.pin }));
+    case 'DESELECT': return withSession(state, (s) => ({ ...s, learn: undefined, selectedInstance: undefined, selectedNet: undefined, selectedPin: undefined, connectFrom: undefined }));
     case 'DISMISS_TIP': return withSession(state, (s) => ({ ...s, dismissedTips: [...s.dismissedTips, a.id], history: [...s.history, ev('dismiss_tip', s.currentHash, a.id)] }));
     case 'DISMISS_INTRO': return withSession(state, (s) => ({ ...s, introDismissed: true }));
     case 'AI_START': return { ...state, aiBusy: true };
