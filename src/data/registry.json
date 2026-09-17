@@ -147,7 +147,16 @@
       "guide": {
         "role": "Controller",
         "summary": "A thumb-sized microcontroller board with Wi-Fi and Bluetooth LE. It runs the software and puts out low-current 3.3 V logic signals on its pins; it is not built to power motors or other loads directly."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "3V3",
+          "requires": [
+            "5V"
+          ],
+          "why": "the 3.3 V output comes from the onboard regulator, which is fed from the 5 V pin in this design"
+        }
+      ]
     },
     {
       "id": "driver.adafruit_tb6612_breakout",
@@ -284,7 +293,53 @@
       "guide": {
         "role": "Motor driver",
         "summary": "A dual H-bridge on a breakout board. Each channel switches current from a separate motor supply and can reverse it, steered by logic-level direction and PWM inputs. Its standby input must be high for the outputs to run; this breakout pulls it high on the board."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "MOTORA1",
+          "requires": [
+            "PWMA",
+            "AIN1",
+            "AIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel A is driven by its speed input PWMA and direction inputs AIN1 and AIN2, switching the motor supply VMOT with logic from VCC"
+        },
+        {
+          "pin": "MOTORA2",
+          "requires": [
+            "PWMA",
+            "AIN1",
+            "AIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel A is driven by its speed input PWMA and direction inputs AIN1 and AIN2, switching the motor supply VMOT with logic from VCC"
+        },
+        {
+          "pin": "MOTORB1",
+          "requires": [
+            "PWMB",
+            "BIN1",
+            "BIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel B is driven by its speed input PWMB and direction inputs BIN1 and BIN2, switching the motor supply VMOT with logic from VCC"
+        },
+        {
+          "pin": "MOTORB2",
+          "requires": [
+            "PWMB",
+            "BIN1",
+            "BIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel B is driven by its speed input PWMB and direction inputs BIN1 and BIN2, switching the motor supply VMOT with logic from VCC"
+        }
+      ]
     },
     {
       "id": "motor.pololu_2365",
@@ -345,7 +400,23 @@
       "guide": {
         "role": "Gearmotor",
         "summary": "A brushed DC motor with a 50:1 gearbox. It turns when current flows through it, reverses when the current reverses, and its speed follows the voltage across it."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "M+",
+          "requires": [
+            "M-"
+          ],
+          "why": "current must flow through the winding from one terminal to the other"
+        },
+        {
+          "pin": "M-",
+          "requires": [
+            "M+"
+          ],
+          "why": "current must flow through the winding from one terminal to the other"
+        }
+      ]
     },
     {
       "id": "motor.generic_high_current_class",
@@ -387,7 +458,23 @@
       "guide": {
         "role": "Gearmotor",
         "summary": "A brushed DC gearmotor class that draws considerably more current, used to test what a heavier motor does to the driver and supply."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "M+",
+          "requires": [
+            "M-"
+          ],
+          "why": "current must flow through the winding from one terminal to the other"
+        },
+        {
+          "pin": "M-",
+          "requires": [
+            "M+"
+          ],
+          "why": "current must flow through the winding from one terminal to the other"
+        }
+      ]
     },
     {
       "id": "regulator.lm2596_adjustable_module_common",
@@ -477,7 +564,18 @@
       "guide": {
         "role": "Voltage regulator",
         "summary": "A step-down (buck) switching regulator module. It turns a higher input voltage into a lower, adjustable output efficiently, as long as the input stays some margin above the output."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "OUT+",
+          "requires": [
+            "IN+",
+            "IN-",
+            "OUT-"
+          ],
+          "why": "the regulator makes its output from the input voltage across IN+ and IN-, returned through OUT-"
+        }
+      ]
     },
     {
       "id": "diode.onsemi_1n5822",
@@ -533,7 +631,23 @@
       "guide": {
         "role": "Reverse-polarity protection",
         "summary": "A Schottky diode: current flows one way with a small voltage drop and is blocked the other way. In series with a battery it makes a backwards connection harmless."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "A",
+          "requires": [
+            "K"
+          ],
+          "why": "a diode conducts from anode to cathode; with one end open nothing flows through it"
+        },
+        {
+          "pin": "K",
+          "requires": [
+            "A"
+          ],
+          "why": "a diode conducts from anode to cathode; with one end open nothing flows through it"
+        }
+      ]
     },
     {
       "id": "battery.3s_lipo_1000_1500mah_class",
@@ -614,7 +728,16 @@
       "guide": {
         "role": "Battery",
         "summary": "Three lithium-polymer cells in series. Its voltage falls as it discharges, from full charge down to a cutoff the design must stay above."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "current leaves the positive terminal and must return through the negative one"
+        }
+      ]
     },
     {
       "id": "battery.2s_lipo_1000_1500mah_class",
@@ -691,7 +814,16 @@
       "guide": {
         "role": "Battery",
         "summary": "Two lithium-polymer cells in series: lower voltage than a 3S pack, with the same falling curve as it discharges."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "current leaves the positive terminal and must return through the negative one"
+        }
+      ]
     },
     {
       "id": "cap.electrolytic_470uf_class",
@@ -733,7 +865,23 @@
       "guide": {
         "role": "Bulk capacitor",
         "summary": "A reservoir of charge placed on a supply rail near a load whose current jumps, such as motors starting. It smooths the dips those jumps cause."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "a capacitor stores charge between its two terminals; with one end open it does nothing"
+        },
+        {
+          "pin": "-",
+          "requires": [
+            "+"
+          ],
+          "why": "a capacitor stores charge between its two terminals; with one end open it does nothing"
+        }
+      ]
     },
     {
       "id": "class.external_5v_3a_supply",
@@ -784,7 +932,16 @@
       "guide": {
         "role": "Power supply",
         "summary": "A regulated wall supply that provides a steady 5 V."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "the supply output is the voltage between + and -; without the return there is no circuit"
+        }
+      ]
     },
     {
       "id": "class.single_cell_lipo",
@@ -845,7 +1002,16 @@
       "guide": {
         "role": "Battery",
         "summary": "One lithium-polymer cell, about 3.7 V nominal, falling toward its cutoff as it discharges."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "current leaves the positive terminal and must return through the negative one"
+        }
+      ]
     },
     {
       "id": "board.dfrobot_dfr1172",
@@ -942,7 +1108,16 @@
       "guide": {
         "role": "Controller",
         "summary": "An ESP32-P4 board with a camera (MIPI CSI) connector, an onboard microphone, I2S digital audio output, and an onboard radio for Wi-Fi and Bluetooth LE."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "3V3",
+          "requires": [
+            "5V"
+          ],
+          "why": "the 3.3 V output comes from the onboard regulator, which is fed from the 5 V pin"
+        }
+      ]
     },
     {
       "id": "camera.dfrobot_sen0173",
@@ -1063,7 +1238,29 @@
       "guide": {
         "role": "Audio amplifier",
         "summary": "Takes a digital I2S audio stream and drives a small speaker directly."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "SPK+",
+          "requires": [
+            "BCLK",
+            "LRC",
+            "DIN",
+            "VIN"
+          ],
+          "why": "the speaker output is made from the digital audio on BCLK, LRC, and DIN, powered from VIN"
+        },
+        {
+          "pin": "SPK-",
+          "requires": [
+            "BCLK",
+            "LRC",
+            "DIN",
+            "VIN"
+          ],
+          "why": "the speaker output is made from the digital audio on BCLK, LRC, and DIN, powered from VIN"
+        }
+      ]
     },
     {
       "id": "speaker.4ohm_3w_class",
@@ -1099,7 +1296,23 @@
       "guide": {
         "role": "Speaker",
         "summary": "Turns the amplifier's output into sound."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "the amplifier drives current through the voice coil from one terminal to the other"
+        },
+        {
+          "pin": "-",
+          "requires": [
+            "+"
+          ],
+          "why": "the amplifier drives current through the voice coil from one terminal to the other"
+        }
+      ]
     },
     {
       "id": "switch.momentary_no_class",
@@ -1126,7 +1339,23 @@
       "guide": {
         "role": "Pushbutton",
         "summary": "A momentary contact that closes only while it is pressed."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "1",
+          "requires": [
+            "2"
+          ],
+          "why": "a switch connects its two terminals when pressed; with one end open pressing it does nothing"
+        },
+        {
+          "pin": "2",
+          "requires": [
+            "1"
+          ],
+          "why": "a switch connects its two terminals when pressed; with one end open pressing it does nothing"
+        }
+      ]
     },
     {
       "id": "board.seeed_xiao_esp32c6",
@@ -1208,7 +1437,16 @@
       "guide": {
         "role": "Controller",
         "summary": "A small microcontroller board with Wi-Fi and Bluetooth LE, a battery input with onboard charging, and a deep-sleep mode for long battery life."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "3V3",
+          "requires": [
+            "BAT+"
+          ],
+          "why": "the 3.3 V output comes from the onboard regulator, which is fed from the battery input in this design"
+        }
+      ]
     },
     {
       "id": "sensor.dfrobot_sen0121",
@@ -1269,7 +1507,16 @@
       "guide": {
         "role": "Water sensor",
         "summary": "Exposed traces whose conductivity changes when wet. It outputs an analog voltage the controller reads."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "SIG",
+          "requires": [
+            "VCC"
+          ],
+          "why": "the sensor output is made from its supply on VCC"
+        }
+      ]
     },
     {
       "id": "cap.ceramic_100nf_class",
@@ -1312,7 +1559,23 @@
       "guide": {
         "role": "Decoupling capacitor",
         "summary": "A small capacitor right at a chip's supply pins that absorbs the fast current spikes the chip makes."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "a capacitor stores charge between its two terminals; with one end open it does nothing"
+        },
+        {
+          "pin": "-",
+          "requires": [
+            "+"
+          ],
+          "why": "a capacitor stores charge between its two terminals; with one end open it does nothing"
+        }
+      ]
     },
     {
       "id": "driver.toshiba_tb6612fng_bare_class",
@@ -1449,7 +1712,53 @@
       "guide": {
         "role": "Motor driver",
         "summary": "The bare TB6612FNG dual H-bridge chip. It switches and reverses motor current like the breakout, but nothing holds its standby input high, so the design has to drive or pull that pin."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "MOTORA1",
+          "requires": [
+            "PWMA",
+            "AIN1",
+            "AIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel A is driven by its speed input PWMA and direction inputs AIN1 and AIN2, switching the motor supply VMOT with logic from VCC"
+        },
+        {
+          "pin": "MOTORA2",
+          "requires": [
+            "PWMA",
+            "AIN1",
+            "AIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel A is driven by its speed input PWMA and direction inputs AIN1 and AIN2, switching the motor supply VMOT with logic from VCC"
+        },
+        {
+          "pin": "MOTORB1",
+          "requires": [
+            "PWMB",
+            "BIN1",
+            "BIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel B is driven by its speed input PWMB and direction inputs BIN1 and BIN2, switching the motor supply VMOT with logic from VCC"
+        },
+        {
+          "pin": "MOTORB2",
+          "requires": [
+            "PWMB",
+            "BIN1",
+            "BIN2",
+            "VMOT",
+            "VCC"
+          ],
+          "why": "channel B is driven by its speed input PWMB and direction inputs BIN1 and BIN2, switching the motor supply VMOT with logic from VCC"
+        }
+      ]
     },
     {
       "id": "battery.3s_lipo_200_300mah_class",
@@ -1530,7 +1839,16 @@
       "guide": {
         "role": "Battery",
         "summary": "Three lithium-polymer cells in series in a small pack: the same voltage window as the larger 3S class at about a quarter of the capacity and mass."
-      }
+      },
+      "pin_dependencies": [
+        {
+          "pin": "+",
+          "requires": [
+            "-"
+          ],
+          "why": "current leaves the positive terminal and must return through the negative one"
+        }
+      ]
     }
   ]
 }

@@ -1044,6 +1044,33 @@
         }
       ],
       "expectAbsent": []
+    },
+    {
+      "id": "disconnect_channel_b_inputs",
+      "label": "What if the B channel inputs are left off?",
+      "description": "Disconnects BIN1 and BIN2 while MOTORB1 and MOTORB2 stay wired to the right motor. The driver's B outputs have no direction inputs, so the right motor cannot be driven.",
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "driver",
+          "pin": "BIN1",
+          "net": null
+        },
+        {
+          "op": "move_pin",
+          "instance": "driver",
+          "pin": "BIN2",
+          "net": null
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "pin_dependencies",
+          "severity": "violation",
+          "category": "load_path",
+          "affectedInstance": "driver"
+        }
+      ]
     }
   ],
   "optimizations": [

@@ -16,8 +16,10 @@ export const regulator_headroom: Rule = {
       const dropout = ctx.fact(reg.id, 'dropout_v')!;
       if (!vin || !vout) {
         findings.push(finding({ ruleId: 'regulator_headroom', basis: 'assumption', severity: 'unknown', category: 'voltage', title: `${reg.label}: input or output voltage unknown`, affected: [{ instanceId: reg.id }],
-          evidence: [{ label: 'input', value: vin ? fmtV(vin.min) : 'unknown', provenance: vin ? vin.provenance : 'unknown' }, { label: 'output', value: vout ? fmtV(vout.nominal) : 'unknown', provenance: vout ? vout.provenance : 'unknown' }],
-          consequence: 'Headroom cannot be estimated.', remediation: [`Wire the regulator input to a source so ${inNet?.name ?? 'its input'} has a known voltage`], missing: ['regulator input voltage'] }));
+          evidence: [
+            { label: `${inPin?.name ?? 'input'} wired to`, value: inNet ? inNet.name : 'nothing', provenance: 'user' }, { label: `${outPin?.name ?? 'output'} wired to`, value: outNet ? outNet.name : 'nothing', provenance: 'user' },
+            { label: 'input', value: vin ? fmtV(vin.min) : 'unknown', provenance: vin ? vin.provenance : 'unknown' }, { label: 'output', value: vout ? fmtV(vout.nominal) : 'unknown', provenance: vout ? vout.provenance : 'unknown' }],
+          consequence: 'Headroom cannot be estimated.', remediation: [`Wire the regulator input to a source so ${inNet?.name ?? 'its input'} has a known voltage`, ...(outNet ? [] : ['Wire the regulator output to the rail it feeds'])], missing: [vin ? 'regulator output voltage' : 'regulator input voltage'] }));
         continue;
       }
       const margin = vin.min - vout.nominal;

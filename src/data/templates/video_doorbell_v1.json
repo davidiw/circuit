@@ -488,6 +488,27 @@
         }
       ],
       "expectStatus": "incomplete"
+    },
+    {
+      "id": "disconnect_amp_data",
+      "label": "What if the amplifier's data line is left off?",
+      "description": "Disconnects DIN on the I2S amplifier while the speaker stays wired. The amplifier has clocks but no audio data, so the speaker output is silent.",
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "amp",
+          "pin": "DIN",
+          "net": null
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "pin_dependencies",
+          "severity": "violation",
+          "category": "load_path",
+          "affectedInstance": "amp"
+        }
+      ]
     }
   ]
 }

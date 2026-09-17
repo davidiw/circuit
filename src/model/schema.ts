@@ -62,6 +62,8 @@ export const RegistryComponent = z.object({
   board_features: z.array(z.string()).default([]),
   sources: z.array(z.string()).default([]),
   notes: z.string().optional(),
+  // Internal relationships: an output pin only does its job when the pins it is made from are wired. Read by the pin_dependencies rule.
+  pin_dependencies: z.array(z.object({ pin: z.string(), requires: z.array(z.string()).min(1), why: z.string() })).default([]),
   // Reusable, hobbyist-facing explanation of what this kind of part does. Project-specific "why it is here" lives in the project's designGuide.
   guide: z.object({ role: z.string(), summary: z.string() }).optional(),
 });

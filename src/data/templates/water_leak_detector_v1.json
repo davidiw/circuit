@@ -315,6 +315,39 @@
         }
       ],
       "expectStatus": "incomplete"
+    },
+    {
+      "id": "sensor_unwired",
+      "label": "What if the sensor is not wired at all?",
+      "description": "Disconnects every sensor pin. The part is still in the design but connected to nothing.",
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "sensor",
+          "pin": "VCC",
+          "net": null
+        },
+        {
+          "op": "move_pin",
+          "instance": "sensor",
+          "pin": "GND",
+          "net": null
+        },
+        {
+          "op": "move_pin",
+          "instance": "sensor",
+          "pin": "SIG",
+          "net": null
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "pin_dependencies",
+          "severity": "warning",
+          "category": "load_path",
+          "affectedInstance": "sensor"
+        }
+      ]
     }
   ]
 }
