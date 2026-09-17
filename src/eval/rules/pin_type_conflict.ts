@@ -24,8 +24,8 @@ export const pin_type_conflict: Rule = {
         title: errs.length ? `Pin types conflict on ${net.name}: ${errs[0]}${errs.length > 1 ? ` and ${errs.length - 1} more` : ''}` : `Questionable pin pairing on ${net.name}: ${wars[0]}${wars.length > 1 ? ` and ${wars.length - 1} more` : ''}`,
         affected,
         evidence: [...errs.map((e) => ({ label: 'error pair', value: e, provenance: 'vetted_source' as const })), ...wars.map((w) => ({ label: 'warning pair', value: w, provenance: 'vetted_source' as const })), { label: 'basis', value: 'KiCad default ERC pin-type matrix', provenance: 'vetted_source' as const }],
-        consequence: errs.length ? 'Two pins that both drive, or a driver tied to a supply, on one node: whichever is stronger wins and the other absorbs the difference. This is the standard electrical-rules error every schematic tool flags.' : 'This pairing is not a certain fault, but schematic tools warn about it because it usually means a driver is tied to a rail or a pin is being used against its type.',
-        remediation: ['Give each driven pin its own net to a load or an input', 'If one of these pins is meant to be a load, wire its input pin instead of its output'],
+        consequence: errs.length ? 'Two pins on this net both try to set its voltage. Whichever is stronger wins and the other carries the difference as a short: heat, a blown output stage, or a regulator in current limit.' : 'The pins on this net can work together only in a narrow case, usually a bidirectional pin used purely as an input. If either pin drives, they fight.',
+        remediation: [`Separate ${errs.length ? errs[0].split(' with ')[0] : wars[0].split(' with ')[0]} onto its own net`, 'Wire outputs to inputs, and supplies to supply inputs; never output to output or output to supply'],
       }));
     }
     return { findings, coverage: [{ dimension: 'pin_type_conflicts', group: 'electrical', status: 'checked', note: `${ctx.project.nets.length} nets checked against the KiCad pin-type matrix` }] };

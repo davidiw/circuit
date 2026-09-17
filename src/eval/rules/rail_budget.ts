@@ -12,11 +12,13 @@ export const rail_budget: Rule = {
     const cov = [] as { dimension: string; group: 'electrical'; status: 'checked' | 'partial'; note: string }[];
     for (const reg of regs) {
       const limit = ctx.fact(reg.id, 'continuous_output_a') ?? ctx.fact(reg.id, 'continuous_current_a')!;
-      // Loads: every motor (stall) and every dev board (peak) reachable in the design. Single-rail designs only in phase 1.
+      // Loads on this regulator's own output rail: parts whose supply input sits on it, plus the motors of any driver whose motor supply sits on it.
+      const outPin = ctx.comp(reg.id)!.pins.find((p) => p.role === 'supply_out'); const outNet = outPin && ctx.netOf(reg.id, outPin.name);
+      const onRail = (id: string) => !!outNet && ctx.comp(id)!.pins.some((p) => p.role === 'supply_in' && ctx.netOf(id, p.name)?.id === outNet.id);
       const parts: { label: string; value: number; provenance: string }[] = [];
-      for (const m of ctx.instancesOfKind('dc_gearmotor')) { const s = ctx.fact(m.id, 'stall_current_a'); if (s) parts.push({ label: `${m.id} stall`, value: s.value, provenance: s.provenance }); }
-      for (const b of ctx.instancesOfKind('dev_board')) { const p = ctx.fact(b.id, 'peak_current_a'); if (p) parts.push({ label: `${b.id} peak`, value: p.value, provenance: p.provenance }); }
-      for (const a of ctx.instancesOfKind('audio_amp_breakout')) { const w = ctx.fact(a.id, 'output_power_w'); if (w) parts.push({ label: `${a.id} at 5 V`, value: w.value / 5, provenance: w.provenance }); }
+      for (const d of ctx.instancesOfKind('motor_driver')) { if (!onRail(d.id)) continue; for (const m of ctx.instancesOfKind('dc_gearmotor')) { const pin = ctx.comp(m.id)!.pins[0]; const net = ctx.netOf(m.id, pin.name); if (!net || !ctx.netPins(net).some((q) => q.instance === d.id)) continue; const s = ctx.fact(m.id, 'stall_current_a'); if (s) parts.push({ label: `${m.id} stall`, value: s.value, provenance: s.provenance }); } }
+      for (const b of ctx.instancesOfKind('dev_board')) { if (!onRail(b.id)) continue; const p = ctx.fact(b.id, 'peak_current_a'); if (p) parts.push({ label: `${b.id} peak`, value: p.value, provenance: p.provenance }); }
+      for (const a of ctx.instancesOfKind('audio_amp_breakout')) { if (!onRail(a.id)) continue; const w = ctx.fact(a.id, 'output_power_w'); if (w) parts.push({ label: `${a.id} at 5 V`, value: w.value / 5, provenance: w.provenance }); }
       const total = parts.reduce((s, p) => s + p.value, 0);
       const thermalUnknown = ctx.comp(reg.id)!.facts['thermal_performance']?.provenance === 'unknown';
       const ev = [...parts.map((p) => ({ label: p.label, value: fmtA(p.value), provenance: p.provenance as never })), { label: `${reg.id} continuous limit`, value: fmtA(limit.value), provenance: limit.provenance }];

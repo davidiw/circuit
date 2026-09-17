@@ -43,8 +43,12 @@ export function evaluate(project: Project, registry: Registry, rules: Rule[] = R
   const ctx = new Ctx(project, registry);
   const findings: Finding[] = []; const coverage: CoverageEntry[] = []; const metrics: Metric[] = [];
   for (const rule of rules) {
+    ctx.resetReads();
     const r = rule.analyze(ctx);
     findings.push(...r.findings); metrics.push(...(r.metrics ?? []));
+    // Coverage policy: 'checked' only when every value the rule read is a published fact or a user setting; an assumption or unknown makes it 'partial' and says which.
+    const assumed = [...new Map(ctx.reads.map((x) => [x.label, x])).values()];
+    for (const c of r.coverage) if (c.status === 'checked' && assumed.length) { c.status = 'partial'; c.note = `${c.note}; relies on assumed or unknown values: ${assumed.slice(0, 4).map((x) => x.label).join(', ')}${assumed.length > 4 ? ` and ${assumed.length - 4} more` : ''}`; }
     // Outcome per dimension: the worst severity among the analyzer's findings, so a "checked" row can still read as failed.
     const rank: Record<string, number> = { violation: 0, warning: 1, unknown: 2, optimization: 3 };
     let worst: CoverageEntry['outcome'];

@@ -6,9 +6,10 @@ export const undriven_net: Rule = {
   id: 'undriven_net', origin: 'deterministic', dimensions: ['undriven_nets'],
   analyze(ctx) {
     const findings = [] as ReturnType<typeof finding>[];
+    if (!ctx.hasPower) return { findings, coverage: [{ dimension: 'undriven_nets', group: 'electrical', status: 'not_evaluated', note: 'No power source; every net is undriven until one is added' }] };
     for (const net of ctx.project.nets) {
       const pins = ctx.netPins(net);
-      if (net.kind === 'ground') continue;                                   // a ground net is the reference, not a driven node
+      if (!pins.length || net.kind === 'ground') continue;                                   // a ground net is the reference, not a driven node
       // A pin drives a net if its type drives in ERC terms, or if the registry derives a voltage for it (a diode cathode fed from its anode).
       const drivers = pins.filter((p) => ['O', 'PwrO', 'Bi', 'OC', 'OE', '3S'].includes(ROLE_TO_KICAD[p.def.role]) || !!p.def.output);
       if (drivers.length) continue;

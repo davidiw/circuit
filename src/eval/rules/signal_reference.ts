@@ -31,7 +31,7 @@ export const signal_reference: Rule = {
     }
     const findings = [...flagged.entries()].map(([id, { net, others }]) => finding({
       ruleId: 'signal_reference', basis: 'component_spec', severity: 'violation', category: 'reference',
-      title: `${ctx.inst(id)!.label} shares no reference with ${others.map((o) => ctx.inst(o)!.label).join(', ')}`,
+      title: `${ctx.inst(id)!.label} shares no reference with ${[...new Set(others.map((o) => ctx.inst(o)!.label))].join(', ')}`,
       affected: [{ instanceId: id, netId: net.id }, ...others.map((o) => ({ instanceId: o }))],
       evidence: [
         { label: `${id} ground nets`, value: [...refNets.get(id)!].join(', ') || 'none', provenance: 'user' },

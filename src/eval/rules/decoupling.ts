@@ -11,26 +11,26 @@ export const decoupling: Rule = {
       const supplyPins = comp.pins.filter((p) => p.role === 'supply_in' && ctx.netOf(inst.id, p.name));
       if (!supplyPins.length) continue;
       checked++;
-      if (comp.board_features.includes('onboard_decoupling')) { notes.push(`${inst.label}: onboard`); continue; }
+      if (ctx.features(inst.id).includes('onboard_decoupling')) { notes.push(`${inst.label}: onboard`); continue; }
       for (const pin of supplyPins) {
         const net = ctx.netOf(inst.id, pin.name)!;
         const caps = ctx.netPins(net).filter((p) => p.def.role === 'cap_pos').map((p) => ({ id: p.instance, uf: ctx.fact(p.instance, 'capacitance_uf')?.value }));
         const local = caps.filter((c) => c.uf !== undefined && c.uf <= 10);
         if (local.length) { notes.push(`${inst.label} ${pin.name}: ${local.map((c) => `${c.id} ${c.uf} uF`).join(', ')}`); continue; }
-        const req = comp.facts['requires_external_decoupling'];
+        const req = ctx.factAny(inst.id, 'requires_external_decoupling');
         const known = req && req.value === true;
         if (!known) unknown++;
         findings.push(finding({
           ruleId: 'decoupling', basis: known ? 'component_spec' : 'heuristic', severity: known ? 'warning' : 'unknown', category: 'transients',
-          title: known ? `${inst.label} ${pin.name} has no local decoupling capacitor` : `${inst.label} ${pin.name}: decoupling provision unknown`,
+          title: known ? `${inst.label} ${pin.name} has no local decoupling capacitor` : `${inst.label} ${pin.name}: we do not know whether this part needs its own capacitor`,
           affected: [{ instanceId: inst.id, pin: pin.name, netId: net.id }],
           evidence: [
             { label: 'board_features', value: comp.board_features.join(', ') || 'none', provenance: comp.verification_status.startsWith('vetted') ? 'vetted_source' : 'fixture_assumption' },
-            { label: 'requires_external_decoupling', value: String(req?.value ?? 'not stated'), provenance: req?.provenance ?? 'unknown' },
+            { label: 'needs an external capacitor', value: String(req?.value ?? 'not stated'), provenance: req?.provenance ?? 'unknown' },
             { label: `capacitors on ${net.name}`, value: caps.length ? caps.map((c) => `${c.id} ${c.uf ?? '?'} uF`).join(', ') : 'none', provenance: 'user' },
           ],
-          consequence: known ? 'Supply transients at the part reach the die unfiltered; the datasheet application circuit assumes local capacitors. Expect resets or erratic switching under motor load.' : 'Whether this part needs an external capacitor is not recorded in the registry.',
-          remediation: known ? ['Add a 0.1 uF ceramic across the supply pin and ground, as close to the part as possible', 'Or use a breakout that carries the decoupling on the board'] : ['Record the part\'s decoupling requirement in the registry with a source'],
+          consequence: known ? 'Supply transients at the part reach the die unfiltered; the datasheet application circuit assumes local capacitors. Expect resets or erratic switching under motor load.' : 'The part may work fine, or it may reset under load; without the documentation we cannot say which.',
+          remediation: known ? ['Add a 0.1 uF ceramic across the supply pin and ground, as close to the part as possible', 'Or use a breakout that carries the decoupling on the board'] : ['Add a 0.1 uF ceramic across the supply pin and ground; it is cheap insurance', 'Or check the maker documentation for the recommended supply capacitor'],
           missing: known ? undefined : ['decoupling requirement'],
           fixes: (() => {
             if (!known) return [];

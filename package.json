@@ -12,7 +12,10 @@
     "server": "tsx server/index.ts",
     "bench": "tsx bench/run.ts",
     "start": "tsx server/main.ts",
-    "sweep": "tsx bench/pin-sweep.ts"
+    "sweep": "tsx bench/pin-sweep.ts",
+    "hooks": "git config core.hooksPath .githooks && echo \"pre-push hook installed\"",
+    "validate": "./scripts/validate.sh",
+    "smoke": "node deploy/smoke.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

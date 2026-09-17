@@ -12,7 +12,7 @@ export const driver_enable_state: Rule = {
         const net = ctx.netOf(inst.id, pin.name);
         const pullup = ctx.fact(inst.id, 'stby_pullup_kohm');
         if (!net) {
-          if (comp.board_features.includes('stby_10k_pullup')) { notes.push(`${inst.label} ${pin.name} unconnected; enabled by this board's ${pullup?.value ?? 10} kOhm pull-up`); continue; }
+          if (ctx.features(inst.id).includes('stby_10k_pullup')) { notes.push(`${inst.label} ${pin.name} unconnected; enabled by this board's ${pullup?.value ?? 10} kOhm pull-up`); continue; }
           findings.push(finding({
             ruleId: 'driver_enable_state', basis: 'component_spec', severity: 'unknown', category: 'control_state',
             title: `${inst.label} ${pin.name} is unconnected and this part's default state is unknown`, affected: [{ instanceId: inst.id, pin: pin.name }],

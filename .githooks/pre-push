@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Installed with: npm run hooks   (sets git config core.hooksPath .githooks)
+exec "$(git rev-parse --show-toplevel)/scripts/validate.sh"

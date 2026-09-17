@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=davidiw
-WorkingDirectory=/srv/circuit
+WorkingDirectory=/srv/circuit/current
 EnvironmentFile=/etc/circuit/env
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/npm run start

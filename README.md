@@ -46,9 +46,9 @@ Saved sessions are versioned (`src/ui/storage.ts`). A change to the saved shape 
 
 `npm run bench -- --dry` proves the plumbing with a fake provider. With `ANTHROPIC_API_KEY` and/or `GEMINI_API_KEY` set, `npm run bench` scores each candidate model on recall against the corpus, contradictions, schema failures, latency, and cost, and writes `bench/results/latest.md` with the `AI_PROVIDER` / `AI_MODEL` lines to put in `/etc/circuit/env`.
 
-## Deploy
+## Validation and deploy
 
-See `deploy/README.md`. Summary: DNS for circuit.davidwolinsky.com to this host, `/etc/circuit/env` from `deploy/env.example`, `deploy/deploy.sh`, certbot, `deploy/deploy.sh` again.
+There is no hosted CI; validation is local. `npm run validate` (also installed as a pre-push hook by `npm run hooks`) runs typecheck, all tests, the pin-sweep report freshness check, and the production build. `deploy/deploy.sh` refuses an uncommitted tree, runs the same gate, installs the build into `/srv/circuit/releases/<stamp>-<commit>`, switches the `current` symlink, restarts the service, smoke-tests the live URL with a headless browser (`npm run smoke`), and rolls back to the previous release if any step fails. `CHANGELOG.md` records every change to the saved-session shape as upgradeable or breaking. First-deploy steps are in `deploy/README.md`.
 
 ## Invariants the code enforces
 

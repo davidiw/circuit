@@ -5,30 +5,34 @@ export const supply_in_range: Rule = {
   analyze(ctx) {
     if (!ctx.hasPower) return { findings: [], coverage: [{ dimension: 'rail_voltages', group: 'electrical', status: 'not_evaluated', note: 'No power source' }] };
     const findings = [] as ReturnType<typeof finding>[];
-    let checked = 0, unknown = 0;
+    let checked = 0, unknown = 0; const unconnected: string[] = [];
     for (const inst of ctx.project.instances) {
       const comp = ctx.comp(inst.id); if (!comp) continue;
       for (const pin of comp.pins) {
         if (pin.role !== 'supply_in') continue;
         const net = ctx.netOf(inst.id, pin.name);
-        if (!net) continue; // unconnected supply inputs are reported by requirement/wiring rules when they matter
-        const v = ctx.netVoltages.get(net.id);
+        if (!net) {
+          unconnected.push(`${inst.label} ${pin.name}`);
+          findings.push(finding({ ruleId: 'supply_in_range', basis: 'component_spec', severity: 'warning', category: 'voltage', title: `${inst.label} ${pin.name} is not connected to anything`, affected: [{ instanceId: inst.id, pin: pin.name }], evidence: [{ label: `${pin.name} role`, value: 'supply input', provenance: 'vetted_source' }], consequence: pin.note?.includes('Logic') ? 'The part has no logic supply and will not respond.' : 'The part is unpowered on this input; whatever it powers does nothing.', remediation: [`Wire ${pin.name} to a rail in its range${pin.supply_range ? ` (${pin.supply_range.min} to ${pin.supply_range.max} V)` : ''}`] }));
+          continue;
+        }
+        const v = ctx.voltage(net.id); const range = ctx.supplyRange(inst.id, pin);
         const affected = [{ instanceId: inst.id, pin: pin.name, netId: net.id }];
-        if (!pin.supply_range || !v) {
+        if (!range || !v) {
           unknown++;
           findings.push(finding({
             ruleId: 'supply_in_range', basis: 'component_spec', severity: 'unknown', category: 'voltage',
             title: `${inst.label} ${pin.name}: ${!v ? 'net voltage unknown' : 'no modeled input range'}`, affected,
-            evidence: [{ label: 'net', value: net.name, provenance: 'user' }, { label: 'voltage', value: v ? fmtV(v.nominal) : 'unknown', provenance: v ? 'fixture_assumption' : 'unknown' }],
-            consequence: 'Compatibility cannot be confirmed.', remediation: [!v ? 'Add a source or a regulator output that defines this net' : 'Add the input range to the registry entry with a source'],
-            missing: [!v ? 'net voltage' : `${comp.id} ${pin.name} supply range`],
+            evidence: [{ label: 'net', value: net.name, provenance: 'user' }, { label: 'voltage', value: v ? fmtV(v.nominal) : 'unknown', provenance: v ? v.provenance : 'unknown' }],
+            consequence: 'Compatibility cannot be confirmed.', remediation: [!v ? `Connect a source or a regulator output to ${net.name} so its voltage is known` : `We do not have a published input range for this pin yet; check the ${comp.manufacturer ?? 'maker'} documentation before powering it`],
+            missing: [!v ? 'net voltage' : `${pin.name} supply range`],
           }));
           continue;
         }
         checked++;
-        const r = pin.supply_range; const prov = pin.supply_range_provenance ?? 'unknown';
+        const r = range; const prov = pin.supply_range_provenance ?? 'unknown';
         const evidence = [
-          { label: `${net.name} nominal / min / max`, value: `${fmtV(v.nominal)} / ${fmtV(v.min)} / ${fmtV(v.max)}`, provenance: 'fixture_assumption' as const },
+          { label: `${net.name} nominal / min / max`, value: `${fmtV(v.nominal)} / ${fmtV(v.min)} / ${fmtV(v.max)}`, provenance: v.provenance },
           { label: `${pin.name} allowed`, value: `${fmtV(r.min)} to ${fmtV(r.max)}`, provenance: prov },
         ];
         if (v.nominal < r.min || v.nominal > r.max || v.max > r.max) {
@@ -65,6 +69,6 @@ export const supply_in_range: Rule = {
         }
       }
     }
-    return { findings, coverage: [{ dimension: 'rail_voltages', group: 'electrical', status: unknown ? 'partial' : 'checked', note: `${checked} supply inputs checked${unknown ? `, ${unknown} unknown` : ''}` }] };
+    return { findings, coverage: [{ dimension: 'rail_voltages', group: 'electrical', status: unknown ? 'partial' : 'checked', note: `${checked} supply inputs checked${unknown ? `, ${unknown} unknown` : ''}${unconnected.length ? `, unconnected: ${unconnected.join(', ')}` : ''}` }] };
   },
 };

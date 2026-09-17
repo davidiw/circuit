@@ -20,7 +20,7 @@ export const requirement_capability: Rule = {
         case 'capability': {
           checked++;
           const have = ctx.instancesWithCapability(String(r.value));
-          if (!have.length) fail(r, `No part provides ${r.label.toLowerCase()}`, [{ label: 'capability', value: String(r.value) }, { label: 'parts', value: ctx.project.instances.map((i) => i.id).join(', ') }], `The requirement "${r.label}" cannot be met by the parts in this design.`, [`Add a part whose registry entry lists the ${r.value} capability`]);
+          if (!have.length) fail(r, `No part provides ${r.label.toLowerCase()}`, [{ label: 'capability', value: String(r.value) }, { label: 'parts', value: ctx.project.instances.map((i) => i.id).join(', ') }], `The requirement "${r.label}" cannot be met by the parts in this design.`, [`Add a part that provides ${String(r.value).replace(/_/g, ' ')}`]);
           break;
         }
         case 'motor_count': {
@@ -45,12 +45,12 @@ export const requirement_capability: Rule = {
         }
         case 'power_mode': {
           checked++;
-          if (!ctx.hasPower || ctx.project.power.mode !== r.value) fail(r, `Power mode is ${ctx.hasPower ? ctx.project.power.mode : 'unresolved'}, requirement is ${r.value}`, [{ label: 'power.mode', value: ctx.project.power.mode }], 'The power architecture does not match the product requirement.', ['Set a power source of the required kind']);
+          if (!ctx.hasPower || ctx.project.power.mode !== r.value) fail(r, ctx.hasPower ? `The design is ${ctx.project.power.mode}-powered but the requirement is ${r.value}` : `The design has no power source; the requirement is ${r.value} power`, [{ label: 'power source', value: ctx.hasPower ? String(ctx.project.power.mode) : 'none' }], 'The power architecture does not match the product requirement.', [ctx.hasPower ? `Replace the source with a ${r.value} one` : `Add a ${r.value} source`]);
           break;
         }
         case 'video': {
           checked++;
-          if (!ctx.instancesWithCapability(`video_${r.value}`).length) fail(r, `No camera provides ${r.value}`, [{ label: 'capability', value: `video_${r.value}` }], 'The video requirement cannot be met.', ['Add a camera module whose registry entry lists this video mode']);
+          if (!ctx.instancesWithCapability(`video_${r.value}`).length) fail(r, `No camera provides ${r.value}`, [{ label: 'capability', value: `video_${r.value}` }], 'The video requirement cannot be met.', ['Add a camera module rated for this video mode']);
           break;
         }
         case 'audio_output': {

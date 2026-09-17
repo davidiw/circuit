@@ -19,6 +19,11 @@ export function assertFindingContract(f: Finding, p: Project, where = '') {
     if (a.netId) expect(p.nets.find((n) => n.id === a.netId), `${ctx} affected net ${a.netId}`).toBeTruthy();
     if (a.requirementId) expect(p.requirements.find((r) => r.id === a.requirementId), `${ctx} affected requirement`).toBeTruthy();
   }
+  // Hobbyist-facing text: no internal vocabulary, no repeated names in a title, evidence that says something.
+  const text = [f.title, f.consequence, ...f.remediation].join(' ');
+  expect(text, `${ctx} leaks internal vocabulary`).not.toMatch(/\bregistry\b|\bfixture\b|\bunresolved\b|\bPwrO\b|\bPwrI\b|_[a-z]+_[a-z]+/);
+  expect(f.title, `${ctx} repeats a name`).not.toMatch(/\b(.{4,}?), \1\b/);
+  expect(f.evidence.every((e) => e.value === 'unknown'), `${ctx} evidence all unknown`).toBe(false);
   for (const fix of f.fixes) { expect(fix.label.length, `${ctx} fix label`).toBeGreaterThan(3); expect(fix.ops.length, `${ctx} fix ops`).toBeGreaterThan(0); }
 }
 
