@@ -16,7 +16,7 @@ export const driver_enable_state: Rule = {
           findings.push(finding({
             ruleId: 'driver_enable_state', basis: 'component_spec', severity: 'unknown', category: 'control_state',
             title: `${inst.label} ${pin.name} is unconnected and this part's default state is unknown`, affected: [{ instanceId: inst.id, pin: pin.name }],
-            evidence: [{ label: 'board_features', value: comp.board_features.join(', ') || 'none', provenance: 'vetted_source' }],
+            evidence: [{ label: 'board features', value: comp.board_features.join(', ') || 'none', provenance: comp.verification_status.startsWith('vetted') ? 'vetted_source' : 'fixture_assumption' }],
             consequence: 'A floating enable may leave the driver disabled or flickering.', remediation: ['Drive the enable pin from a GPIO or tie it to the logic rail'], missing: ['default enable state for this part'],
           }));
           continue;

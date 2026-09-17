@@ -21,8 +21,8 @@ describe('trust boundary: projects that reference unknown parts or pins', () => 
   });
   it('a bad prop value cannot produce voltage findings that blame the net', () => {
     const bad = applyOps(t, [{ op: 'set_prop', instance: 'buck', prop: 'outputV', value: 'five', provenance: 'user' }]);
-    const r = evaluate(bad, registry);
-    for (const f of r.findings.filter((x) => x.ruleId === 'supply_in_range')) expect(f.severity).toBe('unknown');
+    const r = evaluate(bad, registry); const fs = r.findings.filter((x) => x.ruleId === 'supply_in_range');
+    expect(fs.length).toBeGreaterThan(0); for (const f of fs) expect(f.severity).toBe('unknown');
   });
 });
 

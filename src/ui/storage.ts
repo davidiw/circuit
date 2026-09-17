@@ -49,8 +49,7 @@ function reviveSession(id: string, raw: Record<string, unknown>): Session | unde
   if (!Project.safeParse(project).success || integrityProblems(project, registry).length) return undefined;
   const history = Array.isArray(raw.history) ? z.array(HistoryEvent).safeParse(raw.history) : undefined;
   const prev = parseEvaluation(raw.previousEvaluation);
-  const last = template ? undefined : parseEvaluation(projectRaw?.lastEvaluation);   // a template session re-evaluates against the current rules
-  project.lastEvaluation = last;
+  project.lastEvaluation = undefined;   // every revived session re-evaluates against the current rules; a stored result is never presented as current
   const ai = raw.aiReview as Session['aiReview'] | undefined;
   const aiObs = ai?.observations ? ai.observations.map((o) => Finding.safeParse(o)).filter((r) => r.success).map((r) => (r as { data: Finding }).data) : [];
   return {

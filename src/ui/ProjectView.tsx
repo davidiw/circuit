@@ -79,7 +79,7 @@ export function ProjectView({ session, state, dispatch }: { session: Session; st
       if (!r.ok) throw new Error((body && typeof body === 'object' && 'error' in body && typeof (body as { error: unknown }).error === 'string') ? (body as { error: string }).error : `AI review failed (${r.status})`);
       const parsed = AIResponse.safeParse(body);
       if (!parsed.success) throw new Error('The AI review endpoint returned something that is not a review. Nothing was shown.');
-      dispatch({ type: 'AI_RESULT', result: parsed.data });
+      dispatch({ type: 'AI_RESULT', result: { ...parsed.data, observations: parsed.data.observations.map((o) => ({ ...o, origin: 'ai_review' as const, basis: 'ai_inference' as const })) } });
     } catch (e) { dispatch({ type: 'AI_ERROR', error: (e as Error).message }); }
   };
   const exportJson = () => { const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${p.id}.json`; a.click(); URL.revokeObjectURL(url); };

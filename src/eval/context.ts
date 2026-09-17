@@ -61,7 +61,14 @@ export class Ctx {
   voltage(netId: string): NetVoltage | undefined { const v = this.netVoltages.get(netId); if (v) this.note(`net ${netId} voltage`, v.provenance); return v; }
   supplyRange(instanceId: string, pin: RegistryPin) { if (pin.supply_range) this.note(`${instanceId}.${pin.name} range`, pin.supply_range_provenance ?? 'unknown'); return pin.supply_range; }
   assumption(key: string): unknown {
-    return this.project.assumptions.find((a) => a.key === key && a.status === 'active')?.value;
+    const a = this.project.assumptions.find((x) => x.key === key && x.status === 'active');
+    if (a) this.note(`assumption ${key}`, this.assumptionProv(key));
+    return a?.value;
+  }
+  /** Provenance of a project assumption: a user-set value is trusted; a template or AI default is an assumption. */
+  assumptionProv(key: string): Provenance {
+    const a = this.project.assumptions.find((x) => x.key === key && x.status === 'active');
+    return !a ? 'unknown' : a.source === 'user' ? 'user' : a.source === 'ai' ? 'ai' : 'fixture_assumption';
   }
   assumptionNum(key: string): number | undefined {
     const v = this.assumption(key);

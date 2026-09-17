@@ -15,7 +15,7 @@ export type AppState = { view: 'gate' | 'library' | 'project'; sessions: Record<
 export type Action =
   | { type: 'AUTHED' } | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' }
   | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[]; kind?: EventKind } | { type: 'UNDO' } | { type: 'RESET' }
-  | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation: EvaluationResult } | { type: 'COMPARE'; id?: string }
+  | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation?: EvaluationResult } | { type: 'COMPARE'; id?: string }
   | { type: 'VIEW_FINDING'; id: string } | { type: 'VIEW_COVERAGE' } | { type: 'SELECT_INSTANCE'; id?: string } | { type: 'SELECT_NET'; id?: string } | { type: 'SELECT_PIN'; pin?: PinRef } | { type: 'DESELECT' } | { type: 'DISMISS_TIP'; id: string } | { type: 'DISMISS_INTRO' }
   | { type: 'AI_START' } | { type: 'AI_RESULT'; result: { observations: Finding[]; model: string; provider: string; latencyMs: number; dropped: number } } | { type: 'AI_ERROR'; error: string }
   | { type: 'SET_AI_STATUS'; status: AIStatus };
@@ -63,8 +63,9 @@ export function reducer(state: AppState, a: Action): AppState {
     }
     case 'IMPORT': {
       const id = state.sessions[a.project.id] || getTemplate(a.project.id) ? `${a.project.id}-import-${Date.now().toString(36)}` : a.project.id;
+      // An imported file's own evaluation is never trusted: the reviewer re-evaluates with this build's rules.
       const base = { ...structuredClone(a.project), id, source: 'imported' as const, lastEvaluation: undefined };
-      const session = newSession(base, 'open_template'); session.project.lastEvaluation = a.project.lastEvaluation;
+      const session = newSession(base, 'open_template');
       return { ...state, view: 'project', activeId: id, sessions: { ...state.sessions, [id]: session } };
     }
     case 'NEW_SESSION': return { ...state, view: 'project', activeId: a.id, sessions: { ...state.sessions, [a.id]: newSession(freshProject(a.id)) } };
@@ -89,8 +90,13 @@ export function reducer(state: AppState, a: Action): AppState {
     case 'APPLY_OPTIMIZATION': return withSession(state, (s) => {
       const o = s.project.optimizations.find((x) => x.id === a.id); if (!o) return s;
       const prev = s.project.lastEvaluation;
-      const next = replay(s, [...s.edits, { label: o.title, ops: o.ops, optimizationId: o.id }], 'optimize', o.id, a.evaluation);
-      return { ...next, previousEvaluation: prev ?? s.previousEvaluation, lastSummary: summarize(prev, a.evaluation), compareId: undefined, openFinding: undefined };
+      // The evaluation stored with the applied optimization is computed here from the real candidate; a caller-supplied result is only accepted when it is byte-for-byte that.
+      const edits = [...s.edits, { label: o.title, ops: o.ops, optimizationId: o.id }];
+      const candidate = applyOps(structuredClone(s.base), edits.flatMap((e) => e.ops));
+      const fresh = evaluate(candidate, registry);
+      const result = a.evaluation && a.evaluation.stateHash === fresh.stateHash && a.evaluation.rulesVersion === fresh.rulesVersion && JSON.stringify(a.evaluation.findings) === JSON.stringify(fresh.findings) ? a.evaluation : fresh;
+      const next = replay(s, edits, 'optimize', o.id, result);
+      return { ...next, previousEvaluation: prev ?? s.previousEvaluation, lastSummary: summarize(prev, result), compareId: undefined, openFinding: undefined };
     });
     case 'UNDO': return withSession(state, (s) => (s.edits.length ? replay(s, s.edits.slice(0, -1), 'edit', 'undo') : s));
     case 'RESET': return withSession(state, (s) => ({ ...replay(s, [], 'reset'), aiReview: undefined, openFinding: undefined }));

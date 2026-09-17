@@ -23,7 +23,7 @@ export const bulk_capacitance: Rule = {
         title: `${d.label} motor rail has ${total ? `${total} uF` : 'no bulk capacitance'}; heuristic target is ${target ?? 'unset'} uF`, affected: [{ instanceId: d.id, pin: motorSupply.name, netId: net.id }],
         evidence: [
           { label: `capacitors on ${net.name}`, value: caps.join(', ') || 'none', provenance: 'user' },
-          { label: 'motor_bulk_cap_uf assumption', value: String(target ?? 'unset'), provenance: 'fixture_assumption' },
+          { label: 'bulk capacitance target', value: String(target ?? 'unset'), provenance: ctx.assumptionProv('motor_bulk_cap_uf') },
         ],
         consequence: 'Motor start and stall transients pull the shared rail down. The logic board on the same rail may reset. This is a heuristic based on two small motors on a shared regulator, not a datasheet limit.',
         remediation: ['Add an electrolytic capacitor across the motor supply near the driver', 'Or separate the motor rail from the logic rail and accept this warning by override'],

@@ -37,13 +37,24 @@ describe('render every corpus state without errors', () => {
     it(`${t.id}: fresh, evaluated, every mutation evaluated, resolved after undo`, async () => {
       let st = open(t.id); await renderState(st, `${t.id} fresh`); cleanup();
       st = run([{ type: 'EVALUATE' }], st); await renderState(st, `${t.id} evaluated`); cleanup();
+      // A change without re-evaluation: the findings header says the result is from the previous state and every fix button is disabled.
+      const keepsPower = t.mutations.find((m) => !m.ops.some((o) => o.op === 'clear_power_source'));
+      if (keepsPower) {
+        const staleState = run([{ type: 'APPLY_MUTATION', id: keepsPower.id }], st);
+        const sout = await renderState(staleState, `${t.id} stale`);
+        expect(sout.container.querySelector('#panel-findings h4')?.textContent).toMatch(/from the previous state/);
+        expect([...sout.container.querySelectorAll('.chip')].map((c) => c.className + ':' + c.textContent).join(' | '), `${t.id} stale chip`).toMatch(/chip stale/); cleanup();
+      }
       for (const m of t.mutations) {
         const s2 = run([{ type: 'APPLY_MUTATION', id: m.id }, { type: 'EVALUATE' }], st);
         const out = await renderState(s2, `${t.id} ${m.id}`);
+        for (const e of m.expected) if (e.severity === 'violation' || e.severity === 'warning') expect(out.container.querySelectorAll(`.finding.${e.severity === 'violation' ? 'bad' : 'warn'}`).length, `${m.id} shows its ${e.severity}`).toBeGreaterThan(0);
         const firstFinding = out.container.querySelector('.finding .t');
         if (firstFinding) { const s3 = run([{ type: 'VIEW_FINDING', id: s2.sessions[t.id].project.lastEvaluation!.findings[0]?.id ?? '' }], s2); cleanup(); await renderState(s3, `${t.id} ${m.id} open finding`); }
         cleanup();
-        const s4 = run([{ type: 'UNDO' }, { type: 'EVALUATE' }], s2); await renderState(s4, `${t.id} ${m.id} resolved`); cleanup();
+        const s4 = run([{ type: 'UNDO' }, { type: 'EVALUATE' }], s2); const rout = await renderState(s4, `${t.id} ${m.id} resolved`);
+        if (m.expected.some((e) => e.severity === 'violation' || e.severity === 'warning')) { expect(rout.container.querySelector('.finding.res'), `${m.id} shows a resolved row`).toBeTruthy(); expect(rout.container.querySelector('.finding.bad:not(.res)'), `${m.id} no violation after undo`).toBeNull(); }
+        cleanup();
       }
     });
     it(`${t.id}: selection sheets and compare overlay`, async () => {
@@ -51,7 +62,15 @@ describe('render every corpus state without errors', () => {
       await renderState(run([{ type: 'SELECT_INSTANCE', id: p.instances[0].id }], st), `${t.id} instance sheet`); cleanup();
       await renderState(run([{ type: 'SELECT_NET', id: p.nets[0].id }], st), `${t.id} net sheet`); cleanup();
       const pin = p.nets[0].pins[0]; await renderState(run([{ type: 'SELECT_PIN', pin }, { type: 'ARM_CONNECT', pin }], st), `${t.id} connect mode`); cleanup();
-      for (const o of t.optimizations) { await renderState(run([{ type: 'COMPARE', id: o.id }], st), `${t.id} compare ${o.id}`); cleanup(); const after = evaluate(applyOps(p, o.ops), registry); await renderState(run([{ type: 'APPLY_OPTIMIZATION', id: o.id, evaluation: after }], st), `${t.id} applied ${o.id}`); cleanup(); }
+      for (const o of t.optimizations) {
+        const cout = await renderState(run([{ type: 'COMPARE', id: o.id }], st), `${t.id} compare ${o.id}`);
+        const after = evaluate(applyOps(p, o.ops), registry); const before = evaluate(p, registry);
+        // Compare rows are derived: every metric whose value changed appears with both numbers.
+        for (const m of after.metrics) { const b = before.metrics.find((x) => x.key === m.key); if (b && b.value !== m.value) { const text = cout.container.querySelector('.compare')?.textContent ?? ''; expect(text, `${o.id} shows ${m.label}`).toContain(m.label); expect(text).toContain(String(Number.isInteger(m.value) ? m.value : m.value.toFixed(2))); } }
+        cleanup();
+        const aout = await renderState(run([{ type: 'APPLY_OPTIMIZATION', id: o.id }], st), `${t.id} applied ${o.id}`);
+        expect(aout.container.querySelector('.chip.cur'), `${o.id} applied reads current`).toBeTruthy(); cleanup();
+      }
     });
   }
   it('phone layout: tabs, bottom bar, sheet, and full-screen render for evaluated and stale states', async () => {

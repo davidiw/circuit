@@ -636,6 +636,12 @@
           "severity": "violation",
           "category": "voltage",
           "affectedInstance": "mcu"
+        },
+        {
+          "ruleId": "regulator_headroom",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "buck"
         }
       ]
     },
@@ -742,6 +748,90 @@
           "affectedInstance": "driver"
         }
       ]
+    },
+    {
+      "id": "bare_tb6612_stby_floating",
+      "label": "What if a bare TB6612 has STBY floating?",
+      "description": "Swaps in the bare IC and leaves STBY unconnected. The bare chip has no pull-up, so the enable state is unknown rather than fine.",
+      "ops": [
+        {
+          "op": "swap_registry",
+          "instance": "driver",
+          "registryId": "driver.toshiba_tb6612fng_bare_class"
+        },
+        {
+          "op": "move_pin",
+          "instance": "driver",
+          "pin": "STBY",
+          "net": null
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "driver_enable_state",
+          "severity": "unknown",
+          "category": "control_state",
+          "affectedInstance": "driver"
+        }
+      ],
+      "expectAbsent": []
+    },
+    {
+      "id": "set_motor_rail_10v",
+      "label": "What if the buck is set to 10 V?",
+      "description": "Above the battery's cutoff voltage minus the diode drop: a buck cannot step up, so the setting can never be reached.",
+      "ops": [
+        {
+          "op": "set_prop",
+          "instance": "buck",
+          "prop": "outputV",
+          "value": 10.0,
+          "provenance": "user"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "regulator_headroom",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "buck"
+        },
+        {
+          "ruleId": "supply_in_range",
+          "severity": "violation",
+          "category": "voltage",
+          "affectedInstance": "mcu"
+        }
+      ],
+      "expectAbsent": []
+    },
+    {
+      "id": "reverse_diode",
+      "label": "What if the Schottky is installed backwards?",
+      "description": "Swaps the diode's anode and cathode nets. A reversed series diode blocks normal current and conducts when the battery is reversed.",
+      "ops": [
+        {
+          "op": "move_pin",
+          "instance": "diode",
+          "pin": "A",
+          "net": "VIN_PROT"
+        },
+        {
+          "op": "move_pin",
+          "instance": "diode",
+          "pin": "K",
+          "net": "BATT_PLUS"
+        }
+      ],
+      "expected": [
+        {
+          "ruleId": "reverse_polarity_strategy",
+          "severity": "violation",
+          "category": "protection",
+          "affectedInstance": "diode"
+        }
+      ],
+      "expectAbsent": []
     }
   ],
   "optimizations": [

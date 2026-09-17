@@ -1,5 +1,6 @@
 import type { Project, EvaluationResult, Finding, PinRef, MutationOp } from './schema';
 import type { HistoryEvent } from './history';
+import { RULES_VERSION } from '../eval/evaluate';
 
 export type ProjectState = 'intent' | 'requirements' | 'parts_unresolved' | 'design_incomplete' | 'unevaluated' | 'evaluated_current' | 'evaluated_stale' | 'reviewed';
 export type Edit = { label: string; ops: MutationOp[]; mutationId?: string; optimizationId?: string };
@@ -34,7 +35,7 @@ export function projectState(s: Session): ProjectState {
   const powerOk = !!p.power.sourceInstance && p.instances.some((i) => i.id === p.power.sourceInstance);
   if (!powerOk) return 'design_incomplete';
   if (!p.lastEvaluation) return 'unevaluated';
-  if (p.lastEvaluation.stateHash !== s.currentHash) return 'evaluated_stale';
+  if (p.lastEvaluation.stateHash !== s.currentHash || p.lastEvaluation.rulesVersion !== RULES_VERSION) return 'evaluated_stale';
   if (s.aiReview && s.aiReview.stateHash === s.currentHash) return 'reviewed';
   return 'evaluated_current';
 }

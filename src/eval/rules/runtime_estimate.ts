@@ -21,17 +21,18 @@ export const runtime_estimate: Rule = {
     const mass = ctx.fact(src, 'mass_g_approx');
     const metrics = [
       { key: 'battery_capacity_mah', label: 'Battery capacity (min of class)', value: cap.value, unit: 'mAh', provenance: cap.provenance, group: 'power' as const },
-      { key: 'runtime_min', label: 'Estimated runtime', value: minutes, unit: 'min', provenance: 'fixture_assumption' as const, group: 'power' as const, note: `from ${cap.value} mAh at ${pLoad.toFixed(2)} W average load` },
-      { key: 'avg_load_w', label: 'Average load', value: Math.round(pLoad * 100) / 100, unit: 'W', provenance: 'fixture_assumption' as const, group: 'power' as const },
+      { key: 'runtime_min', label: 'Estimated runtime', value: minutes, unit: 'min', provenance: ctx.assumptionProv('avg_motor_current_a'), group: 'power' as const, note: `from ${cap.value} mAh at ${pLoad.toFixed(2)} W average load` },
+      { key: 'avg_load_w', label: 'Average load', value: Math.round(pLoad * 100) / 100, unit: 'W', provenance: ctx.assumptionProv('avg_motor_current_a'), group: 'power' as const },
       ...(mass ? [{ key: 'battery_mass_g', label: 'Battery mass (approx.)', value: mass.value, unit: 'g', provenance: mass.provenance, group: 'physical' as const }] : []),
     ];
     const ev = [
       { label: 'capacity_mah_min', value: `${cap.value} mAh`, provenance: cap.provenance },
       { label: 'nominal_v', value: `${vnom.value} V`, provenance: vnom.provenance },
-      { label: 'avg_motor_current_a x motors', value: `${iMotor} A x ${motors} at ${vMotor} V`, provenance: 'fixture_assumption' as const },
-      { label: 'mcu_avg_current_a', value: `${iMcu} A at 5 V`, provenance: 'fixture_assumption' as const },
-      { label: 'buck_efficiency', value: String(eff), provenance: 'fixture_assumption' as const },
-      { label: 'estimated runtime', value: `${minutes} min`, provenance: 'fixture_assumption' as const },
+      { label: 'average motor current x motors', value: `${iMotor} A x ${motors} at ${vMotor} V`, provenance: ctx.assumptionProv('avg_motor_current_a') },
+      { label: 'motor rail', value: `${vMotor} V`, provenance: ctx.assumptionProv('motor_rail_v') },
+      { label: 'controller average current', value: `${iMcu} A at 5 V`, provenance: ctx.assumptionProv('mcu_avg_current_a') },
+      { label: 'regulator efficiency', value: String(eff), provenance: ctx.assumptionProv('buck_efficiency') },
+      { label: 'estimated runtime', value: `${minutes} min`, provenance: ctx.assumptionProv('avg_motor_current_a') },
     ];
     const max = (req.value as { max?: number }).max;
     const findings = [] as ReturnType<typeof finding>[];

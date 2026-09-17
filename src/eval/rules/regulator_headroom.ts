@@ -7,7 +7,7 @@ export const regulator_headroom: Rule = {
     if (regs.length === 0) return { findings: [], coverage: [] };
     if (!ctx.hasPower) return { findings: [], coverage: [{ dimension: 'regulator_headroom', group: 'electrical', status: 'not_evaluated', note: 'No power source' }] };
     const findings = [] as ReturnType<typeof finding>[];
-    const notes: string[] = []; const metrics = [] as { key: string; label: string; value: number; unit: string; provenance: 'fixture_assumption'; group: 'electrical' }[];
+    const notes: string[] = []; const metrics = [] as { key: string; label: string; value: number; unit: string; provenance: 'fixture_assumption' | 'user' | 'vetted_source'; group: 'electrical' }[];
     for (const reg of regs) {
       const comp = ctx.comp(reg.id)!;
       const inPin = comp.pins.find((p) => p.role === 'supply_in'); const outPin = comp.pins.find((p) => p.role === 'supply_out');
@@ -21,12 +21,12 @@ export const regulator_headroom: Rule = {
         continue;
       }
       const margin = vin.min - vout.nominal;
-      metrics.push({ key: `headroom_v:${reg.id}`, label: `${reg.label} headroom at battery cutoff`, value: Math.round(margin * 100) / 100, unit: 'V', provenance: 'fixture_assumption', group: 'electrical' });
+      metrics.push({ key: `headroom_v:${reg.id}`, label: `${reg.label} headroom at battery cutoff`, value: Math.round(margin * 100) / 100, unit: 'V', provenance: vin.provenance === 'vetted_source' && vout.provenance === 'user' ? 'user' : 'fixture_assumption', group: 'electrical' });
       const ev = [
         { label: `${inNet!.name} minimum (via ${vin.via})`, value: fmtV(vin.min), provenance: vin.provenance },
         { label: `${outNet!.name} setting`, value: fmtV(vout.nominal), provenance: ctx.prop(reg.id, 'outputV')?.provenance ?? 'fixture_assumption' },
         { label: 'assumed dropout', value: fmtV(dropout.value), provenance: dropout.provenance },
-        { label: 'margin at end of discharge', value: fmtV(margin), provenance: 'fixture_assumption' as const },
+        { label: 'margin at end of discharge', value: fmtV(margin), provenance: vin.provenance },
       ];
       if (margin < 0) {
         findings.push(finding({

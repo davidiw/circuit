@@ -21,6 +21,9 @@ import { net_conflict } from './rules/net_conflict';
 import { pin_type_conflict } from './rules/pin_type_conflict';
 import { undriven_net } from './rules/undriven_net';
 
+/** Bump when a rule's semantics change: a saved result from an older rule set is stale even if the design is unchanged. */
+export const RULES_VERSION = '2026-09-16.4';
+
 export const RULES: Rule[] = [
   power_source_present, signal_reference, supply_in_range, motor_load_path, driver_enable_state,
   reverse_polarity_strategy, regulator_headroom, bulk_capacitance, requirement_capability,
@@ -34,7 +37,7 @@ export function evaluate(project: Project, registry: Registry, rules: Rule[] = R
   resetIds();
   const problems = integrityProblems(project, registry);
   if (problems.length) {
-    return { status: 'incomplete', metrics: [], coverage: [], stateHash: stateHash(project), evaluatedAt: new Date().toISOString(), findings: [{
+    return { status: 'incomplete', metrics: [], coverage: [], stateHash: stateHash(project), rulesVersion: RULES_VERSION, evaluatedAt: new Date().toISOString(), findings: [{
       id: 'integrity-1', ruleId: 'integrity', origin: 'deterministic', basis: 'component_spec', severity: 'unsupported', category: 'other', title: `This design references parts or pins the registry does not know (${problems.length} problem${problems.length > 1 ? 's' : ''}); the rules did not run`,
       affected: [], evidence: problems.slice(0, 8).map((x) => ({ label: 'problem', value: x, provenance: 'user' as const })), consequence: 'Nothing can be evaluated until every part and pin resolves to a registry entry.',
       remediation: ['Undo the last change, reset the template, or import a file saved by this version'], missing: problems, fixes: [],
@@ -59,5 +62,5 @@ export function evaluate(project: Project, registry: Registry, rules: Rule[] = R
   const seen = new Set(coverage.map((c) => c.dimension));
   for (const d of UNIVERSAL_DIMENSIONS) if (!seen.has(d)) coverage.push({ dimension: d, group: 'electrical', status: 'not_evaluated', note: 'No analyzer covers this dimension yet' });
   findings.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
-  return { status: ctx.hasPower ? 'complete' : 'incomplete', findings, coverage, metrics, stateHash: stateHash(project), evaluatedAt: new Date().toISOString() };
+  return { status: ctx.hasPower ? 'complete' : 'incomplete', findings, coverage, metrics, stateHash: stateHash(project), rulesVersion: RULES_VERSION, evaluatedAt: new Date().toISOString() };
 }

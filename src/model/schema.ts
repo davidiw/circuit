@@ -157,6 +157,7 @@ export const EvaluationResult = z.object({
   coverage: z.array(CoverageEntry),
   metrics: z.array(Metric).default([]),
   stateHash: z.string(),
+  rulesVersion: z.string().default('unknown'),
   evaluatedAt: z.string(),
 });
 export type EvaluationResult = z.infer<typeof EvaluationResult>;

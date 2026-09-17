@@ -28,6 +28,9 @@ describe('pin-pair sweep: every pin connected to every other pin', () => {
     expect(summary.filter((s) => s.verdict === 'MISSED').map((s) => `${s.key}: ${s.relevant}/${s.tested}`)).toEqual([]);
     expect(summary.filter((s) => s.verdict === 'NOISY').map((s) => `${s.key}: ${s.fired}/${s.tested}`)).toEqual([]);
     for (const g of summary.filter((s) => s.verdict === 'gap')) expect(KNOWN_GAPS[g.key], `gap ${g.key} needs a documented reason`).toBeTruthy();
+    // Merge mode is what the user experiences; every 'finding' kind must fire there too, on the touched pins.
+    const merge = runPinSweep(t, registry, 'merge');
+    expect(merge.summary.filter((s) => s.verdict === 'MISSED').map((s) => `${s.key}: ${s.relevant}/${s.tested}`)).toEqual([]);
   });
   it('docs/pin-sweep.md matches the code (run npm run sweep after changing rules or the table)', async () => {
     const { renderReport } = await import('../../../bench/pin-sweep');
