@@ -17,11 +17,13 @@ import { runtime_estimate } from './rules/runtime_estimate';
 import { decoupling } from './rules/decoupling';
 import { motor_operating_point } from './rules/motor_operating_point';
 import { net_conflict } from './rules/net_conflict';
+import { pin_type_conflict } from './rules/pin_type_conflict';
+import { undriven_net } from './rules/undriven_net';
 
 export const RULES: Rule[] = [
   power_source_present, signal_reference, supply_in_range, motor_load_path, driver_enable_state,
   reverse_polarity_strategy, regulator_headroom, bulk_capacitance, requirement_capability,
-  driver_load_current, rail_budget, runtime_estimate, decoupling, motor_operating_point, net_conflict,
+  driver_load_current, rail_budget, runtime_estimate, decoupling, motor_operating_point, pin_type_conflict, net_conflict, undriven_net,
 ];
 
 const SEVERITY_ORDER: Record<Finding['severity'], number> = { violation: 0, warning: 1, unknown: 2, optimization: 3, unsupported: 4 };
