@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-16 · hardening and documentation round
+- Storage: **no shape change; saved sessions stay compatible.**
+- Arbitrary connect through layout: every merge-mode pin pair in every template now runs `connectPins → applyOps → evaluate → layout` with a layout contract (finite geometry, nodes are instances, edge endpoints are real pins on their net). A named adversarial topology corpus (`src/eval/__tests__/adversarial.ts`) plus the largest single merges run through regular and compact layout, and the named topologies render through `ProjectView` with valid SVG attributes and the page mounted, stale and re-evaluated, desktop and phone.
+- Graceful layout failure is an explicit contract: when layout rejects, the page stays mounted with the fallback, findings still show, and Undo, Reset, Re-evaluate, and Back still work.
+- Production smoke (`deploy/smoke.mjs`) now walks the golden interaction: login, fresh Race Car, evaluate, pick a pin, Connect mode, wire STBY into ground through the merge confirmation, stale, re-evaluate, the standby violation with its detail, apply the structured fix, cleared, optimization preview, phone viewport. Fails on page errors, unhandled rejections, console errors, missing UI, wrong stale/current transitions, or horizontal overflow.
+- AI review surface: shown only when `/api/ai/status` reports a configured provider. No disabled panel or dead button otherwise. Provider interfaces, adapters, benchmark, routes, and tests are unchanged.
+- Documentation: README rewritten as the front door (live demo, quick tour, product thesis, setup, validation, deployment); `AGENTS.md` added as the evergreen engineering guide; `CLAUDE.md` points to it.
+
 ## 2026-09-16 · test-suite adversarial review (commit after c0a0d93)
 - Storage: **no shape change; upgradeable.** Every revived session, template or imported, now re-evaluates with the current rules instead of restoring a stored result, so a saved evaluation is never shown as current. Evaluation results carry a `rulesVersion`; a result from an older rule set reads as stale even when the design is unchanged.
 - Trust boundaries: an imported file's own evaluation is discarded; applying an optimization re-runs the evaluator on the real candidate inside the reducer and ignores a caller-supplied result that does not match; AI observations are stamped `ai_review` on the client regardless of what the server sent.

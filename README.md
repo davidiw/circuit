@@ -1,63 +1,138 @@
 # Circuit Factory
 
-Turns an AI-generated engineering proposal into an explicit artifact you can inspect, challenge, modify, and re-evaluate. Phase 1 proves one loop on one template: open the Bluetooth Race Car, evaluate it with deterministic rules, break something, read the finding, fix it, and watch the result change.
+Circuit Factory turns an electronics design into an explicit engineering artifact you can inspect, modify, evaluate, and optimize. It makes assumptions, provenance, validation coverage, and engineering tradeoffs visible instead of hiding them behind a generated answer.
 
-The plan, system design, and done/to-do tracker live in the shared design doc: https://claude.ai/code/artifact/6cc888ac-45ce-4a00-a660-9b4d7f334a32 (three tabs; edited there, not mirrored here). The screenshot walkthrough is published alongside it and regenerated from a running build by `npm run walkthrough` (writes to the git-ignored `out/walkthrough/`; needs `GATE_USER` and `GATE_PASS`). [docs/pin-sweep.md](docs/pin-sweep.md) records which wrong wiring the rules reveal, produced by `npm run sweep`. The handoff folder (`/media/data2/circuit_factory_handoff`) holds the PRD, execution spec, templates, and sources.
+### Live demo
 
-## Run locally
+https://circuit.davidwolinsky.com
+
+Access credentials are supplied separately. Nothing in this repository grants access, and no credential is committed.
+
+## Quick tour
+
+1. Open **Bluetooth Race Car**.
+2. Press **Evaluate**. The deterministic rules run in the browser and the design reads *evaluated · current*.
+3. Open the coverage line under the findings to see what was checked, what is partial because it rests on an assumption, and what is not evaluated at all.
+4. Tap a real pin in the diagram (the XIAO's **D6** is a good one), choose **Connect to another pin**, and wire it somewhere wrong, such as the driver's **GND**. Confirm the merge.
+5. Notice the state chip now reads *changed since evaluation* and the findings say they are from the previous state.
+6. Press **Re-evaluate**.
+7. Open the new violation. It shows the rule, the evidence with the source of each value, the consequence, and a structured fix.
+8. Apply the fix (or press **Undo**) and re-evaluate. The violation shows once more, marked resolved.
+9. Open **Optimize** and preview *right-size the battery*.
+10. Read the before/after comparison: modeled quantities, requirement status, changed assumptions, and the risk you accept. Apply it or keep the current design.
+
+## What the product is
+
+- **Canonical structured state.** A project is instances of registry parts, their pins, nets of pin references, a power source, requirements, and assumptions. Templates, edited designs, and imported files all use this one representation (`src/model/schema.ts`).
+- **Deterministic analysis of that state.** The rules (one file each under `src/eval/rules/`) read the canonical state, never prose, and produce findings that name real parts, pins, nets, and requirements, with evidence and a consequence.
+- **Provenance.** Every fact a rule reads carries where it came from: a verified source, a stated assumption, the user, or unknown. Unknown stays unknown; rules refuse to compute on it and say so.
+- **Explicit coverage instead of a score.** Each dimension reads checked, partial (naming the assumed values it leaned on), not evaluated, or unsupported. There is no global confidence number.
+- **Direct connectivity editing.** Pins connect to pins, nets merge, parts and wires can be removed. Poor choices are allowed so the evaluator can explain them.
+- **Stale and current are distinct.** An evaluation is bound to a hash of the design and a rules version. Any edit makes it stale; a rules change makes old results stale. A stale result is never shown as current.
+- **Fixes are structured edits.** A finding's fix is the same kind of operation a manual edit is, applied through the same path, undoable, and re-evaluated by the same rules.
+- **Optimization is an edit plus the same evaluator.** An optimization applies canonical edits to a candidate, runs the normal evaluator on it, and shows the before/after difference. No ranking, no score.
+- **AI review is a separate trust domain.** When a provider is configured, an AI reviewer can add labeled observations. They are kept apart from deterministic findings and can never change the design. When no provider is configured, the surface is simply absent.
+
+Three example projects ship with the app: the Bluetooth Race Car (the fully worked reference path with guided changes and optimizations), a video doorbell, and a water-leak detector. Sessions persist per browser with a versioned format, and projects can be exported and imported as JSON.
+
+## Prerequisites
+
+Developed, tested, and deployed with Node.js 26.8 and npm 12. No other version has been tested. A Chrome binary is needed only for the browser smoke test and the walkthrough capture (`CHROME` overrides the default path `/opt/google/chrome/chrome`).
+
+## Local setup
 
 ```bash
-npm install
-npm run build          # SPA -> dist/
-cp .env.example .env   # set GATE_USER, GATE_PASS, SESSION_SECRET; git-ignored
-npm run start          # http://127.0.0.1:8797, login with the credentials from .env
+npm ci
+cp .env.example .env
 ```
 
-For UI work: `npm run dev` (Vite on 5173, proxies /api to 8797, shows a browser-only dev gate that checks `VITE_DEV_GATE_USER` / `VITE_DEV_GATE_PASS` from `.env`).
+Edit `.env` (git-ignored). The server refuses logins while `GATE_USER` or `GATE_PASS` is empty, and refuses to start in production without `SESSION_SECRET`. All credentials and API keys come from the environment only: `.env` locally, `/etc/circuit/env` in production.
 
-No credential or key is committed. The server reads `.env` locally and `/etc/circuit/env` in production; both are git-ignored templates of `.env.example` and `deploy/env.example`.
+Production-style run, which is what the deployment does:
 
-## Layout
+```bash
+npm run build     # Vite builds the SPA into dist/
+npm run start     # Hono serves dist/ and /api on http://127.0.0.1:8797
+```
 
-| Path | What | Ports to Dart |
-| --- | --- | --- |
-| `src/model/` | Zod schemas (Project, Registry, Finding, Coverage, MutationOp), vocabularies, history, workflow state machine | yes, mechanically |
-| `src/data/` | `registry.json`, three template fixtures with mutation corpus, loader | yes, it is JSON |
-| `src/eval/` | `Ctx` (indexed project + net voltage propagation), one file per rule, `evaluate.ts`, `mutations.ts`, `layout.ts` (pure diagram geometry), `hash.ts` | yes, pure functions |
-| `src/ai/` | `Provider` interface, Anthropic and Gemini adapters, fake provider, review prompt (text file), output gate | interface yes, adapters rewritten |
-| `src/ui/` | React app: store, library, project view, SVG diagram, findings, coverage, inspector, AI panel | rewritten in Flutter |
-| `server/` | Hono: signed-cookie gate, static serving, `/api/review` with limits | keep or rewrite |
-| `bench/` | Frozen cases from fixtures x mutations, scoring, price table, runner | yes |
-| `deploy/` | nginx site, systemd unit, env example, `deploy.sh` | n/a |
+Log in with the credentials from `.env`.
 
-## Tests
+Development workflow:
 
-`npm test` runs eight suites:
+```bash
+npm run start     # in one terminal: the API and gate on 8797
+npm run dev       # in another: Vite on http://localhost:5173 with hot reload
+```
 
-- **Corpus**: registry integrity, template integrity, every mutation and optimization in every fixture asserting structured findings (never prose), voltage propagation, connect-pins semantics, and a sweep that applies every fix offered on every mutation and asserts the finding clears.
-- **Finding contract** (`src/eval/__tests__/contract.ts`): every finding names something that exists, carries evidence with provenance, a consequence, and a remediation or an explicit missing list. Used by the sweep, the sequence property, and the corpus.
-- **Pin-pair sweep** (`sweep.test.ts`): every pin connected to every other pin in every template; no crash, valid project, contract-clean evaluation. Expectations come from the KiCad default ERC pin-type matrix (`src/eval/erc.ts`, imported verbatim; our pin roles are mapped onto KiCad's twelve electrical types) plus domain extensions for what that matrix cannot express (shorts to ground, motors that need a driver). Pairs KiCad calls OK but a domain expert would still question are listed as gaps with a reason (`KNOWN_GAPS`); a gap that a new rule covers must be moved out of that list. `npm run sweep` writes `docs/pin-sweep.md`, the honest best-effort statement of what wrong wiring the rules reveal.
-- **Edit sequences** (`sequences.test.ts`, fast-check): random sequences of connect, disconnect, remove, guided change, fix, optimize, and undo keep the project valid and evaluable; failures shrink to a minimal repro.
-- **Render** (`src/ui/__tests__/render.test.tsx`, jsdom): the project view renders every corpus state (fresh, evaluated, each mutation, resolved after undo, sheets, connect mode, each optimization's compare and applied state) and a migrated old evaluation, with no thrown error and no console error.
-- **Storage** (`storage.test.ts`): a payload written by an earlier build migrates; unreadable, newer, and invalid payloads are dropped with a notice.
-- **Layout**: no node overlap, every net routed, no wire through a box or symbol, no overlapping labels.
-- **AI gate** and **server auth** as before.
+Vite proxies `/api` to 8797. In development the SPA shows a browser-only gate that checks `VITE_DEV_GATE_USER` and `VITE_DEV_GATE_PASS` from `.env`; in production the gate is the server's signed session cookie and the dev gate does not exist.
 
-Saved sessions are versioned (`src/ui/storage.ts`). A change to the saved shape needs a migration step or it is a breaking change that drops saved work with a notice; each report classifies which.
+## Validation
 
-## Benchmark
+```bash
+npm test            # typecheck, then every unit, property, sweep, render, storage, and server test
+npm run validate    # the canonical local release gate
+```
 
-`npm run bench -- --dry` proves the plumbing with a fake provider. With `ANTHROPIC_API_KEY` and/or `GEMINI_API_KEY` set, `npm run bench` scores each candidate model on recall against the corpus, contradictions, schema failures, latency, and cost, and writes `bench/results/latest.md` with the `AI_PROVIDER` / `AI_MODEL` lines to put in `/etc/circuit/env`.
+`npm run validate` runs the typecheck and the full test suite, regenerates the pin-sweep report and fails if `docs/pin-sweep.md` changed (so the committed report always matches the rules), and runs the production build. There is no hosted CI; this gate is what the pre-push hook and the deploy script run.
 
-## Validation and deploy
+```bash
+npm run hooks       # optional: install the pre-push hook that runs npm run validate
+```
 
-There is no hosted CI; validation is local. `npm run validate` (also installed as a pre-push hook by `npm run hooks`) runs typecheck, all tests, the pin-sweep report freshness check, and the production build. `deploy/deploy.sh` refuses an uncommitted tree, runs the same gate, installs the build into `/srv/circuit/releases/<stamp>-<commit>`, switches the `current` symlink, restarts the service, smoke-tests the live URL with a headless browser (`npm run smoke`), and rolls back to the previous release if any step fails. `CHANGELOG.md` records every change to the saved-session shape as upgradeable or breaking. First-deploy steps are in `deploy/README.md`.
+The test strategy, layer by layer, is described in `AGENTS.md`. In short: a corpus of template mutations with expected findings, a finding contract every finding must satisfy, exhaustive pin-pair sweeps through evaluation and layout, property-based edit sequences, adversarial render cases, storage migrations, the freshness state machine, AI and import trust boundaries, and server authentication.
 
-## Invariants the code enforces
+## Useful commands
 
-- Templates load and evaluate with zero network calls.
-- One `Project` schema for templates and generated designs.
-- Every fact carries provenance; `unknown` is a value and rules refuse to compute on it.
-- Deterministic findings and AI observations are separate lists with separate origins; AI never writes to project state.
-- Coverage is emitted only by analyzers that ran; everything else reads not evaluated.
-- Edits are structured ops; the same ops drive the UI, the tests, and the benchmark.
+```bash
+npm run sweep           # regenerate docs/pin-sweep.md: which wrong wiring the rules reveal, and the documented gaps
+npm run walkthrough     # capture the reviewer loop as screenshots into out/walkthrough/ (needs a running build, GATE_USER, GATE_PASS)
+npm run bench -- --dry  # run the model-selection benchmark with a scripted provider (proves the plumbing without keys)
+npm run smoke           # the live browser smoke test against the deployed URL (needs GATE_USER, GATE_PASS)
+```
+
+With `ANTHROPIC_API_KEY` or `GEMINI_API_KEY` set, `npm run bench` scores candidate models on the frozen corpus and writes the `AI_PROVIDER` / `AI_MODEL` lines for the server environment. See `bench/README.md`.
+
+## Deployment
+
+One Node process behind nginx with TLS, run by systemd, reading `/etc/circuit/env`. Each deploy installs a versioned release directory under `/srv/circuit/releases/` and switches a `current` symlink, so rollback is a symlink change.
+
+```text
+clean git tree
+    ↓
+npm run validate
+    ↓
+deploy/deploy.sh
+    ↓
+versioned release  /srv/circuit/releases/<stamp>-<commit>
+    ↓
+current symlink
+    ↓
+service restart  (systemd unit: circuit)
+    ↓
+live browser smoke  (deploy/smoke.mjs)
+    ↓
+automatic rollback if smoke fails
+```
+
+`deploy/deploy.sh` refuses an uncommitted tree, runs the validation gate, installs the release, updates the systemd unit and the nginx site when they differ, restarts the service, checks `/healthz`, runs the live browser smoke test through the normal login and pin-editing path, and rolls back to the previous release if anything fails. `/healthz` reports the deployed commit. First-deploy steps (DNS, certificate, environment file) are in `deploy/README.md`.
+
+## Repository map
+
+| Path | Contents |
+| --- | --- |
+| `src/model/` | Zod schemas (Project, Registry, Finding, Coverage, MutationOp), vocabularies, history, integrity check, workflow state machine |
+| `src/data/` | `registry.json` and the three template projects with their guided changes and optimizations |
+| `src/eval/` | Evaluation context with net-voltage propagation, `evaluate.ts`, `rules/` (one file per rule), structured mutations, the KiCad ERC matrix, the pin-pair sweep, and the ELK diagram layout |
+| `src/ui/` | React app: store and reducer, versioned storage, library, project view, SVG diagram, findings, coverage, sheets, changes, compare |
+| `src/ai/` | Provider interface, Anthropic and Gemini adapters, a scripted provider, the review prompt, and the output gate |
+| `server/` | Hono server: signed-cookie gate, static serving, `/api/review` with limits |
+| `bench/` | Model-selection benchmark over the frozen corpus |
+| `deploy/` | nginx site, systemd unit, environment template, `deploy.sh`, `smoke.mjs` |
+| `scripts/` | `validate.sh` (the release gate) and the walkthrough capture |
+| `docs/` | `pin-sweep.md`, generated by the sweep |
+
+`AGENTS.md` is the engineering guide: invariants, testing layers, and the workflow for changing this codebase. `CHANGELOG.md` records each round and whether saved sessions stayed compatible.
+
+## Additional context
+
+The original plan and system design were written in a shared design document outside this repository. They are historical context, not required reading; the code on `main`, this README, and `AGENTS.md` are authoritative.

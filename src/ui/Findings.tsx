@@ -60,11 +60,13 @@ export function Findings({ session, lifecycles, state, dispatch, busy, onRunAI }
           {showCov && <Coverage session={session} dispatch={dispatch} embedded />}
         </div>
       )}
-      <div className="ai-line">
-        <span className="sev ai">AI review</span>
-        {configured ? <><button className="btn small" id="btn-ai" disabled={busy || !ev} onClick={onRunAI}>{busy ? 'Reviewing…' : 'Run'}</button><span className="muted small">separate from the rules above; nothing it says changes the design · {state.aiStatus?.provider} · {state.aiStatus?.model}</span></>
-          : <span className="muted small">not configured on this server; when it is, observations appear here as a separate, labeled list</span>}
-      </div>
+      {/* The AI review surface exists only when the server has a provider; the deterministic product is complete without it. */}
+      {configured && (
+        <div className="ai-line">
+          <span className="sev ai">AI review</span>
+          <button className="btn small" id="btn-ai" disabled={busy || !ev} onClick={onRunAI}>{busy ? 'Reviewing…' : 'Run'}</button><span className="muted small">separate from the rules above; nothing it says changes the design · {state.aiStatus?.provider} · {state.aiStatus?.model}</span>
+        </div>
+      )}
       {ai?.error && <div className="error">{ai.error}</div>}
       {ai && !ai.error && <div className="muted small">{ai.observations.length} observations · {ai.dropped} dropped by the output gate · {ai.model} · {(ai.latencyMs / 1000).toFixed(1)} s{ai.stateHash !== session.currentHash ? ' · for a previous state' : ''}</div>}
       {ai?.observations.map((f) => (

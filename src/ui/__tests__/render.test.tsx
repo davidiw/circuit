@@ -8,6 +8,7 @@ import { ProjectView } from '../ProjectView';
 import { Library } from '../Library';
 import { evaluate } from '../../eval/evaluate';
 import { applyOps } from '../../eval/mutations';
+import { ADVERSARIAL_TOPOLOGIES } from '../../eval/__tests__/adversarial';
 
 afterEach(cleanup);
 const base = (): AppState => ({ view: 'library', sessions: {}, aiBusy: false });
@@ -20,10 +21,27 @@ async function renderState(state: AppState, label: string) {
   const dispatch = vi.fn();
   const s = state.sessions[state.activeId!];
   const out = render(<ProjectView session={s} state={state} dispatch={dispatch} />);
-  await waitFor(() => expect(out.container.querySelector('.dia svg, .dia .muted')).toBeTruthy(), { timeout: 4000 });
+  // Wait for the layout to settle (a drawn diagram or the explicit fallback), so layout-time errors are caught by the spy too.
+  await waitFor(() => expect(out.container.querySelector('.dia svg') || /Layout unavailable/.test(out.container.querySelector('.dia')?.textContent ?? '')).toBeTruthy(), { timeout: 4000 });
   spy.mockRestore();
   expect(errors.map(String), label).toEqual([]);
   return out;
+}
+
+/** Every attribute on every SVG element is a real number or text: no NaN, Infinity, or undefined ever reaches the DOM. */
+function assertSvgGeometry(container: HTMLElement, label: string) {
+  const svgs = container.querySelectorAll('svg'); expect(svgs.length, `${label} has a diagram`).toBeGreaterThan(0);
+  const bad: string[] = [];
+  for (const svg of svgs) {
+    const vb = svg.getAttribute('viewBox') ?? ''; const dims = vb.split(/\s+/).map(Number);
+    if (dims.length !== 4 || dims.some((d) => !Number.isFinite(d)) || dims[2] <= 0 || dims[3] <= 0) bad.push(`viewBox "${vb}"`);
+    for (const el of svg.querySelectorAll('*')) for (const a of el.attributes) if (/NaN|Infinity|undefined|null/.test(a.value)) bad.push(`<${el.tagName} ${a.name}="${a.value}">`);
+  }
+  expect(bad, `${label} invalid SVG geometry`).toEqual([]);
+}
+/** The page is not a white screen: the app bar, the diagram, and the findings panel are all mounted. */
+function assertPageMounted(container: HTMLElement, label: string) {
+  for (const sel of ['.appbar', '.dia svg', '#panel-findings, .tabs']) expect(container.querySelector(sel), `${label} missing ${sel}`).toBeTruthy();
 }
 
 describe('render every corpus state without errors', () => {
@@ -73,6 +91,40 @@ describe('render every corpus state without errors', () => {
       }
     });
   }
+  for (const topo of ADVERSARIAL_TOPOLOGIES) {
+    it(`adversarial topology renders: ${topo.template} · ${topo.label}`, async () => {
+      // Reached exactly as a user reaches it: select a pin, arm connect, pick the target; each merge goes through the reducer.
+      let st = run([{ type: 'EVALUATE' }], open(topo.template));
+      for (const [a, b] of topo.pairs) st = run([{ type: 'SELECT_PIN', pin: a }, { type: 'ARM_CONNECT', pin: a }, { type: 'CONNECT_TO', pin: b }], st);
+      expect(st.sessions[topo.template].edits.length, `${topo.label} every connect became an edit`).toBe(topo.pairs.length);
+      const stale = await renderState(st, `${topo.label} stale`); assertPageMounted(stale.container, topo.label); assertSvgGeometry(stale.container, `${topo.label} stale`);
+      expect(stale.container.querySelector('.chip.stale'), `${topo.label} reads stale after the edit`).toBeTruthy(); cleanup();
+      const st2 = run([{ type: 'EVALUATE' }], st);
+      const out = await renderState(st2, `${topo.label} evaluated`); assertPageMounted(out.container, topo.label); assertSvgGeometry(out.container, `${topo.label} evaluated`);
+      expect(out.container.querySelector('.chip.cur'), `${topo.label} reads current after re-evaluation`).toBeTruthy();
+      // The last connected pin stays selected, so its sheet is open on top of the ugly diagram.
+      expect(out.container.querySelector('.sheet'), `${topo.label} pin sheet open`).toBeTruthy(); cleanup();
+      const firstId = st2.sessions[topo.template].project.lastEvaluation!.findings[0]?.id;
+      if (firstId) { const fo = await renderState(run([{ type: 'VIEW_FINDING', id: firstId }], st2), `${topo.label} finding open`); assertSvgGeometry(fo.container, `${topo.label} finding open`); cleanup(); }
+      (globalThis as unknown as { __narrow: boolean }).__narrow = true;
+      try { const ph = await renderState(st2, `${topo.label} phone`); assertPageMounted(ph.container, `${topo.label} phone`); assertSvgGeometry(ph.container, `${topo.label} phone`); }
+      finally { (globalThis as unknown as { __narrow: boolean }).__narrow = false; }
+    });
+  }
+  it('AI review surface: absent when the server reports no provider, present with Run when configured', async () => {
+    const st = run([{ type: 'EVALUATE' }], open(templates[0].id));
+    for (const aiStatus of [undefined, { configured: false }]) {
+      const out = await renderState({ ...st, aiStatus }, `ai ${JSON.stringify(aiStatus)}`);
+      expect(out.container.querySelector('.ai-line, #btn-ai'), 'no AI panel or button when unconfigured').toBeNull();
+      expect(out.container.textContent, 'no wording that implies a missing provider').not.toMatch(/not configured|AI review/i); cleanup();
+    }
+    const out = await renderState({ ...st, aiStatus: { configured: true, provider: 'anthropic', model: 'claude-sonnet-5' } }, 'ai configured');
+    const btn = out.container.querySelector<HTMLButtonElement>('#btn-ai'); expect(btn, 'Run button when configured').toBeTruthy(); expect(btn!.disabled).toBe(false);
+    expect(out.container.querySelector('.ai-line')?.textContent).toContain('claude-sonnet-5'); cleanup();
+    // Unevaluated design: the button exists but waits for an evaluation.
+    const un = await renderState({ ...open(templates[0].id), aiStatus: { configured: true } }, 'ai configured unevaluated');
+    expect(un.container.querySelector<HTMLButtonElement>('#btn-ai')!.disabled).toBe(true);
+  });
   it('phone layout: tabs, bottom bar, sheet, and full-screen render for evaluated and stale states', async () => {
     (globalThis as unknown as { __narrow: boolean }).__narrow = true;
     try {
