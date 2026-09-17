@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "tsc --noEmit -p tsconfig.json && vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "server": "tsx server/index.ts",
     "bench": "tsx bench/run.ts",

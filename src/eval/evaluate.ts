@@ -1,5 +1,6 @@
 import type { Project, Registry, EvaluationResult, Finding, CoverageEntry, Metric } from '../model/schema';
 import { UNIVERSAL_DIMENSIONS } from '../model/vocab';
+import { integrityProblems } from '../model/integrity';
 import { Ctx, resetIds, type Rule } from './context';
 import { stateHash } from './hash';
 import { power_source_present } from './rules/power_source_present';
@@ -31,6 +32,14 @@ const SEVERITY_ORDER: Record<Finding['severity'], number> = { violation: 0, warn
 /** Deterministic evaluation of canonical state. Pure: same project and registry always give the same result. */
 export function evaluate(project: Project, registry: Registry, rules: Rule[] = RULES): EvaluationResult {
   resetIds();
+  const problems = integrityProblems(project, registry);
+  if (problems.length) {
+    return { status: 'incomplete', metrics: [], coverage: [], stateHash: stateHash(project), evaluatedAt: new Date().toISOString(), findings: [{
+      id: 'integrity-1', ruleId: 'integrity', origin: 'deterministic', basis: 'component_spec', severity: 'unsupported', category: 'other', title: `This design references parts or pins the registry does not know (${problems.length} problem${problems.length > 1 ? 's' : ''}); the rules did not run`,
+      affected: [], evidence: problems.slice(0, 8).map((x) => ({ label: 'problem', value: x, provenance: 'user' as const })), consequence: 'Nothing can be evaluated until every part and pin resolves to a registry entry.',
+      remediation: ['Undo the last change, reset the template, or import a file saved by this version'], missing: problems, fixes: [],
+    }] };
+  }
   const ctx = new Ctx(project, registry);
   const findings: Finding[] = []; const coverage: CoverageEntry[] = []; const metrics: Metric[] = [];
   for (const rule of rules) {

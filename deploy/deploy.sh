@@ -15,6 +15,7 @@ say "Installing dependencies, building, testing"
 npm ci
 npm run build
 npm test
+npm run sweep && git diff --quiet -- docs/pin-sweep.md || { echo 'docs/pin-sweep.md is out of date: run npm run sweep and commit' >&2; exit 1; }
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "Missing $ENV_FILE. Copy deploy/env.example there, set SESSION_SECRET (openssl rand -hex 32) and any AI keys, chmod 600." >&2

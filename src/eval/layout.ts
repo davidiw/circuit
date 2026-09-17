@@ -41,7 +41,10 @@ export async function layout(project: Project, registry: Registry, opts: { compa
   const roleOf = (p: { instance: string; pin: string }): PinRole | undefined => { const i = instById.get(p.instance); return i ? comp(i.registryId)?.pins.find((x) => x.name === p.pin)?.role : undefined; };
   const kindOf = (id: string) => { const i = instById.get(id); return i ? comp(i.registryId)?.kind : undefined; };
   const netOfPin = new Map<string, string>();
-  for (const n of project.nets) for (const p of n.pins) netOfPin.set(`${p.instance}.${p.pin}`, n.id);
+  const knownPin = (p: { instance: string; pin: string }) => { const i = instById.get(p.instance); return !!i && !!comp(i.registryId)?.pins.some((x) => x.name === p.pin); };
+  for (const n of project.nets) for (const p of n.pins) if (knownPin(p)) netOfPin.set(`${p.instance}.${p.pin}`, n.id);
+  // Nets as the layout sees them: only pins that exist on their component (an unknown part or pin never reaches ELK).
+  project = { ...project, nets: project.nets.map((n) => ({ ...n, pins: n.pins.filter(knownPin) })).filter((n) => n.pins.length > 0) };
 
   // Which nets are flags (ground with 3+ pins, or power with more than MAX_ROUTED_POWER_PINS) versus routed wires.
   const flagNets = project.nets.filter((n) => (n.kind === 'ground' && n.pins.length >= 3) || (n.kind === 'power' && n.pins.length > MAX_ROUTED_POWER_PINS));

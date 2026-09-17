@@ -5,6 +5,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { integrityProblems } from '../src/model/integrity';
 import { Project } from '../src/model/schema';
 import { registry } from '../src/data';
 import { loadAi, type Provider } from './ai-stub';
@@ -117,6 +118,8 @@ app.post('/api/review', async (c) => {
   try { json = JSON.parse(raw); } catch { return c.json({ error: 'Body is not valid JSON' }, 400); }
   const parsed = Project.safeParse(json);
   if (!parsed.success) return c.json({ error: 'Project failed schema validation', issues: parsed.error.issues.slice(0, 10).map((i) => `${i.path.join('.')}: ${i.message}`) }, 400);
+  const problems = integrityProblems(parsed.data, registry);
+  if (problems.length) return c.json({ error: 'Project references parts or pins the registry does not know', issues: problems.slice(0, 10) }, 400);
   if (!provider) return c.json({ error: 'AI review is not configured' }, 503);
   if (!aiSessionLimiter.hit(getCookie(c, COOKIE) ?? 'anon')) return c.json({ error: `AI review limit reached for this session (${config.aiHourlyLimit} per hour). Try again later.` }, 429);
   if (!dailyOk()) return c.json({ error: 'AI review daily cap reached for this deployment. Try again tomorrow.' }, 429);
@@ -128,7 +131,7 @@ app.post('/api/review', async (c) => {
     const msg = (e as Error).message;
     if (msg === 'timeout') return c.json({ error: 'AI review timed out after 60 seconds' }, 504);
     console.error('[circuit] review failed:', msg);
-    return c.json({ error: `AI review failed: ${msg}` }, 502);
+    return c.json({ error: 'AI review failed on the server. The error was logged; nothing was shown.' }, 502);
   }
 });
 

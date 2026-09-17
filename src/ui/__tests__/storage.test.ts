@@ -4,6 +4,7 @@ import { templates, registry } from '../../data';
 import { evaluate } from '../../eval/evaluate';
 import { applyOps } from '../../eval/mutations';
 import { findingLifecycles } from '../../model/workflow';
+import { readFileSync } from 'node:fs';
 
 class MemStorage { m = new Map<string, string>(); getItem(k: string) { return this.m.get(k) ?? null; } setItem(k: string, v: string) { this.m.set(k, v); } removeItem(k: string) { this.m.delete(k); } }
 
@@ -15,6 +16,17 @@ function v1Payload() {
 }
 
 describe('versioned storage', () => {
+  it('a payload frozen from build b71e7f8 (committed fixture) still loads', () => {
+    const st = new MemStorage(); st.setItem(LEGACY_KEY_V1, readFileSync('src/ui/__tests__/fixtures/storage-v1-b71e7f8.json', 'utf8'));
+    const r = loadSessions(st); expect(r.notice).toBeUndefined(); expect(r.sessions[templates[0].id]?.edits.length).toBe(1);
+  });
+  it('malformed edits, history, or a project that fails integrity are dropped with a notice, never revived', () => {
+    const st = new MemStorage();
+    st.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, sessions: { [templates[0].id]: { project: templates[0], edits: [{ label: 'bad', ops: [{ op: 'move_pin', instance: 'mcu' }] }] } } }));
+    expect(loadSessions(st).notice).toMatch(/could not be kept/);
+    st.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, sessions: { custom: { base: { ...templates[0], id: 'custom', source: 'imported', instances: [...templates[0].instances, { id: 'ghost', registryId: 'part.does_not_exist', label: 'Ghost', props: {} }] }, edits: [], project: { ...templates[0], id: 'custom' } } } }));
+    expect(loadSessions(st).notice).toMatch(/could not be kept/);
+  });
   it('upgrades a v1 payload: findings gain fixes, evaluations re-parse, the session survives and renders lifecycles', () => {
     const st = new MemStorage(); st.setItem(LEGACY_KEY_V1, v1Payload());
     const r = loadSessions(st);

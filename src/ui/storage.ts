@@ -1,4 +1,8 @@
-import { Project, EvaluationResult, Finding } from '../model/schema';
+import { Project, EvaluationResult, Finding, MutationOp } from '../model/schema';
+import { HistoryEvent } from '../model/history';
+import { integrityProblems } from '../model/integrity';
+import { registry } from '../data';
+import { z } from 'zod';
 import type { Session } from '../model/workflow';
 import { getTemplate } from '../data';
 import { applyOps } from '../eval/mutations';
@@ -35,10 +39,15 @@ function reviveSession(id: string, raw: Record<string, unknown>): Session | unde
   if (template) base = structuredClone(template);                       // template sessions rebase on the current template
   else { const b = Project.safeParse(raw.base ?? projectRaw); if (!b.success) return undefined; base = b.data; }
   // v1 sessions stored applied mutation ids instead of an edit list; rebuild the edits from the template's mutations.
-  const editsRaw: Session['edits'] = Array.isArray(raw.edits) ? raw.edits as Session['edits']
+  const EditSchema = z.object({ label: z.string(), ops: z.array(MutationOp), mutationId: z.string().optional(), optimizationId: z.string().optional() });
+  const editsParsed = Array.isArray(raw.edits) ? z.array(EditSchema).safeParse(raw.edits) : undefined;
+  if (editsParsed && !editsParsed.success) return undefined;
+  const editsRaw: Session['edits'] = editsParsed ? editsParsed.data
     : (Array.isArray(raw.appliedMutations) ? (raw.appliedMutations as string[]).map((m) => ({ label: template?.mutations.find((x) => x.id === m)?.label ?? m, ops: template?.mutations.find((x) => x.id === m)?.ops ?? [], mutationId: m })) : []);
   let project: Project;
   try { project = applyOps(structuredClone(base), editsRaw.flatMap((e) => e.ops ?? [])); } catch { return undefined; }
+  if (!Project.safeParse(project).success || integrityProblems(project, registry).length) return undefined;
+  const history = Array.isArray(raw.history) ? z.array(HistoryEvent).safeParse(raw.history) : undefined;
   const prev = parseEvaluation(raw.previousEvaluation);
   const last = template ? undefined : parseEvaluation(projectRaw?.lastEvaluation);   // a template session re-evaluates against the current rules
   project.lastEvaluation = last;
@@ -46,7 +55,7 @@ function reviveSession(id: string, raw: Record<string, unknown>): Session | unde
   const aiObs = ai?.observations ? ai.observations.map((o) => Finding.safeParse(o)).filter((r) => r.success).map((r) => (r as { data: Finding }).data) : [];
   return {
     base, edits: editsRaw, project, currentHash: stateHash(project),
-    history: Array.isArray(raw.history) ? raw.history as Session['history'] : [],
+    history: history?.success ? history.data : [],
     lastSummary: raw.lastSummary as Session['lastSummary'], previousEvaluation: prev,
     aiReview: ai ? { ...ai, observations: aiObs } : undefined,
     dismissedTips: Array.isArray(raw.dismissedTips) ? raw.dismissedTips as string[] : [],

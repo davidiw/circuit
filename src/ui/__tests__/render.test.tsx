@@ -54,6 +54,37 @@ describe('render every corpus state without errors', () => {
       for (const o of t.optimizations) { await renderState(run([{ type: 'COMPARE', id: o.id }], st), `${t.id} compare ${o.id}`); cleanup(); const after = evaluate(applyOps(p, o.ops), registry); await renderState(run([{ type: 'APPLY_OPTIMIZATION', id: o.id, evaluation: after }], st), `${t.id} applied ${o.id}`); cleanup(); }
     });
   }
+  it('phone layout: tabs, bottom bar, sheet, and full-screen render for evaluated and stale states', async () => {
+    (globalThis as unknown as { __narrow: boolean }).__narrow = true;
+    try {
+      let st = run([{ type: 'EVALUATE' }], open(templates[0].id));
+      const out = await renderState(st, 'phone evaluated'); expect(out.container.querySelector('.tabs')).toBeTruthy(); cleanup();
+      st = run([{ type: 'APPLY_MUTATION', id: 'force_stby_low' }], st);
+      const out2 = await renderState(st, 'phone stale'); expect(out2.container.querySelector('.evalbar')).toBeTruthy(); cleanup();
+      const p = st.sessions[templates[0].id].project;
+      await renderState(run([{ type: 'SELECT_PIN', pin: p.nets[0].pins[0] }], st), 'phone pin sheet'); cleanup();
+    } finally { (globalThis as unknown as { __narrow: boolean }).__narrow = false; }
+  });
+  it('AI review states: observations, error, and an observation for a previous state', async () => {
+    const st = run([{ type: 'EVALUATE' }], open(templates[0].id)); const p = st.sessions[templates[0].id].project;
+    const obs = { id: 'ai-1', ruleId: 'ai_review', origin: 'ai_review' as const, basis: 'ai_inference' as const, severity: 'warning' as const, category: 'power_path', title: 'XIAO 5V pin can backfeed USB', affected: [{ instanceId: 'mcu' }], evidence: [{ label: 'model rationale', value: 'Seeed advises a diode', provenance: 'ai' as const }], consequence: 'USB and the buck fight.', remediation: ['Add a diode'], confidence: 0.7, fixes: [] };
+    let s2 = run([{ type: 'AI_RESULT', result: { observations: [obs], model: 'm', provider: 'fake', latencyMs: 12, dropped: 1 } }], st);
+    const out = await renderState(s2, 'ai observations'); expect(out.getByText(/backfeed/)).toBeTruthy(); cleanup();
+    await renderState(run([{ type: 'VIEW_FINDING', id: 'ai-1' }], s2), 'ai observation open'); cleanup();
+    await renderState(run([{ type: 'AI_ERROR', error: 'AI review limit reached' }], st), 'ai error'); cleanup();
+    s2 = run([{ type: 'APPLY_MUTATION', id: 'force_stby_low' }], s2); await renderState(s2, 'ai observation for previous state'); cleanup();
+    expect(p.id).toBe(templates[0].id);
+  });
+  it('an imported project and a session revived from storage render', async () => {
+    const { loadSessions } = await import('../storage'); const { readFileSync } = await import('node:fs');
+    const mem = new Map<string, string>(); const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); }, removeItem: (k: string) => { mem.delete(k); } };
+    storage.setItem('circuit-factory.sessions.v1', readFileSync('src/ui/__tests__/fixtures/storage-v1-b71e7f8.json', 'utf8'));
+    const loaded = loadSessions(storage);
+    const st: AppState = { view: 'project', sessions: loaded.sessions, activeId: loaded.activeId, aiBusy: false };
+    await renderState(run([{ type: 'EVALUATE' }], st), 'revived v1 session'); cleanup();
+    const imported = run([{ type: 'IMPORT', project: { ...templates[1], id: 'my-doorbell' } }]);
+    await renderState(run([{ type: 'EVALUATE' }], imported), 'imported project');
+  });
   it('findings from an older build without the fixes field render after migration', async () => {
     const st = run([{ type: 'EVALUATE' }, { type: 'APPLY_MUTATION', id: 'force_stby_low' }, { type: 'EVALUATE' }], open(templates[0].id));
     const s = st.sessions[templates[0].id];

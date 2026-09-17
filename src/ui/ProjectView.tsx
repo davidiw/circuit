@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '../model/workflow';
 import { projectState, findingLifecycles, stepState, requirementStatuses, type Step } from '../model/workflow';
-import { Project as ProjectSchema } from '../model/schema';
+import { Project as ProjectSchema, EvaluationResult as EvaluationResultSchema, Finding as FindingSchema } from '../model/schema';
+import { integrityProblems } from '../model/integrity';
+import { z } from 'zod';
 import { registry } from '../data';
 import { Ctx } from '../eval/context';
 import { RULES } from '../eval/evaluate';
@@ -73,12 +75,24 @@ export function ProjectView({ session, state, dispatch }: { session: Session; st
     dispatch({ type: 'AI_START' });
     try {
       const r = await fetch('/api/review', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ ...p, lastEvaluation: undefined, mutations: [], optimizations: [] }) });
-      const body = await r.json().catch(() => ({})); if (!r.ok) throw new Error(body.error ?? `AI review failed (${r.status})`);
-      dispatch({ type: 'AI_RESULT', result: body });
+      const body: unknown = await r.json().catch(() => undefined);
+      if (!r.ok) throw new Error((body && typeof body === 'object' && 'error' in body && typeof (body as { error: unknown }).error === 'string') ? (body as { error: string }).error : `AI review failed (${r.status})`);
+      const parsed = AIResponse.safeParse(body);
+      if (!parsed.success) throw new Error('The AI review endpoint returned something that is not a review. Nothing was shown.');
+      dispatch({ type: 'AI_RESULT', result: parsed.data });
     } catch (e) { dispatch({ type: 'AI_ERROR', error: (e as Error).message }); }
   };
   const exportJson = () => { const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${p.id}.json`; a.click(); URL.revokeObjectURL(url); };
-  const importJson = async (file: File | undefined) => { if (!file) return; try { dispatch({ type: 'IMPORT', project: ProjectSchema.parse(JSON.parse(await file.text())) }); } catch (e) { setNote(`Import failed: ${(e as Error).message.slice(0, 100)}`); } };
+  const importJson = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const parsed = ProjectSchema.parse(JSON.parse(await file.text()));
+      const problems = integrityProblems(parsed, registry);
+      if (problems.length) throw new Error(`the file references parts or pins this version does not know (${problems[0]}${problems.length > 1 ? `, and ${problems.length - 1} more` : ''})`);
+      dispatch({ type: 'IMPORT', project: { ...parsed, lastEvaluation: parsed.lastEvaluation && EvaluationResultSchema.safeParse(parsed.lastEvaluation).success ? parsed.lastEvaluation : undefined } });
+    } catch (e) { setNote(`Import failed: ${(e as Error).message.slice(0, 160)}`); window.clearTimeout(noteTimer.current); noteTimer.current = window.setTimeout(() => setNote(null), 8000); }
+  };
+  const AIResponse = z.object({ observations: z.array(FindingSchema), dropped: z.number().default(0), model: z.string().default('unknown'), provider: z.string().default('unknown'), latencyMs: z.number().default(0) });
 
   const evalLabel = evaluating ? 'Evaluating…' : !p.lastEvaluation ? 'Evaluate' : current ? 'Up to date' : 'Re-evaluate';
   const evalButton = (id: string, wide = false) => <button className={`btn ${actionable || evaluating ? 'primary' : 'ghost'} ${wide ? 'wide' : ''} ${evaluating ? 'working' : ''}`} id={id} onClick={runEvaluate} disabled={evaluating} title={`${RULES.length} deterministic rules, in the browser`}>{evalLabel}</button>;
