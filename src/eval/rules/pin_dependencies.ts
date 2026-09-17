@@ -53,7 +53,8 @@ export const pin_dependencies: Rule = {
         findings.push(finding({
           ruleId: 'pin_dependencies', basis: 'component_spec', severity: 'violation', category: 'load_path',
           title: `${inst.label}: ${outs} ${g.outputs.length > 1 ? 'are wired but not everything they depend on is' : 'is wired but not everything it depends on is'}`,
-          affected: [...g.outputs.map((o) => ({ instanceId: inst.id, pin: o, netId: ctx.netOf(inst.id, o)?.id })), ...g.missing.map((m) => ({ instanceId: inst.id, pin: m }))],
+          // Identity is the wired outputs: which inputs are missing is evidence, so wiring one of several updates this finding instead of replacing it.
+          affected: g.outputs.map((o) => ({ instanceId: inst.id, pin: o, netId: ctx.netOf(inst.id, o)?.id })),
           evidence: [
             { label: `${g.outputs.length > 1 ? 'outputs' : 'output'} wired`, value: g.outputs.map((o) => `${o} on ${ctx.netOf(inst.id, o)?.name}`).join(', '), provenance: 'user' },
             { label: 'unwired', value: miss, provenance: 'user' },

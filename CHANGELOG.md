@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-17 · findings are identified by pin
+- Storage: **no shape change; saved sessions stay compatible.**
+- A finding's identity across evaluations (`findingKey`) now includes the pins it names, not just the parts. Fixing one problem and causing another on a different pin of the same part reads as one resolved and one new, in the summary next to the state chip and in the findings list, instead of one "persisting" finding. Wiring one of several missing inputs of a driver channel still reads as the same finding updating, because a dependency finding is identified by its wired outputs; the missing inputs are evidence.
+
 ## 2026-09-16 · a part's outputs need the pins they are made from
 - Storage: **no shape change; saved sessions stay compatible.** Rules version bumped to 2026-09-16.5, so stored evaluations read as stale until re-evaluated.
 - Registry: every component declares `pin_dependencies`, the internal relationships between an output pin and the pins it is made from (a driver channel's outputs need that channel's speed and direction inputs and the supplies; a regulator's output needs its input and returns; a diode, capacitor, motor, speaker, or switch with one end open does nothing; a board's 3.3 V output needs its supply pin; an amplifier's speaker outputs need the three I2S lines and VIN).

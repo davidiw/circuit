@@ -38,7 +38,7 @@ describe('pin dependencies: every required pin, every part, every template', () 
           for (const r of d.requires) {
             if (!wired(t, inst.id, r)) continue;
             const p2 = applyOps(t, disconnectPin({ instance: inst.id, pin: r })); const res = evaluate(p2, registry); assertEvaluationContract(res, p2, `${inst.id}.${r} off`);
-            const hits = res.findings.filter((f) => f.ruleId === 'pin_dependencies' && f.severity === 'violation' && f.affected.some((a) => a.instanceId === inst.id && a.pin === d.pin) && f.affected.some((a) => a.instanceId === inst.id && a.pin === r));
+            const hits = res.findings.filter((f) => f.ruleId === 'pin_dependencies' && f.severity === 'violation' && f.affected.some((a) => a.instanceId === inst.id && a.pin === d.pin) && f.evidence.some((e) => e.label === 'unwired' && e.value.split(' and ').includes(r)));
             expect(hits.length, `${t.id}: ${inst.id}.${d.pin} wired, ${r} off -> one finding naming both (got ${res.findings.filter((f) => f.ruleId === 'pin_dependencies').map((f) => f.title).join(' | ') || 'none'})`).toBe(1);
             expect(hits[0].fixes.length, `${inst.id}.${d.pin}/${r}: a structured fix is offered`).toBeGreaterThan(0);
             // Every offered fix clears this finding (a shared supply pin may still leave the other channel's finding standing).
@@ -47,8 +47,7 @@ describe('pin dependencies: every required pin, every part, every template', () 
           }
           // The output itself off: no dependency violation for this part (other rules may speak; that is theirs).
           const off = evaluate(applyOps(t, disconnectPin({ instance: inst.id, pin: d.pin })), registry);
-          // (an output appears in a finding as a wired output with its net; it may still appear as a missing pin of another output, e.g. the other end of a diode)
-          expect(off.findings.filter((f) => f.ruleId === 'pin_dependencies' && f.severity === 'violation' && f.affected.some((a) => a.instanceId === inst.id && a.pin === d.pin && a.netId)), `${inst.id}.${d.pin} off needs nothing`).toEqual([]);
+          expect(off.findings.filter((f) => f.ruleId === 'pin_dependencies' && f.severity === 'violation' && f.affected.some((a) => a.instanceId === inst.id && a.pin === d.pin)), `${inst.id}.${d.pin} off needs nothing`).toEqual([]);
         }
         // Every pin off: the part is flagged as connected to nothing, once, with a remove fix that clears it.
         if (c.pins.length) {

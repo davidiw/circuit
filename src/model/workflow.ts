@@ -44,7 +44,8 @@ export function projectState(s: Session): ProjectState {
 export type FindingLifecycle = 'new' | 'persisting' | 'resolved' | 'acknowledged' | 'overridden';
 export type LifecycleFinding = Finding & { lifecycle: FindingLifecycle };
 
-export const findingKey = (f: Finding) => `${f.ruleId}|${f.category}|${f.affected.map((a) => a.instanceId ?? a.netId ?? a.requirementId ?? '').sort().join(',')}`;
+/** Identity of a finding across evaluations: the rule, its category, and exactly which pins, parts, nets, or requirements it names. Two problems on different pins of one part are two findings. */
+export const findingKey = (f: Finding) => `${f.ruleId}|${f.category}|${f.affected.map((a) => a.instanceId ? `${a.instanceId}${a.pin ? `.${a.pin}` : ''}` : a.netId ?? a.requirementId ?? '').sort().join(',')}`;
 
 /** Diff the current evaluation against the previous one. Resolved findings are returned once, from the previous result. */
 export function findingLifecycles(current: EvaluationResult | undefined, previous: EvaluationResult | undefined, history: HistoryEvent[], overrides: Project['overrides']): LifecycleFinding[] {

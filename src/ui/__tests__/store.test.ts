@@ -125,3 +125,24 @@ describe('stepper: a standing violation sends the loop back to Inspect', () => {
     const st = stepState(sess(clear), lc(clear)); expect(st.current).toBe('optimize'); expect(st.hint).toMatch(/cleared because the circuit changed/);
   });
 });
+
+describe('finding lifecycle: fix one problem and cause another on the same part', () => {
+  const dis = (instance: string, pin: string): Action => ({ type: 'EDIT', label: `Disconnect ${pin}`, ops: [{ op: 'move_pin', instance, pin, net: null }] });
+  const rows = (st: AppState) => { const s = sess(st); return findingLifecycles(s.project.lastEvaluation, s.previousEvaluation, s.history, s.project.overrides).filter((f) => f.severity === 'violation' || f.lifecycle === 'resolved').map((f) => `${f.lifecycle}:${f.title}`); };
+  it('reads one resolved and one new, in the summary and in the rows, when the new problem is on another pin of the same part', () => {
+    const first = run([dis('driver', 'BIN1'), { type: 'EVALUATE' }], evaluated());
+    expect(rows(first)).toEqual(['new:TB6612 motor driver: MOTORB1 and MOTORB2 are wired but not everything they depend on is']);
+    const second = run([{ type: 'UNDO' }, dis('driver', 'AIN1'), { type: 'EVALUATE' }], first);
+    expect(sess(second).lastSummary).toMatchObject({ added: 1, resolved: 1 });
+    expect(rows(second).sort()).toEqual(['new:TB6612 motor driver: MOTORA1 and MOTORA2 are wired but not everything they depend on is', 'resolved:TB6612 motor driver: MOTORB1 and MOTORB2 are wired but not everything they depend on is']);
+    // Different part: the same.
+    const third = run([{ type: 'UNDO' }, dis('buck', 'IN+'), { type: 'EVALUATE' }], second);
+    expect(sess(third).lastSummary).toMatchObject({ resolved: 1 }); expect(rows(third).some((r) => r.startsWith('resolved:TB6612 motor driver: MOTORA1'))).toBe(true);
+  });
+  it('wiring one of two missing inputs updates the same finding (persisting), not resolved plus new', () => {
+    const both = run([dis('driver', 'BIN1'), dis('driver', 'BIN2'), { type: 'EVALUATE' }], evaluated());
+    const one = run([{ type: 'UNDO' }, { type: 'EVALUATE' }], both);   // BIN2 back, BIN1 still off
+    expect(sess(one).lastSummary).toMatchObject({ added: 0, resolved: 0 });
+    expect(rows(one)).toEqual(['persisting:TB6612 motor driver: MOTORB1 and MOTORB2 are wired but not everything they depend on is']);
+  });
+});
