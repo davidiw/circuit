@@ -14,7 +14,7 @@ COMMIT="$(git rev-parse --short HEAD)"; STAMP="$(date -u +%Y%m%dT%H%M%SZ)"; REL=
 
 say "Validating (typecheck, tests, sweep freshness, build)"
 ./scripts/validate.sh
-[ -f "$ENV_FILE" ] || { echo "Missing $ENV_FILE. Copy deploy/env.example there, set SESSION_SECRET (openssl rand -hex 32), chmod 600." >&2; exit 1; }
+[ -f "$ENV_FILE" ] || { echo "Missing $ENV_FILE. Copy deploy/env.example there and chmod 600." >&2; exit 1; }
 
 say "Installing release $REL"
 sudo mkdir -p "$RELEASES"; sudo chown "$USER":"$USER" "$ROOT" "$RELEASES"
@@ -39,7 +39,7 @@ if sudo test -d /etc/letsencrypt/live/circuit.davidwolinsky.com; then install_if
 sudo nginx -t >/dev/null && sudo systemctl reload nginx
 
 say "Live smoke test against $URL"
-GATE_USER="$(sudo grep -E '^GATE_USER=' "$ENV_FILE" | cut -d= -f2-)" GATE_PASS="$(sudo grep -E '^GATE_PASS=' "$ENV_FILE" | cut -d= -f2-)" node deploy/smoke.mjs "$URL" || rollback
+node deploy/smoke.mjs "$URL" || rollback
 
 say "Pruning old releases (keeping 3)"
 ls -1dt "$RELEASES"/*/ | tail -n +4 | while read -r old; do [ "$(readlink -f "$old")" != "$(readlink -f "$CURRENT")" ] && rm -rf "$old" && echo "removed $old"; done || true

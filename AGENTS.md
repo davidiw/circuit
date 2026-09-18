@@ -26,7 +26,7 @@ Circuit Factory presents an electronics design as explicit state and lets a pers
 - Optimizations are curated canonical edits. Preview applies them to a candidate, runs the normal evaluator, and shows the before/after difference; Apply records the edit like any other.
 - Sessions persist per browser in a versioned localStorage format with migrations; projects export and import as JSON, and imported files are validated and re-evaluated before they are trusted.
 - Each template carries a `designGuide` (system flow, power/control/result, why each part is here, engineering decisions) and each registry component a `guide` (role, summary). The Learn sheet renders them beside the diagram and highlights the related artifacts. It is explanatory content, read-only with respect to engineering state.
-- The server (`server/`) is a signed-cookie access gate plus static serving plus one AI review endpoint.
+- The server (`server/`) serves the static build and one AI review endpoint with per-client and daily limits. There is no access gate: the prototype holds no sensitive content.
 - AI review is optional and architecturally separate: a provider interface (`src/ai/`), an output gate, a benchmark to select a model, and a labeled observation list in the UI that appears only when a provider is configured.
 
 ## Architectural invariants
@@ -94,8 +94,8 @@ Each layer catches a different kind of bug. Put a new test where its failure wou
 | Storage | `storage.test.ts`, `fixtures/` | Payloads from earlier builds migrate; unreadable, newer, and invalid payloads are dropped with a notice; stored evaluations are never restored as current | The saved-session shape changes |
 | Reducer and freshness | `store.test.ts` | Every semantic edit makes the evaluation stale; UI-only actions are hash-neutral; undo and reset restore the template hash; rules-version staleness; optimization apply path | State-machine semantics change |
 | AI trust boundary | `src/ai/review.test.ts`, render and store tests | The output gate drops malformed observations; observations are stamped as AI on the client; AI results never touch the design | The provider interface or gate changes |
-| Server and auth | `server/__tests__/auth.test.ts` | Unauthenticated requests redirect or 401; wrong credentials are rejected; the API validates schema and integrity and leaks no internal error text | A route or the gate changes |
-| Production smoke | `deploy/smoke.mjs` | In a real browser against the deployed URL: login, open, evaluate, connect a bad pin through the UI, stale, re-evaluate, expected finding, fix, cleared, optimization preview, phone viewport, no page errors | Deployment confidence; keep it short |
+| Server | `server/__tests__/server.test.ts` | The page and the API are open; the review endpoint validates schema and integrity, enforces body and rate limits, and leaks no internal error text | A route changes |
+| Production smoke | `deploy/smoke.mjs` | In a real browser against the deployed URL: open, evaluate, connect a bad pin through the UI, stale, re-evaluate, expected finding, fix, cleared, optimization preview, phone viewport, no page errors | Deployment confidence; keep it short |
 
 `npm test` runs everything but the production smoke. Saved-session compatibility: any change to the stored shape gets a migration in `src/ui/storage.ts` and a fixture under `src/ui/__tests__/fixtures/`, or it is a breaking change that drops saved work with a notice. Record which in `CHANGELOG.md`.
 
@@ -105,9 +105,9 @@ Each layer catches a different kind of bug. Put a new test where its failure wou
 - `src/data/` — the registry and the three template projects, loaded and schema-parsed at import.
 - `src/eval/` — the evaluation context (indexing, net-voltage propagation, provenance tracking), `evaluate.ts` with `RULES_VERSION`, structured mutations and `connectPins`, the KiCad ERC matrix, the pin-pair sweep, the state hash, and the ELK layout.
 - `src/eval/rules/` — one analyzer per file; each declares its id, dimensions, and what it read.
-- `src/ui/` — React application: store and reducer, versioned storage, library, project view, diagram, findings, coverage, sheets, the Learn guide (`Learn.tsx`), changes and optimize, compare, gate, error boundary.
+- `src/ui/` — React application: store and reducer, versioned storage, library, project view, diagram, findings, coverage, sheets, the Learn guide (`Learn.tsx`), changes and optimize, compare, error boundary.
 - `src/ai/` — provider interface, Anthropic and Gemini adapters, scripted provider, prompt text, review orchestration and output gate.
-- `server/` — Hono application (gate, static, `/api/review`), environment loading, entry point.
+- `server/` — Hono application (static, `/api/review`), environment loading, entry point.
 - `bench/` — the frozen benchmark cases, runner, and price table for selecting an AI model.
 - `docs/` — generated documentation (`pin-sweep.md`).
 - `deploy/` — nginx site, systemd unit, environment template, deploy script, live smoke test, first-deploy notes.
@@ -134,7 +134,7 @@ npm run sweep               # after changing a rule, a pin role, or KNOWN_GAPS; 
 npm run validate            # the release gate; also the pre-push hook (npm run hooks)
 git commit                  # one cohesive commit per change
 deploy/deploy.sh            # clean tree required; validates, releases, restarts, smoke-tests, rolls back on failure
-npm run smoke               # rerun the live smoke at any time (GATE_USER and GATE_PASS in the environment)
+npm run smoke               # rerun the live smoke at any time
 curl -s https://circuit.davidwolinsky.com/healthz   # deployed commit must equal main
 ```
 

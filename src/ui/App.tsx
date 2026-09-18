@@ -18,15 +18,13 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error?: Error }
     );
   }
 }
-import { Gate } from './Gate';
 import { Library } from './Library';
 import { ProjectView } from './ProjectView';
 
 export function App() { return <ErrorBoundary><Inner /></ErrorBoundary>; }
 
 function Inner() {
-  const { state, dispatch, isDev } = useAppStore();
-  if (state.view === 'gate') return <Gate onAuthed={() => dispatch({ type: 'AUTHED' })} dev={isDev} />;
+  const { state, dispatch } = useAppStore();
   if (state.view === 'library' || !state.activeId || !state.sessions[state.activeId]) return <Library state={state} dispatch={dispatch} />;
   return <ProjectView session={state.sessions[state.activeId]} state={state} dispatch={dispatch} />;
 }

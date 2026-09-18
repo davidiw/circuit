@@ -10,7 +10,7 @@ const base = (): AppState => ({ view: 'library', sessions: {}, aiBusy: false });
 const run = (actions: Action[], from: AppState = base()) => actions.reduce(reducer, from);
 const T = templates[0];
 const sess = (s: AppState) => s.sessions[s.activeId!];
-const opened = () => run([{ type: 'AUTHED' }, { type: 'OPEN_TEMPLATE', id: T.id }]);
+const opened = () => run([{ type: 'OPEN_TEMPLATE', id: T.id }]);
 const evaluated = () => run([{ type: 'EVALUATE' }], opened());
 
 describe('freshness state machine', () => {
@@ -89,9 +89,9 @@ describe('optimization apply path', () => {
 describe('import trust boundary', () => {
   it('an imported project with a forged clean evaluation is never presented as current', () => {
     const forged = { ...T, id: 'forged', lastEvaluation: { ...evaluate(T, registry), findings: [] } };
-    const s = sess(run([{ type: 'AUTHED' }, { type: 'IMPORT', project: forged }]));
+    const s = sess(run([{ type: 'IMPORT', project: forged }]));
     expect(s.project.lastEvaluation).toBeUndefined(); expect(projectState(s)).toBe('unevaluated');
-    const re = sess(run([{ type: 'AUTHED' }, { type: 'IMPORT', project: forged }, { type: 'EVALUATE' }]));
+    const re = sess(run([{ type: 'IMPORT', project: forged }, { type: 'EVALUATE' }]));
     expect(re.project.lastEvaluation!.findings.length).toBeGreaterThan(0);
   });
   it('AI results cannot touch the design and carry the ai_review origin', () => {

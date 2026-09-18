@@ -1,10 +1,9 @@
 // Captures the reviewer walkthrough from a running build into out/walkthrough/ (git-ignored): walkthrough.md plus 12 PNGs.
 // The published walkthrough page is built from that output; it is not tracked in this repository.
-// Usage: WALKTHROUGH_URL=http://127.0.0.1:8797 GATE_USER=... GATE_PASS=... node scripts/walkthrough.mjs   (npm run walkthrough)
+// Usage: WALKTHROUGH_URL=http://127.0.0.1:8797 node scripts/walkthrough.mjs   (npm run walkthrough)
 import puppeteer from 'puppeteer-core';
 import { writeFileSync, mkdirSync } from 'node:fs';
-const base = process.env.WALKTHROUGH_URL ?? 'http://127.0.0.1:8797'; const user = process.env.GATE_USER, pass = process.env.GATE_PASS;
-if (!user || !pass) { console.error('set GATE_USER and GATE_PASS'); process.exit(1); }
+const base = process.env.WALKTHROUGH_URL ?? 'http://127.0.0.1:8797';
 const out = process.env.WALKTHROUGH_OUT ?? 'out/walkthrough'; mkdirSync(out, { recursive: true });
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME ?? '/opt/google/chrome/chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] });
 const page = await browser.newPage(); await page.setViewport({ width: 1280, height: 860, deviceScaleFactor: 1 });
@@ -28,8 +27,7 @@ const steps = [
   ['13-phone-full', 'Phone, full-screen', 'Wiring on a phone', 'The full-screen view zooms in steps for touch targets and hosts the selection sheet inside it.'],
 ];
 try {
-  await page.goto(`${base}/login`); await page.evaluate(() => { try { localStorage.clear(); } catch {} });
-  await page.type('#username', user); await page.type('#password', pass); await Promise.all([page.waitForNavigation(), page.click('button[type=submit]')]); await page.waitForSelector('.cards');
+  await page.goto(`${base}/`); await page.evaluate(() => { try { localStorage.clear(); } catch {} }); await page.goto(`${base}/`); await page.waitForSelector('.cards');
   await clickText('.card .btn', 'Open'); await page.waitForSelector('.dia svg'); await wait(900); await shot('01-project');
   await page.click('#btn-learn'); await page.waitForSelector('#panel-learn'); await clickText('#panel-learn .chain button', 'Regulation'); await wait(500); await shot('02-learn'); await page.keyboard.press('Escape'); await wait(300);
   await page.click('#btn-evaluate'); await wait(1300); await shot('03-evaluated');

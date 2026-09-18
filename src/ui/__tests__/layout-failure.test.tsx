@@ -26,7 +26,7 @@ function Harness({ init }: { init: AppState }) {
 describe('graceful layout failure', () => {
   it('page stays mounted with a fallback; findings, Undo, Reset, and Back still work', async () => {
     const errors: string[] = []; const spy = vi.spyOn(console, 'error').mockImplementation((...a) => { errors.push(a.map(String).join(' ')); });
-    const init = [{ type: 'AUTHED' as const }, { type: 'OPEN_TEMPLATE' as const, id: templates[0].id }, { type: 'EVALUATE' as const }, { type: 'APPLY_MUTATION' as const, id: 'force_stby_low' }, { type: 'EVALUATE' as const }].reduce(reducer, { view: 'library', sessions: {}, aiBusy: false } as AppState);
+    const init = [{ type: 'OPEN_TEMPLATE' as const, id: templates[0].id }, { type: 'EVALUATE' as const }, { type: 'APPLY_MUTATION' as const, id: 'force_stby_low' }, { type: 'EVALUATE' as const }].reduce(reducer, { view: 'library', sessions: {}, aiBusy: false } as AppState);
     const out = render(<Harness init={init} />);
     await waitFor(() => expect(out.container.querySelector('.dia')?.textContent).toMatch(/Layout unavailable/), { timeout: 4000 });
     // Not a white screen: the app bar, stepper, findings (with the real violation), and changes are all present without a diagram.

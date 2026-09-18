@@ -11,7 +11,7 @@ import { guideFocus, resolveToken, tokensIn } from '../Learn';
 afterEach(cleanup);
 const base = (): AppState => ({ view: 'library', sessions: {}, aiBusy: false });
 const run = (actions: Action[], from: AppState = base()) => actions.reduce(reducer, from);
-const open = (id: string) => run([{ type: 'AUTHED' }, { type: 'OPEN_TEMPLATE', id }]);
+const open = (id: string) => run([{ type: 'OPEN_TEMPLATE', id }]);
 const sess = (s: AppState) => s.sessions[s.activeId!];
 
 async function renderState(state: AppState, label: string) {

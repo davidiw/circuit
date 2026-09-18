@@ -1,14 +1,12 @@
 // Live smoke test after a deploy: one short golden interaction in a real browser against the deployed URL.
-// login -> fresh Race Car -> Evaluate -> pick a pin -> Connect mode -> wire STBY into ground (a known-bad merge through the
+// open -> fresh Race Car -> Evaluate -> pick a pin -> Connect mode -> wire STBY into ground (a known-bad merge through the
 // normal UI) -> evaluation reads stale -> Re-evaluate -> the standby violation appears -> apply its structured fix ->
 // Re-evaluate -> the violation clears -> preview an optimization (before/after renders) -> phone viewport checks.
 // Fails on any page error or unhandled rejection, a console error, missing critical UI, a wrong stale/current transition,
 // a missing expected finding, or horizontal overflow at 390 px. A deployment confidence check, not an E2E framework.
-// Usage: GATE_USER=... GATE_PASS=... node deploy/smoke.mjs [base-url]   (needs puppeteer-core and the Chrome binary below)
+// Usage: node deploy/smoke.mjs [base-url]   (needs puppeteer-core and the Chrome binary below)
 import puppeteer from 'puppeteer-core';
 const base = process.argv[2] ?? 'https://circuit.davidwolinsky.com';
-const user = process.env.GATE_USER, pass = process.env.GATE_PASS;
-if (!user || !pass) { console.error('SMOKE FAIL: set GATE_USER and GATE_PASS in the environment'); process.exit(1); }
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME ?? '/opt/google/chrome/chrome', headless: 'new', args: ['--no-sandbox', '--disable-gpu'] });
 const fail = async (msg) => { console.error(`SMOKE FAIL: ${msg}`); await browser.close(); process.exit(1); };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -30,14 +28,11 @@ try {
   const expectChip = async (cls, what) => { await wait(300); if (!(await page.$(`.chip.${cls}`))) await fail(`${what}: expected the state chip to read ${cls}`); };
   const evaluate = async () => { await page.click('#btn-evaluate'); await wait(1500); };
 
-  // 1. health and login
+  // 1. health and the library, from a clean browser state
   const health = await fetch(`${base}/healthz`).then((r) => r.json()).catch(() => null);
   if (!health?.ok) await fail('healthz not ok');
-  await page.goto(`${base}/login`, { timeout: 20000 });
-  await page.evaluate(() => { try { localStorage.clear(); } catch {} });
-  await page.type('#username', user); await page.type('#password', pass);
-  await Promise.all([page.waitForNavigation({ timeout: 20000 }), page.click('button[type=submit]')]);
-  await page.waitForSelector('.cards', { timeout: 10000 }); step('login');
+  await page.goto(`${base}/`, { timeout: 20000 }); await page.evaluate(() => { try { localStorage.clear(); } catch {} });
+  await page.goto(`${base}/`, { timeout: 20000 }); await page.waitForSelector('.cards', { timeout: 10000 }); step('open library');
 
   // 2. a fresh Bluetooth Race Car (the first card; storage was cleared so it offers Open)
   if (!(await clickText('.card .btn', /^Open$/))) await fail('no Open button on the first card');

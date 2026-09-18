@@ -6,7 +6,7 @@ Circuit Factory turns an electronics design into an explicit engineering artifac
 
 https://circuit.davidwolinsky.com
 
-Access credentials are supplied separately. Nothing in this repository grants access, and no credential is committed.
+No login: the prototype holds no sensitive content. No credential or API key is committed; AI provider keys, when used, come from the environment only.
 
 ## Quick tour
 
@@ -48,7 +48,7 @@ npm ci
 cp .env.example .env
 ```
 
-Edit `.env` (git-ignored). The server refuses logins while `GATE_USER` or `GATE_PASS` is empty, and refuses to start in production without `SESSION_SECRET`. All credentials and API keys come from the environment only: `.env` locally, `/etc/circuit/env` in production.
+Edit `.env` (git-ignored) only if you want AI review: set the provider, model, and key there. Everything else runs with no configuration.
 
 Production-style run, which is what the deployment does:
 
@@ -57,8 +57,6 @@ npm run build     # Vite builds the SPA into dist/
 npm run start     # Hono serves dist/ and /api on http://127.0.0.1:8797
 ```
 
-Log in with the credentials from `.env`.
-
 Development workflow:
 
 ```bash
@@ -66,7 +64,7 @@ npm run start     # in one terminal: the API and gate on 8797
 npm run dev       # in another: Vite on http://localhost:5173 with hot reload
 ```
 
-Vite proxies `/api` to 8797. In development the SPA shows a browser-only gate that checks `VITE_DEV_GATE_USER` and `VITE_DEV_GATE_PASS` from `.env`; in production the gate is the server's signed session cookie and the dev gate does not exist.
+Vite proxies `/api` to 8797. There is no access gate in development or production.
 
 ## Validation
 
@@ -87,9 +85,9 @@ The test strategy, layer by layer, is described in `AGENTS.md`. In short: a corp
 
 ```bash
 npm run sweep           # regenerate docs/pin-sweep.md: which wrong wiring the rules reveal, and the documented gaps
-npm run walkthrough     # capture the reviewer loop as screenshots into out/walkthrough/ (needs a running build, GATE_USER, GATE_PASS)
+npm run walkthrough     # capture the reviewer loop as screenshots into out/walkthrough/ (needs a running build)
 npm run bench -- --dry  # run the model-selection benchmark with a scripted provider (proves the plumbing without keys)
-npm run smoke           # the live browser smoke test against the deployed URL (needs GATE_USER, GATE_PASS)
+npm run smoke           # the live browser smoke test against the deployed URL
 ```
 
 With `ANTHROPIC_API_KEY` or `GEMINI_API_KEY` set, `npm run bench` scores candidate models on the frozen corpus and writes the `AI_PROVIDER` / `AI_MODEL` lines for the server environment. See `bench/README.md`.
@@ -116,7 +114,7 @@ live browser smoke  (deploy/smoke.mjs)
 automatic rollback if smoke fails
 ```
 
-`deploy/deploy.sh` refuses an uncommitted tree, runs the validation gate, installs the release, updates the systemd unit and the nginx site when they differ, restarts the service, checks `/healthz`, runs the live browser smoke test through the normal login and pin-editing path, and rolls back to the previous release if anything fails. `/healthz` reports the deployed commit. First-deploy steps (DNS, certificate, environment file) are in `deploy/README.md`.
+`deploy/deploy.sh` refuses an uncommitted tree, runs the validation gate, installs the release, updates the systemd unit and the nginx site when they differ, restarts the service, checks `/healthz`, runs the live browser smoke test through the normal pin-editing path, and rolls back to the previous release if anything fails. `/healthz` reports the deployed commit. First-deploy steps (DNS, certificate, environment file) are in `deploy/README.md`.
 
 ## Repository map
 
@@ -127,7 +125,7 @@ automatic rollback if smoke fails
 | `src/eval/` | Evaluation context with net-voltage propagation, `evaluate.ts`, `rules/` (one file per rule), structured mutations, the KiCad ERC matrix, the pin-pair sweep, and the ELK diagram layout |
 | `src/ui/` | React app: store and reducer, versioned storage, library, project view, SVG diagram, findings, coverage, sheets, the Learn guide, changes, compare |
 | `src/ai/` | Provider interface, Anthropic and Gemini adapters, a scripted provider, the review prompt, and the output gate |
-| `server/` | Hono server: signed-cookie gate, static serving, `/api/review` with limits |
+| `server/` | Hono server: static serving and `/api/review` with per-client and daily limits |
 | `bench/` | Model-selection benchmark over the frozen corpus |
 | `deploy/` | nginx site, systemd unit, environment template, `deploy.sh`, `smoke.mjs` |
 | `scripts/` | `validate.sh` (the release gate) and the walkthrough capture |

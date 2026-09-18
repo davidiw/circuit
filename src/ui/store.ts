@@ -10,18 +10,16 @@ import { stateHash } from '../eval/hash';
 import { loadSessions, saveSessions } from './storage';
 
 export type AIStatus = { configured: boolean; provider?: string; model?: string };
-export type AppState = { view: 'gate' | 'library' | 'project'; sessions: Record<string, Session>; activeId?: string; aiStatus?: AIStatus; aiBusy: boolean; notice?: string };
+export type AppState = { view: 'library' | 'project'; sessions: Record<string, Session>; activeId?: string; aiStatus?: AIStatus; aiBusy: boolean; notice?: string };
 
 export type Action =
-  | { type: 'AUTHED' } | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' }
+  | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' }
   | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[]; kind?: EventKind } | { type: 'UNDO' } | { type: 'RESET' }
   | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation?: EvaluationResult } | { type: 'COMPARE'; id?: string }
   | { type: 'LEARN_OPEN' } | { type: 'LEARN_CLOSE' } | { type: 'LEARN_FOCUS'; id?: string }
   | { type: 'VIEW_FINDING'; id: string } | { type: 'VIEW_COVERAGE' } | { type: 'SELECT_INSTANCE'; id?: string } | { type: 'SELECT_NET'; id?: string } | { type: 'SELECT_PIN'; pin?: PinRef } | { type: 'DESELECT' } | { type: 'DISMISS_TIP'; id: string } | { type: 'DISMISS_INTRO' }
   | { type: 'AI_START' } | { type: 'AI_RESULT'; result: { observations: Finding[]; model: string; provider: string; latencyMs: number; dropped: number } } | { type: 'AI_ERROR'; error: string }
   | { type: 'SET_AI_STATUS'; status: AIStatus };
-
-const isDev = import.meta.env.DEV;
 
 const ev = (kind: EventKind, hash: string, ref?: string): HistoryEvent => ({ kind, at: new Date().toISOString(), stateHash: hash, ref });
 
@@ -56,7 +54,6 @@ function summarize(prev: EvaluationResult | undefined, result: EvaluationResult)
 
 export function reducer(state: AppState, a: Action): AppState {
   switch (a.type) {
-    case 'AUTHED': return { ...state, view: 'library' };
     case 'OPEN_TEMPLATE': {
       const existing = state.sessions[a.id];
       const session = existing ? { ...existing, history: [...existing.history, ev('open_template', existing.currentHash)] } : newSession(freshProject(a.id));
@@ -122,12 +119,11 @@ export function reducer(state: AppState, a: Action): AppState {
 export function useAppStore() {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     const persisted = loadSessions();
-    let authed = !isDev; try { authed = authed || sessionStorage.getItem('cf.dev.authed') === '1'; } catch { /* ignore */ }
-    return { view: authed ? 'library' : 'gate', aiBusy: false, sessions: persisted.sessions, activeId: persisted.activeId, notice: persisted.notice } as AppState;
+    return { view: 'library', aiBusy: false, sessions: persisted.sessions, activeId: persisted.activeId, notice: persisted.notice } as AppState;
   });
   useEffect(() => { saveSessions(state.sessions, state.activeId); }, [state.sessions, state.activeId]);
   useEffect(() => {
     fetch('/api/ai/status', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : { configured: false })).then((s) => dispatch({ type: 'SET_AI_STATUS', status: s })).catch(() => dispatch({ type: 'SET_AI_STATUS', status: { configured: false } }));
   }, []);
-  return { state, dispatch, isDev };
+  return { state, dispatch };
 }

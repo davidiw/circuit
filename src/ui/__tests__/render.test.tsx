@@ -13,7 +13,7 @@ import { ADVERSARIAL_TOPOLOGIES } from '../../eval/__tests__/adversarial';
 afterEach(cleanup);
 const base = (): AppState => ({ view: 'library', sessions: {}, aiBusy: false });
 const run = (actions: Action[], from: AppState = base()) => actions.reduce(reducer, from);
-const open = (id: string) => run([{ type: 'AUTHED' }, { type: 'OPEN_TEMPLATE', id }]);
+const open = (id: string) => run([{ type: 'OPEN_TEMPLATE', id }]);
 
 /** Render the project view for a state and fail on any thrown render error or console.error. */
 async function renderState(state: AppState, label: string) {
@@ -47,7 +47,7 @@ function assertPageMounted(container: HTMLElement, label: string) {
 describe('render every corpus state without errors', () => {
   it('library with and without sessions, with a storage notice', () => {
     const s0 = base(); render(<Library state={s0} dispatch={vi.fn()} />);
-    const s1 = run([{ type: 'AUTHED' }, { type: 'OPEN_TEMPLATE', id: templates[0].id }, { type: 'EVALUATE' }, { type: 'BACK' }]);
+    const s1 = run([{ type: 'OPEN_TEMPLATE', id: templates[0].id }, { type: 'EVALUATE' }, { type: 'BACK' }]);
     const out = render(<Library state={{ ...s1, notice: 'Saved work from an earlier version could not be kept.' }} dispatch={vi.fn()} />);
     expect(out.getAllByText(/Resume/).length).toBeGreaterThan(0); expect(out.getByText(/could not be kept/)).toBeTruthy();
   });

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-17 · no access gate
+- Storage: **no shape change; saved sessions stay compatible.** The browser no longer keeps a dev-gate flag.
+- The login page, session cookie, and development gate are removed: the prototype holds no sensitive content. `GATE_USER`, `GATE_PASS`, `SESSION_SECRET`, and the `VITE_DEV_GATE_*` variables are gone from both environment templates. The AI review endpoint is now rate-limited per client address instead of per session, plus the daily cap. The smoke test, walkthrough capture, and deploy script need no credentials.
+
 ## 2026-09-17 · findings are identified by pin
 - Storage: **no shape change; saved sessions stay compatible.**
 - A finding's identity across evaluations (`findingKey`) now includes the pins it names, not just the parts. Fixing one problem and causing another on a different pin of the same part reads as one resolved and one new, in the summary next to the state chip and in the findings list, instead of one "persisting" finding. Wiring one of several missing inputs of a driver channel still reads as the same finding updating, because a dependency finding is identified by its wired outputs; the missing inputs are evidence.
