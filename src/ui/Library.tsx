@@ -4,10 +4,14 @@ import type { AppState, Action } from './store';
 
 export function Library({ state, dispatch }: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const [confirmNew, setConfirmNew] = useState<string | undefined>();
+  const [confirmClear, setConfirmClear] = useState(false);
+  const saved = Object.values(state.sessions); const edits = saved.reduce((n, s) => n + s.edits.length, 0);
   return (
     <div className="page">
       <header className="appbar"><div className="brand">Circuit Factory <span>· Library</span></div>
-        <form method="post" action="/api/logout"><button className="btn ghost" type="submit">Sign out</button></form></header>
+        {saved.length > 0 && (confirmClear
+          ? <div className="row wrap"><span className="small">Discard {saved.length} saved session{saved.length > 1 ? 's' : ''}{edits ? ` and ${edits} change${edits > 1 ? 's' : ''}` : ''} from this browser?</span><button className="btn small danger" id="btn-clear-yes" onClick={() => { setConfirmClear(false); dispatch({ type: 'CLEAR_ALL' }); }}>Clear saved work</button><button className="btn ghost small" onClick={() => setConfirmClear(false)}>Keep</button></div>
+          : <button className="btn ghost" id="btn-clear" onClick={() => setConfirmClear(true)}>Clear saved work</button>)}</header>
       {state.notice && <div className="bar stale">{state.notice}<button className="x" onClick={() => dispatch({ type: 'DISMISS_NOTICE' })}>dismiss</button></div>}
       <p className="lede"><b>An engineering design as explicit state.</b> Every template below is parts, pins, nets, a power source, requirements, and assumptions with provenance. Open one, run the deterministic rules, change the circuit, and see what the rules say about the change. The Bluetooth Race Car is the fully worked example.</p>
       <div className="cards">

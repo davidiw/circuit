@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-09-17 · Clear saved work replaces Sign out
+- Storage: **no shape change.** The library's Sign out button, which had nothing left to do without a gate, is now "Clear saved work": after an inline confirmation naming how many sessions and changes it discards, every saved session in this browser is removed and the library starts fresh. Hidden when nothing is saved.
+
 ## 2026-09-17 · no access gate
 - Storage: **no shape change; saved sessions stay compatible.** The browser no longer keeps a dev-gate flag.
 - The login page, session cookie, and development gate are removed: the prototype holds no sensitive content. `GATE_USER`, `GATE_PASS`, `SESSION_SECRET`, and the `VITE_DEV_GATE_*` variables are gone from both environment templates. The AI review endpoint is now rate-limited per client address instead of per session, plus the daily cap. The smoke test, walkthrough capture, and deploy script need no credentials.

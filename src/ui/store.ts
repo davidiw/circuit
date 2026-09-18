@@ -13,7 +13,7 @@ export type AIStatus = { configured: boolean; provider?: string; model?: string 
 export type AppState = { view: 'library' | 'project'; sessions: Record<string, Session>; activeId?: string; aiStatus?: AIStatus; aiBusy: boolean; notice?: string };
 
 export type Action =
-  | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' }
+  | { type: 'OPEN_TEMPLATE'; id: string } | { type: 'NEW_SESSION'; id: string } | { type: 'BACK' } | { type: 'IMPORT'; project: Project } | { type: 'DISMISS_NOTICE' } | { type: 'CLEAR_ALL' }
   | { type: 'EVALUATE' } | { type: 'APPLY_MUTATION'; id: string } | { type: 'EDIT'; label: string; ops: MutationOp[]; kind?: EventKind } | { type: 'UNDO' } | { type: 'RESET' }
   | { type: 'CONNECT_TO'; pin: PinRef } | { type: 'ARM_CONNECT'; pin?: PinRef } | { type: 'APPLY_OPTIMIZATION'; id: string; evaluation?: EvaluationResult } | { type: 'COMPARE'; id?: string }
   | { type: 'LEARN_OPEN' } | { type: 'LEARN_CLOSE' } | { type: 'LEARN_FOCUS'; id?: string }
@@ -68,6 +68,8 @@ export function reducer(state: AppState, a: Action): AppState {
     }
     case 'NEW_SESSION': return { ...state, view: 'project', activeId: a.id, sessions: { ...state.sessions, [a.id]: newSession(freshProject(a.id)) } };
     case 'DISMISS_NOTICE': return { ...state, notice: undefined };
+    // Clear saved work: every session in this browser is discarded and the library starts fresh. The AI status is server state and stays.
+    case 'CLEAR_ALL': return { view: 'library', sessions: {}, activeId: undefined, notice: undefined, aiBusy: false, aiStatus: state.aiStatus };
     case 'BACK': return { ...state, view: 'library' };
     case 'EVALUATE': return withSession(state, (s) => {
       const result = evaluate(s.project, registry); const prev = s.project.lastEvaluation;

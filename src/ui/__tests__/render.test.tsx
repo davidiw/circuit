@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import './setup';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, cleanup, waitFor } from '@testing-library/react';
+import { render, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { templates, registry } from '../../data';
 import { reducer, type AppState, type Action } from '../store';
 import { ProjectView } from '../ProjectView';
@@ -50,6 +50,16 @@ describe('render every corpus state without errors', () => {
     const s1 = run([{ type: 'OPEN_TEMPLATE', id: templates[0].id }, { type: 'EVALUATE' }, { type: 'BACK' }]);
     const out = render(<Library state={{ ...s1, notice: 'Saved work from an earlier version could not be kept.' }} dispatch={vi.fn()} />);
     expect(out.getAllByText(/Resume/).length).toBeGreaterThan(0); expect(out.getByText(/could not be kept/)).toBeTruthy();
+  });
+  it('clear saved work: hidden without sessions, confirms, then discards every session and returns to an empty library', () => {
+    const empty = render(<Library state={base()} dispatch={vi.fn()} />); expect(empty.container.querySelector('#btn-clear')).toBeNull(); cleanup();
+    const s1 = run([{ type: 'OPEN_TEMPLATE', id: templates[0].id }, { type: 'EVALUATE' }, { type: 'APPLY_MUTATION', id: 'force_stby_low' }, { type: 'BACK' }]);
+    const dispatch = vi.fn(); const out = render(<Library state={s1} dispatch={dispatch} />);
+    fireEvent.click(out.container.querySelector('#btn-clear')!); expect(out.container.textContent).toMatch(/Discard 1 saved session and 1 change/);
+    fireEvent.click(out.container.querySelector('#btn-clear-yes')!); expect(dispatch).toHaveBeenCalledWith({ type: 'CLEAR_ALL' });
+    const after = reducer({ ...s1, aiStatus: { configured: true } }, { type: 'CLEAR_ALL' });
+    expect(after.sessions).toEqual({}); expect(after.activeId).toBeUndefined(); expect(after.view).toBe('library'); expect(after.aiStatus).toEqual({ configured: true });
+    cleanup(); const fresh = render(<Library state={after} dispatch={vi.fn()} />); expect(fresh.container.querySelector('#btn-clear')).toBeNull(); expect(fresh.getAllByText(/^Open$/).length).toBe(templates.length);
   });
   for (const t of templates) {
     it(`${t.id}: fresh, evaluated, every mutation evaluated, resolved after undo`, async () => {
